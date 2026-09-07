@@ -1,0 +1,193 @@
+/* ============================================================
+   HISTORY OF WORLD CUP — style.css
+   Identitate vizuală „stadion nocturn": verde-teren, auriu reflector,
+   roșu tablă de scor. Tipografie condensată (scoreboard) pentru
+   titluri, monospace pentru statistici/scoruri.
+   ============================================================ */
+
+@import url("https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap");
+
+:root {
+  --bg: #0a0f0d;
+  --bg-panel: #121a16;
+  --bg-panel-2: #182620;
+  --pitch: #1f8a4c;
+  --pitch-2: #2fb361;
+  --gold: #e0b84b;
+  --gold-2: #f4d37a;
+  --red: #d1453b;
+  --text: #eef4ef;
+  --text-dim: #a9b8ae;
+  --border: #26362d;
+  --shadow: rgba(0, 0, 0, 0.45);
+}
+
+:root[data-theme="light"] {
+  --bg: #f3f1e7;
+  --bg-panel: #ffffff;
+  --bg-panel-2: #f0ece0;
+  --pitch: #1f8a4c;
+  --pitch-2: #17703c;
+  --gold: #a97c13;
+  --gold-2: #8a6410;
+  --red: #b23127;
+  --text: #14211a;
+  --text-dim: #4c5e53;
+  --border: #ddd6c0;
+  --shadow: rgba(0, 0, 0, 0.12);
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Oswald", "Segoe UI", sans-serif;
+  min-height: 100vh;
+}
+
+#app {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 20px 16px 60px;
+  position: relative;
+}
+
+h1, h2, h3, h4 { font-family: "Oswald", sans-serif; font-weight: 700; letter-spacing: 0.02em; margin: 0 0 12px; }
+p { line-height: 1.5; }
+
+.theme-toggle {
+  position: fixed; top: 14px; right: 14px; z-index: 10;
+  background: var(--bg-panel); border: 1px solid var(--border); color: var(--text);
+  width: 40px; height: 40px; border-radius: 50%; cursor: pointer; font-size: 18px;
+}
+
+/* ---------- Meniu ---------- */
+.hero { text-align: center; padding: 40px 0 24px; }
+.hero-ball { font-size: 56px; filter: drop-shadow(0 0 18px var(--gold)); }
+.hero h1 { font-size: 40px; line-height: 1.05; background: linear-gradient(180deg, var(--gold-2), var(--gold)); -webkit-background-clip: text; background-clip: text; color: transparent; margin: 12px 0 6px; }
+.tagline { color: var(--text-dim); font-family: "JetBrains Mono", monospace; font-size: 13px; }
+.menu-buttons { display: flex; flex-direction: column; gap: 12px; max-width: 360px; margin: 24px auto 0; }
+
+/* ---------- Butoane ---------- */
+.btn {
+  background: var(--bg-panel-2); color: var(--text); border: 1px solid var(--border);
+  padding: 14px 18px; border-radius: 10px; font-family: "Oswald", sans-serif; font-size: 16px;
+  font-weight: 600; cursor: pointer; transition: transform .1s, border-color .15s;
+}
+.btn:hover { border-color: var(--gold); transform: translateY(-1px); }
+.btn-primary { background: linear-gradient(180deg, var(--pitch-2), var(--pitch)); border-color: var(--pitch-2); color: #fff; }
+.btn-primary:hover { border-color: var(--gold); }
+.btn-block { display: block; width: 100%; margin-top: 18px; }
+.btn-back { background: none; border: none; color: var(--gold); font-family: "Oswald", sans-serif; font-size: 14px; cursor: pointer; padding: 6px 0; }
+
+/* ---------- Topbar ---------- */
+.topbar { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; flex-wrap: wrap; }
+.topbar h2 { margin: 0; }
+
+/* ---------- Grile / carduri ---------- */
+.grid { display: grid; gap: 12px; }
+.grid-editions { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+.grid-teams { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
+.grid-legends { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+
+.card {
+  background: var(--bg-panel); border: 1px solid var(--border); border-radius: 12px;
+  padding: 14px; text-align: left; cursor: pointer; color: var(--text);
+  box-shadow: 0 2px 6px var(--shadow); transition: border-color .15s, transform .1s;
+}
+.card:hover { border-color: var(--gold); transform: translateY(-2px); }
+
+.edition-year { font-family: "JetBrains Mono", monospace; color: var(--gold); font-size: 20px; font-weight: 600; }
+.edition-host { font-size: 14px; color: var(--text-dim); margin: 2px 0 8px; }
+.edition-champ { font-size: 13px; }
+
+.team-flag { font-size: 28px; }
+.team-name { font-weight: 600; margin: 6px 0 2px; }
+.team-rating { font-family: "JetBrains Mono", monospace; font-size: 12px; color: var(--gold); }
+
+.legend-card { cursor: default; }
+.legend-name { font-size: 18px; font-weight: 700; color: var(--gold); }
+.legend-team { font-size: 12px; color: var(--text-dim); margin-bottom: 8px; }
+.legend-bio { font-size: 14px; color: var(--text); margin: 0; }
+
+/* ---------- Hub ---------- */
+.hub-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.panel { background: var(--bg-panel); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+.panel-wide { grid-column: 1 / -1; }
+.panel label { display: block; font-size: 12px; color: var(--text-dim); margin: 10px 0 4px; text-transform: uppercase; letter-spacing: .05em; }
+.panel select {
+  width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border);
+  background: var(--bg-panel-2); color: var(--text); font-family: "Oswald", sans-serif; font-size: 14px;
+}
+
+.fixture-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+.fixture-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;
+  background: var(--bg-panel-2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; font-size: 14px;
+}
+.fixture-row.future { opacity: 0.5; }
+.fx-status { font-family: "JetBrains Mono", monospace; color: var(--gold); font-weight: 600; }
+
+.badge { font-size: 11px; padding: 3px 8px; border-radius: 20px; font-family: "JetBrains Mono", monospace; }
+.badge-real { background: rgba(224, 184, 75, 0.18); color: var(--gold); border: 1px solid var(--gold); }
+.badge-sim { background: rgba(169, 184, 174, 0.15); color: var(--text-dim); border: 1px solid var(--border); }
+
+.squad-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; margin: 10px 0; }
+.squad-bench { opacity: 0.75; }
+.chip {
+  display: flex; align-items: center; gap: 6px; background: var(--bg-panel-2);
+  border: 1px solid var(--border); border-radius: 8px; padding: 6px 8px; font-size: 12px;
+}
+.chip-legend { border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold) inset; }
+.chip-pos { font-family: "JetBrains Mono", monospace; color: var(--gold); font-weight: 600; width: 26px; }
+.chip-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chip-ovr { font-family: "JetBrains Mono", monospace; color: var(--text-dim); }
+
+/* ---------- Preview & meci live ---------- */
+.preview-vs { display: flex; align-items: center; justify-content: center; gap: 24px; margin: 24px 0; text-align: center; }
+.preview-team { font-size: 18px; font-weight: 600; }
+.preview-rating { font-family: "JetBrains Mono", monospace; font-size: 12px; color: var(--text-dim); margin-top: 4px; }
+.preview-vs-label { font-family: "JetBrains Mono", monospace; color: var(--red); font-size: 22px; font-weight: 700; }
+.preview-badge { text-align: center; margin-bottom: 12px; }
+.note { color: var(--text-dim); font-size: 13px; margin-top: 6px; font-style: italic; }
+.hint { color: var(--text-dim); font-size: 13px; }
+
+.live-score {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  background: linear-gradient(180deg, var(--bg-panel-2), var(--bg-panel));
+  border: 1px solid var(--red); border-radius: 12px; padding: 18px; font-weight: 600;
+}
+#live-score-num, .live-score span:nth-child(2) { font-family: "JetBrains Mono", monospace; color: var(--red); font-size: 28px; font-weight: 700; }
+.ticker { list-style: none; padding: 0; margin: 16px 0; max-height: 260px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
+.ticker-event { background: var(--bg-panel); border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; font-family: "JetBrains Mono", monospace; font-size: 13px; }
+
+/* ---------- Clasament ---------- */
+.standings { width: 100%; border-collapse: collapse; margin: 16px 0; font-family: "JetBrains Mono", monospace; font-size: 14px; }
+.standings th, .standings td { padding: 10px; border-bottom: 1px solid var(--border); text-align: left; }
+.standings tr.me { background: rgba(224, 184, 75, 0.1); }
+.standings tr.qualified td:first-child { color: var(--pitch-2); font-weight: 700; }
+
+/* ---------- Sumar carieră ---------- */
+.summary-hero { text-align: center; margin: 20px 0; }
+.summary-team { font-size: 20px; font-weight: 700; }
+.summary-outcome { font-size: 24px; color: var(--gold); margin-top: 6px; }
+.compare { font-family: "JetBrains Mono", monospace; font-size: 12px; margin-top: 4px; width: 100%; }
+.compare-same { color: var(--text-dim); }
+.compare-diff { color: var(--pitch-2); }
+
+/* ---------- Muzeu ---------- */
+.museum-list { display: flex; flex-direction: column; gap: 8px; }
+.museum-item { background: var(--bg-panel); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+.museum-head { width: 100%; display: flex; justify-content: space-between; padding: 14px 16px; background: none; border: none; color: var(--text); font-family: "Oswald", sans-serif; font-size: 16px; font-weight: 600; cursor: pointer; }
+.museum-body { padding: 0 16px 16px; font-size: 14px; }
+.museum-note { color: var(--text-dim); font-style: italic; }
+
+/* ---------- Trofee ---------- */
+.trophy-row { display: flex; justify-content: space-between; font-family: "JetBrains Mono", monospace; font-size: 13px; }
+
+@media (max-width: 640px) {
+  .hub-grid { grid-template-columns: 1fr; }
+  .hero h1 { font-size: 30px; }
+          }
