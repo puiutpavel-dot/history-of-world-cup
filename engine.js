@@ -82,10 +82,40 @@ const FORMATION_SLOTS = {
   GK: 1, DF: 4, MF: 4, FW: 2, // linia de start; restul lotului e banc
 };
 
+/* Lot real (jucători istorici reali) pentru campaniile curate din
+   real_rosters.js — restul combinațiilor echipă+an nu au lot real
+   și folosesc generarea aleatoare de mai jos. */
+function getRealRoster(teamCode, year) {
+  if (typeof REAL_ROSTERS === "undefined") return null;
+  return REAL_ROSTERS[fixtureKey(teamCode, year)] || null;
+}
+
 function generateSquad(teamCode, year, rng) {
   const baseRating = getRatingAt(teamCode, year);
-  const positions = ["GK", "GK", "DF", "DF", "DF", "DF", "DF", "DF", "MF", "MF", "MF", "MF", "MF", "MF", "FW", "FW", "FW", "FW"];
   const legendsHere = LEGENDS.filter((l) => l.team === teamCode && Math.abs(l.yearTag - year) <= 8);
+  const realRoster = getRealRoster(teamCode, year);
+
+  if (realRoster && realRoster.length) {
+    // lot real: nume + poziție reale; dacă un jucător real e și în LEGENDS
+    // (potrivire exactă de nume), primește boost-ul + bio de legendă.
+    const squad = realRoster.map((p) => {
+      const legend = legendsHere.find((l) => l.name === p.name);
+      const variance = randInt(rng, -9, 9);
+      let overall = Math.max(35, Math.min(96, baseRating + variance));
+      let isLegend = false, bio;
+      if (legend) {
+        overall = Math.max(35, Math.min(99, baseRating + legend.boost));
+        isLegend = true;
+        bio = legend.bio;
+      }
+      return { name: p.name, pos: p.pos, overall, isLegend, bio };
+    });
+    squad.sort((a, b) => b.overall - a.overall);
+    return squad;
+  }
+
+  // fallback: nume generate aleator (fără lot real curat pentru acest echipă+an)
+  const positions = ["GK", "GK", "DF", "DF", "DF", "DF", "DF", "DF", "MF", "MF", "MF", "MF", "MF", "MF", "FW", "FW", "FW", "FW"];
   const squad = positions.map((pos, i) => {
     const variance = randInt(rng, -9, 9);
     const overall = Math.max(35, Math.min(96, baseRating + variance));
@@ -225,5 +255,6 @@ if (typeof module !== "undefined" && module.exports) {
     generateSquad, squadStrength, tacticalRatings,
     simulateMatch, assignScorers, simulatePenalties, poissonSample,
     getRealGroupOpponents, getRealGroupMatch, getRealKnockoutMatch, drawOpponent, fixtureKey,
+    getRealRoster,
   };
 }
