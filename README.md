@@ -6,7 +6,7 @@ Prototip web jucabil pentru o aplicație iOS nativă despre istoria Campionatulu
 
 ## Conceptul jocului
 
-Jucătorul alege o ediție a Cupei Mondiale (1930-2022) și o națională disponibilă în acea eră. Pentru cele **12 campanii istorice curate** (vezi mai jos), lotul e **loturi reale, cu jucători istorici reali** (18-26 fotbaliști, nume + poziție reale, verificate). Pentru restul combinațiilor echipă+an, echipa primește un lot generat, cu rating calculat dintr-o curbă istorică de putere per echipă/an — iar fotbaliștii **legendari reali** (Pelé, Maradona, Beckenbauer, Cruyff, Zidane, Messi ș.a.) apar automat în lotul echipei lor, la anul corect, indiferent de tipul de lot.
+Jucătorul alege o ediție a Cupei Mondiale (1930-2022) și o națională disponibilă în acea eră. Pentru **orice combinație echipă+an care a avut loc cu adevărat istoric** (peste 300 de loturi, acoperind toate cele 23 de națiuni curate la fiecare ediție la care au participat real, plus ~24 de loturi pentru echipe "shadow" adversare în campaniile curate), lotul e **real, cu jucători istorici reali** (18-26 fotbaliști per lot, nume + poziție reale, verificate încrucișat pe surse). Doar combinațiile echipă+an care sunt teoretic selectabile în joc dar care **nu au avut loc real** (echipa nu s-a calificat sau nu a existat încă la acea ediție) primesc un lot generat, cu rating calculat dintr-o curbă istorică de putere per echipă/an — iar fotbaliștii **legendari reali** (Pelé, Maradona, Beckenbauer, Cruyff, Zidane, Messi ș.a.) apar automat în lotul echipei lor, la anul corect, indiferent de tipul de lot.
 
 Bucla de joc: alege mentalitate + formație → joacă 3 meciuri în grupă (celelalte se simulează automat pentru clasament) → sferturi → semifinală → finală (penalty-uri la egalitate) → cariera intră în Sala Trofeelor.
 
@@ -20,8 +20,8 @@ Ecrane suplimentare: **Muzeul Edițiilor** (toate cele 22 de ediții, cu gazdă/
 
 Acest prototip a fost **reconstruit de la zero** pornind de la conceptul și planul de arhitectură din documentul de proiect (o versiune anterioară, mai completă, a fost construită într-o sesiune Claude separată care nu mai există). Pentru a rămâne un v1 solid și verificabil:
 
-- **12 campanii istorice curate** cu adversari reali (Uruguay 1930, Brazilia 1950/1970/2002, Germania 1954/1990/2014, Anglia 1966, Argentina 1986/2022, Franța 1998, Japonia 2002) — nu baza de date completă de 1316 meciuri din prototipul original.
-- Aceleași 12 campanii au și **loturi reale** (`real_rosters.js`, sursă: paginile Wikipedia "[an] FIFA World Cup squads") — restul combinațiilor echipă+an folosesc lot generat aleator.
+- **12 campanii istorice curate** cu adversari reali, meci cu meci (Uruguay 1930, Brazilia 1950/1970/2002, Germania 1954/1990/2014, Anglia 1966, Argentina 1986/2022, Franța 1998, Japonia 2002) — nu baza de date completă de 1316 meciuri din prototipul original.
+- **Loturi reale extinse la scară completă** (`real_rosters.js`, peste 300 de chei `ECHIPA_AN`, sursă: paginile Wikipedia "[an] FIFA World Cup squads", verificate jucător cu jucător): fiecare din cele 23 de națiuni curate primește lot real pentru *fiecare* ediție la care a participat cu adevărat istoric (1930-2022), nu doar cele 12 campanii curate — plus loturi reale pentru ~24 de echipe "shadow" adversare relevante în acele 12 campanii. Restul combinațiilor echipă+an (selectabile teoretic în joc, dar care nu au avut loc real) folosesc lot generat aleator.
 - **23 de națiuni curate** cu curbă de putere pe eră + ~19 echipe "shadow" (rating dedus automat din diferența de gol reală, fără curbă proprie).
 - Structura de date (`REAL_FIXTURES`, `TEAMS.curve`, `REAL_ROSTERS`) e identică cu planul original, deci **oricine poate extinde** subsetul de meciuri/loturi reale fără nicio schimbare de motor.
 
@@ -33,7 +33,7 @@ Structura oglindește direct arhitectura SwiftUI propusă (vezi documentul de pr
 |---|---|
 | `data.js` | `Data.json` (ediții, echipe, legende) |
 | `real_fixtures.js` | `RealFixtures.json` |
-| `real_rosters.js` | `RealRosters.json` (loturi reale pentru campaniile curate) |
+| `real_rosters.js` | `RealRosters.json` (loturi reale pentru toate combinațiile echipă+an istorice reale) |
 | `engine.js` | Motor Swift — funcții pure testabile cu XCTest (`simulateMatch`, `generateSquad`, `getTeamRating`, `getShadowRating`...) |
 | `app.js` | `ObservableObject GameState` + ecrane SwiftUI |
 | `style.css` | Paletă „stadion nocturn" → `Font.custom` / `Color` assets |
