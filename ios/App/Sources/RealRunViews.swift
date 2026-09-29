@@ -264,7 +264,9 @@ struct RunMatchCard: View {
                     .font(.stat(40, weight: .bold))
                     .foregroundStyle(revealed ? Color.hwcRed : Color.hwcTextDim)
                     .contentTransition(.numericText())
-                    .frame(minWidth: 110)
+                    .lineLimit(1)
+                    .fixedSize()
+                    .layoutPriority(1)
                 VStack(spacing: 4) {
                     Text(b.flag).font(.system(size: 44))
                     Text(b.name).font(.system(size: 13, weight: .semibold)).multilineTextAlignment(.center).lineLimit(2)
