@@ -13,7 +13,8 @@ on:
 jobs:
   testflight:
     name: Build semnat + upload în TestFlight
-    runs-on: macos-15
+    # App Store Connect acceptă doar build-uri cu SDK-ul iOS 26 (Xcode 26 sau mai nou)
+    runs-on: macos-26
     env:
       ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
       ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
@@ -28,6 +29,12 @@ jobs:
           done
           exit $missing
       - uses: actions/checkout@v4
+      - name: Xcode 26
+        run: |
+          XC=$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -1)
+          if [ -z "$XC" ]; then echo "::error::Xcode 26 lipsește pe runner"; ls -d /Applications/Xcode*.app; exit 1; fi
+          sudo xcode-select -s "$XC"
+          xcodebuild -version
       - name: Generează JSON-urile din prototipul web
         run: node tools/export_ios_data.js
       - name: Generează iconița aplicației
