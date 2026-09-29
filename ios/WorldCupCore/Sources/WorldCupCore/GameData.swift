@@ -76,7 +76,8 @@ public final class GameData: @unchecked Sendable {
             return try Data(contentsOf: url)
         }
         let decoder = JSONDecoder()
-        let file = try decoder.decode(DataFile.self, from: read("Data"))
+        // textele în limba aplicației (Data_en.json = aceeași structură, în engleză)
+        let file = try decoder.decode(DataFile.self, from: read(AppLanguage.isRomanian ? "Data" : "Data_en"))
         let campaigns = try decoder.decode([Campaign].self, from: read("RealFixtures"))
         let rosters = try decoder.decode([String: [RosterEntry]].self, from: read("RealRosters"))
         return GameData(editions: file.editions, teams: file.teams, shadowTeams: file.shadowTeams,

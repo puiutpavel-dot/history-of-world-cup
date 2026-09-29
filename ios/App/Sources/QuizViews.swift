@@ -8,16 +8,16 @@ struct QuizMenuView: View {
     let columns = [GridItem(.adaptive(minimum: 150), spacing: 12)]
 
     var body: some View {
-        ScreenContainer(title: "🧠 Quiz", backLabel: "Meniu", onBack: { game.go(.menu) }) {
+        ScreenContainer(title: "🧠 Quiz", backLabel: tr("Meniu", "Menu"), onBack: { game.go(.menu) }) {
             VStack(alignment: .leading, spacing: 12) {
-                QuizModeCard(title: "🏃 Maraton 1930 → 2026", subtitle: "23 de întrebări, câte una pe ediție",
+                QuizModeCard(title: tr("🏃 Maraton 1930 → 2026", "🏃 Marathon 1930 → 2026"), subtitle: tr("23 de întrebări, câte una pe ediție", "23 questions, one per edition"),
                              best: game.quizProgress.best(.marathon, year: nil), total: 23, locked: !game.fullHistory) { game.startQuiz(.marathon) }
-                QuizModeCard(title: "🕵️ Duoul greșit", subtitle: "3 afirmații, una e falsă — 10 runde",
+                QuizModeCard(title: tr("🕵️ Duoul greșit", "🕵️ Spot the fake"), subtitle: tr("3 afirmații, una e falsă — 10 runde", "3 statements, one is false — 10 rounds"),
                              best: game.quizProgress.best(.tf, year: nil), total: 10, locked: !game.fullHistory) { game.startQuiz(.tf) }
-                QuizModeCard(title: "🧩 Alege faza", subtitle: "Îți dau anul, tu spui ce urma după prima fază — 10 runde",
+                QuizModeCard(title: tr("🧩 Alege faza", "🧩 Name the stage"), subtitle: tr("Îți dau anul, tu spui ce urma după prima fază — 10 runde", "I give you the year, you say what came after the first stage — 10 rounds"),
                              best: game.quizProgress.best(.phase, year: nil), total: 10, locked: !game.fullHistory) { game.startQuiz(.phase) }
 
-                Text("Quiz pe ediție — 5 întrebări: gazdă, finală, format, golgheter, o surpriză")
+                Text(tr("Quiz pe ediție — 5 întrebări: gazdă, finală, format, golgheter, o surpriză", "Quiz by edition — 5 questions: host, final, format, top scorer, a surprise"))
                     .font(.system(size: 14, weight: .semibold)).foregroundStyle(Color.hwcTextDim)
                     .padding(.top, 6)
                 LazyVGrid(columns: columns, spacing: 12) {
@@ -52,8 +52,8 @@ struct QuizModeCard: View {
 
     private var label: String {
         if locked { return "🔒 Full History" }
-        if let best { return "Record: \(best) / \(total)" }
-        return "Nejucat încă"
+        if let best { return tr("Record: ", "Best: ") + "\(best) / \(total)" }
+        return tr("Nejucat încă", "Not played yet")
     }
 
     var body: some View {
@@ -83,7 +83,7 @@ struct QuizPlayView: View {
             let q = z.current
             ScreenContainer(title: z.title, backLabel: "Quiz", onBack: { game.go(.quizMenu) }) {
                 VStack(alignment: .leading, spacing: 12) {
-                    Text("Întrebarea \(z.idx + 1) / \(z.questions.count) · Scor \(z.score)")
+                    Text(tr("Întrebarea \(z.idx + 1) / \(z.questions.count) · Scor \(z.score)", "Question \(z.idx + 1) / \(z.questions.count) · Score \(z.score)"))
                         .font(.stat(13)).foregroundStyle(Color.hwcTextDim)
                     VStack(alignment: .leading, spacing: 6) {
                         Text(String(q.year)).font(.stat(12)).foregroundStyle(Color.hwcTextDim)
@@ -100,9 +100,9 @@ struct QuizPlayView: View {
                     }
 
                     if let picked = z.picked {
-                        Text(picked == q.answer ? "✅ Corect!" : "❌ Răspuns corect: **\(q.options[q.answer])**")
+                        Text(LocalizedStringKey(picked == q.answer ? tr("✅ Corect!", "✅ Correct!") : tr("❌ Răspuns corect: ", "❌ Correct answer: ") + "**\(q.options[q.answer])**"))
                             .font(.system(size: 15)).foregroundStyle(Color.hwcText)
-                        PrimaryButton(title: z.isLast ? "Vezi rezultatul" : "Următoarea", systemImage: "arrow.right") {
+                        PrimaryButton(title: z.isLast ? tr("Vezi rezultatul", "See your score") : tr("Următoarea", "Next"), systemImage: "arrow.right") {
                             game.nextQuestion()
                         }
                     }
@@ -151,21 +151,21 @@ struct QuizResultView: View {
         if let z = game.quiz {
             let total = z.questions.count
             let pct = Double(z.score) / Double(max(total, 1))
-            let verdict = pct == 1 ? "Perfect! Știi istoria pe de rost."
-                : pct >= 0.6 ? "Foarte bine!" : pct >= 0.3 ? "Nu-i rău — Muzeul te ajută." : "Mai trece o dată prin Muzeu."
+            let verdict = pct == 1 ? tr("Perfect! Știi istoria pe de rost.", "Perfect! You know your history by heart.")
+                : pct >= 0.6 ? tr("Foarte bine!", "Very good!") : pct >= 0.3 ? tr("Nu-i rău — Muzeul te ajută.", "Not bad — the Museum will help.") : tr("Mai trece o dată prin Muzeu.", "Take another walk through the Museum.")
             ScreenContainer(title: z.title) {
                 VStack(spacing: 14) {
                     Text("\(z.score) / \(total)").font(.scoreboard(48)).foregroundStyle(Color.hwcGold2)
-                    Text(verdict + (z.newRecord ? " · 🏅 Record nou!" : ""))
+                    Text(verdict + (z.newRecord ? tr(" · 🏅 Record nou!", " · 🏅 New best!") : ""))
                         .font(.system(size: 16)).foregroundStyle(Color.hwcText).multilineTextAlignment(.center)
-                    PrimaryButton(title: "Încă o dată", systemImage: "arrow.clockwise") { game.startQuiz(z.mode, year: z.year) }
+                    PrimaryButton(title: tr("Încă o dată", "Play again"), systemImage: "arrow.clockwise") { game.startQuiz(z.mode, year: z.year) }
                     if let y = z.year {
-                        SecondaryButton(title: "Citește ediția \(String(y)) în Muzeu", systemImage: "book") {
+                        SecondaryButton(title: tr("Citește ediția \(String(y)) în Muzeu", "Read about \(String(y)) in the Museum"), systemImage: "book") {
                             game.museumOpenYear = y
                             game.go(.museum)
                         }
                     }
-                    SecondaryButton(title: "Înapoi la Quiz", systemImage: "list.bullet") { game.go(.quizMenu) }
+                    SecondaryButton(title: tr("Înapoi la Quiz", "Back to Quiz"), systemImage: "list.bullet") { game.go(.quizMenu) }
                 }
                 .padding(.top, 20)
             }
@@ -182,35 +182,35 @@ struct CountryView: View {
 
     var body: some View {
         let t = game.userCountry
-        ScreenContainer(title: t.map { "\($0.flag) \($0.name)" } ?? "🌍 Traseul țării tale",
-                        backLabel: "Meniu", onBack: { game.go(.menu) }) {
+        ScreenContainer(title: t.map { "\($0.flag) \($0.name)" } ?? tr("🌍 Traseul țării tale", "🌍 Your country's journey"),
+                        backLabel: tr("Meniu", "Menu"), onBack: { game.go(.menu) }) {
             VStack(alignment: .leading, spacing: 12) {
                 if let t {
                     Text(summary(t)).font(.system(size: 14)).foregroundStyle(Color.hwcTextDim)
                     if t.entries.isEmpty {
-                        Text("\(t.name) nu a jucat încă la un turneu final.").foregroundStyle(Color.hwcText)
+                        Text(tr("\(t.name) nu a jucat încă la un turneu final.", "\(t.name) have not played at a finals yet.")).foregroundStyle(Color.hwcText)
                     }
                     ForEach(Array(t.entries.enumerated()), id: \.offset) { _, e in
                         TrackEntryCard(track: t, entry: e)
                     }
                     if !t.absent.isEmpty {
-                        Text("Absentă la: " + t.absent.map(String.init).joined(separator: ", ") + ".")
+                        Text(tr("Absentă la: ", "Absent in: ") + t.absent.map(String.init).joined(separator: ", ") + ".")
                             .font(.system(size: 13)).foregroundStyle(Color.hwcTextDim)
                     }
                 } else {
-                    Text("Nu am putut stabili țara din setările telefonului. Alege-o din listă:")
+                    Text(tr("Nu am putut stabili țara din setările telefonului. Alege-o din listă:", "We couldn't work out your country from your phone settings. Pick it from the list:"))
                         .font(.system(size: 14)).foregroundStyle(Color.hwcTextDim)
                 }
                 CountryPicker()
-                Text("Date meci cu meci 1930-2022: Fjelstul World Cup Database, CC-BY-SA 4.0.")
+                Text(tr("Date meci cu meci 1930-2022: Fjelstul World Cup Database, CC-BY-SA 4.0.", "Match-by-match data 1930-2022: Fjelstul World Cup Database, CC-BY-SA 4.0."))
                     .font(.system(size: 11)).foregroundStyle(Color.hwcTextDim)
             }
         }
     }
 
     func summary(_ t: CountryTrack) -> String {
-        var s = "\(t.entries.count) participări"
-        if let b = t.best { s += " · cel mai bun rezultat: \(b.label) (\(String(b.year)))" }
+        var s = tr("\(t.entries.count) participări", "\(t.entries.count) appearances")
+        if let b = t.best { s += tr(" · cel mai bun rezultat: ", " · best finish: ") + "\(b.label) (\(String(b.year)))" }
         return s
     }
 }
@@ -229,13 +229,13 @@ struct TrackEntryCard: View {
                 Text(String(entry.year)).font(.scoreboard(22)).foregroundStyle(Color.hwcGold2)
                 Text(game.data.edition(entry.year)?.host ?? "").font(.system(size: 14)).foregroundStyle(Color.hwcText)
                 if entry.code != track.codes.first {
-                    Text("(ca \(name))").font(.system(size: 12)).foregroundStyle(Color.hwcTextDim)
+                    Text(tr("(ca \(name))", "(as \(name))")).font(.system(size: 12)).foregroundStyle(Color.hwcTextDim)
                 }
                 Spacer()
                 Text(entry.finishLabel).font(.system(size: 14, weight: .bold)).foregroundStyle(Color.hwcText)
             }
             if entry.matches.isEmpty {
-                Text("Meciurile din \(String(entry.year)) nu sunt încă în baza de date.")
+                Text(tr("Meciurile din \(String(entry.year)) nu sunt încă în baza de date.", "The \(String(entry.year)) matches are not in the database yet."))
                     .font(.system(size: 13)).foregroundStyle(Color.hwcTextDim)
             }
             ForEach(Array(entry.matches.enumerated()), id: \.offset) { _, m in
@@ -254,7 +254,7 @@ struct TrackEntryCard: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
             if playable {
-                let playTitle = game.isOpen(entry.year) ? "Joacă această campanie" : "🔒 Joacă această campanie"
+                let playTitle = (game.isOpen(entry.year) ? "" : "🔒 ") + tr("Joacă această campanie", "Play this campaign")
                 SecondaryButton(title: playTitle, systemImage: "play.fill") {
                     game.startCareer(team: entry.code, year: entry.year)
                 }
@@ -270,13 +270,13 @@ struct CountryPicker: View {
     @EnvironmentObject var game: GameState
 
     var body: some View {
-        let sorted = game.data.countries.sorted { $0.name.compare($1.name, locale: Locale(identifier: "ro")) == .orderedAscending }
+        let sorted = game.data.countries.sorted { $0.name.compare($1.name, locale: Locale(identifier: AppLanguage.code)) == .orderedAscending }
         Menu {
             ForEach(sorted) { c in
                 Button("\(c.flag) \(c.name)") { game.setCountry(c.iso) }
             }
         } label: {
-            Label("Schimbă țara", systemImage: "globe")
+            Label(tr("Schimbă țara", "Change country"), systemImage: "globe")
                 .font(.system(size: 15, weight: .semibold))
                 .foregroundStyle(Color.hwcGold)
         }

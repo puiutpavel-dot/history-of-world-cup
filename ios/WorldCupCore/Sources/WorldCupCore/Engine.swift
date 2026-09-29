@@ -9,6 +9,14 @@ public enum Mentality: String, Codable, CaseIterable, Identifiable, Sendable {
     case echilibrat = "Echilibrat"
     case ofensiv = "Ofensiv"
     public var id: String { rawValue }
+    /// numele afișat, în limba aplicației
+    public var title: String {
+        switch self {
+        case .defensiv: return tr("Defensiv", "Defensive")
+        case .echilibrat: return tr("Echilibrat", "Balanced")
+        case .ofensiv: return tr("Ofensiv", "Attacking")
+        }
+    }
 
     var mod: (atk: Double, def: Double) {
         switch self {

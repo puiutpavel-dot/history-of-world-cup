@@ -6,7 +6,7 @@ struct MuseumView: View {
     @State private var open: Int?
 
     var body: some View {
-        ScreenContainer(title: "📖 Muzeul Edițiilor", backLabel: "Meniu", onBack: { game.go(.menu) }) {
+        ScreenContainer(title: tr("📖 Muzeul Edițiilor", "📖 Museum of Editions"), backLabel: tr("Meniu", "Menu"), onBack: { game.go(.menu) }) {
             VStack(spacing: 10) {
                 ForEach(game.data.editions) { ed in
                     VStack(alignment: .leading, spacing: 0) {
@@ -26,13 +26,13 @@ struct MuseumView: View {
 
                         if open == ed.year {
                             VStack(alignment: .leading, spacing: 8) {
-                                Text("🏆 Campioană: **\(game.label(ed.champion))**")
-                                Text("🥈 Finalistă: \(game.label(ed.runnerUp)) · 🥉 Locul 3: \(game.label(ed.third))")
-                                Text("⚽ Golgheter: \(ed.topScorer)")
-                                Text("🔴 Minge oficială: \(ed.ball)")
+                                Text(LocalizedStringKey(tr("🏆 Campioană: ", "🏆 Champions: ") + "**\(game.label(ed.champion))**"))
+                                Text(tr("🥈 Finalistă: ", "🥈 Runners-up: ") + game.label(ed.runnerUp) + tr(" · 🥉 Locul 3: ", " · 🥉 Third: ") + game.label(ed.third))
+                                Text(tr("⚽ Golgheter: ", "⚽ Top scorer: ") + ed.topScorer)
+                                Text(tr("🔴 Minge oficială: ", "🔴 Match ball: ") + ed.ball)
                                 Text(ed.note).italic().foregroundStyle(Color.hwcTextDim)
                                 if let f = game.data.formats[ed.year] {
-                                    Text("📋 **Format:** \(f.summary)")
+                                    Text(LocalizedStringKey("📋 **Format:** " + f.summary))
                                     Text(rulesLine(f)).foregroundStyle(Color.hwcTextDim)
                                 }
                                 if let st = game.data.story(ed.year) {
@@ -50,7 +50,7 @@ struct MuseumView: View {
                     .background(Color.hwcPanel, in: RoundedRectangle(cornerRadius: 12))
                     .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.hwcBorder))
                 }
-                Text("Rezultatele meciurilor reale: [Fjelstul World Cup Database](https://www.github.com/jfjelstul/worldcup) © 2023 Joshua C. Fjelstul, Ph.D., licență [CC-BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/legalcode) (date adaptate). Loturi: Wikipedia, „FIFA World Cup squads”.")
+                Text(LocalizedStringKey(tr("Rezultatele meciurilor reale: [Fjelstul World Cup Database](https://www.github.com/jfjelstul/worldcup) © 2023 Joshua C. Fjelstul, Ph.D., licență [CC-BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/legalcode) (date adaptate). Loturi: Wikipedia, „FIFA World Cup squads”.", "Real match results: [Fjelstul World Cup Database](https://www.github.com/jfjelstul/worldcup) © 2023 Joshua C. Fjelstul, Ph.D., licensed [CC-BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/legalcode) (adapted data). Squads: Wikipedia, \"FIFA World Cup squads\".")))
                     .font(.system(size: 11))
                     .foregroundStyle(Color.hwcTextDim)
                     .tint(.hwcGold)
@@ -65,21 +65,21 @@ struct MuseumView: View {
 func rulesLine(_ f: TournamentFormat) -> String {
     var parts: [String] = []
     if f.subs == 0 {
-        parts.append("Fără schimbări: un accidentat lasă echipa în 10")
+        parts.append(tr("Fără schimbări: un accidentat lasă echipa în 10", "No substitutions: an injury leaves the team with 10"))
     } else {
-        var s = "\(f.subs) schimbări"
-        if f.gkSub ?? false { s += " (+1 pentru portar)" }
-        if let et = f.etSub, et > 0 { s += " (+\(et) în prelungiri)" }
+        var s = tr("\(f.subs) schimbări", "\(f.subs) substitutions")
+        if f.gkSub ?? false { s += tr(" (+1 pentru portar)", " (+1 for the goalkeeper)") }
+        if let et = f.etSub, et > 0 { s += tr(" (+\(et) în prelungiri)", " (+\(et) in extra time)") }
         parts.append(s)
     }
     switch f.cards {
-    case "none": parts.append("fără cartonașe")
-    case "accumulate": parts.append("2 galbene = suspendare, tot turneul")
-    default: parts.append("galbenele se șterg după grupe")
+    case "none": parts.append(tr("fără cartonașe", "no cards"))
+    case "accumulate": parts.append(tr("2 galbene = suspendare, tot turneul", "2 yellows = suspension, whole tournament"))
+    default: parts.append(tr("galbenele se șterg după grupe", "yellows wiped after the groups"))
     }
-    if f.goldenGoal ?? false { parts.append("gol de aur în prelungiri") }
-    if f.stages.contains(where: { $0.groupExtraTime ?? false }) { parts.append("prelungiri și în grupă") }
-    if f.fairPlay ?? false { parts.append("fair-play la departajare") }
+    if f.goldenGoal ?? false { parts.append(tr("gol de aur în prelungiri", "golden goal in extra time")) }
+    if f.stages.contains(where: { $0.groupExtraTime ?? false }) { parts.append(tr("prelungiri și în grupă", "extra time in the groups too")) }
+    if f.fairPlay ?? false { parts.append(tr("fair-play la departajare", "fair play as a tiebreaker")) }
     return "📏 " + parts.joined(separator: " · ")
 }
 
@@ -90,15 +90,15 @@ struct StoryView: View {
         VStack(alignment: .leading, spacing: 8) {
             Divider().overlay(Color.hwcBorder)
             Text(story.context)
-            Text("Momente-cheie").font(.system(size: 14, weight: .bold)).foregroundStyle(Color.hwcGold2)
+            Text(tr("Momente-cheie", "Key moments")).font(.system(size: 14, weight: .bold)).foregroundStyle(Color.hwcGold2)
             ForEach(Array(story.moments.enumerated()), id: \.offset) { _, m in
                 HStack(alignment: .top, spacing: 6) {
                     Text("•")
                     Text(m).fixedSize(horizontal: false, vertical: true)
                 }
             }
-            Text("🏟️ **Finala:** \(story.finalMatch)")
-            Text("🧑‍💼 **Antrenor campion:** \(story.coach)")
+            Text(LocalizedStringKey(tr("🏟️ **Finala:** ", "🏟️ **The final:** ") + story.finalMatch))
+            Text(LocalizedStringKey(tr("🧑‍💼 **Antrenor campion:** ", "🧑‍💼 **Winning coach:** ") + story.coach))
         }
         .fixedSize(horizontal: false, vertical: true)
     }
@@ -108,20 +108,20 @@ struct RulesView: View {
     @EnvironmentObject var game: GameState
 
     var body: some View {
-        ScreenContainer(title: "📜 Evoluția regulilor", backLabel: "Meniu", onBack: { game.go(.menu) }) {
+        ScreenContainer(title: tr("📜 Evoluția regulilor", "📜 How the rules changed"), backLabel: tr("Meniu", "Menu"), onBack: { game.go(.menu) }) {
             VStack(alignment: .leading, spacing: 12) {
-                Text("Regulile de pe teren s-au schimbat mai lent decât formatul turneului. Toate sunt aplicate în joc, pentru ediția aleasă.")
+                Text(tr("Regulile de pe teren s-au schimbat mai lent decât formatul turneului. Toate sunt aplicate în joc, pentru ediția aleasă.", "The laws on the pitch changed more slowly than the tournament format. All of them are applied in the game, for the edition you pick."))
                     .font(.system(size: 13)).foregroundStyle(Color.hwcTextDim)
                 if let h = game.data.history {
                     ForEach(Array(h.rulesTimeline.enumerated()), id: \.offset) { _, era in
                         RulesCard(years: era.years, title: era.title, items: era.items)
                     }
-                    RulesCard(years: nil, title: "Lotul",
-                              items: h.squadRules.map { "**\($0.years) — \($0.size) de jucători.** \($0.text)" })
-                    RulesCard(years: nil, title: "Cele 7 familii de format",
+                    RulesCard(years: nil, title: tr("Lotul", "The squad"),
+                              items: h.squadRules.map { "**\($0.years) — \($0.size) " + tr("de jucători", "players") + ".** \($0.text)" })
+                    RulesCard(years: nil, title: tr("Cele 7 familii de format", "The 7 format families"),
                               items: h.families.map { "**\($0.years):** \($0.text)" })
-                    RulesCard(years: nil, title: "Câte meciuri joacă campioana",
-                              items: h.titlePath.map { "**\($0.years):** \($0.games) meciuri" })
+                    RulesCard(years: nil, title: tr("Câte meciuri joacă campioana", "Matches played by the champions"),
+                              items: h.titlePath.map { "**\($0.years):** \($0.games) " + tr("meciuri", "matches") })
                 }
             }
         }
@@ -158,7 +158,7 @@ struct LegendsView: View {
     let columns = [GridItem(.adaptive(minimum: 280), spacing: 12)]
 
     var body: some View {
-        ScreenContainer(title: "⭐ Galeria Legendelor", backLabel: "Meniu", onBack: { game.go(.menu) }) {
+        ScreenContainer(title: tr("⭐ Galeria Legendelor", "⭐ Hall of Legends"), backLabel: tr("Meniu", "Menu"), onBack: { game.go(.menu) }) {
             LazyVGrid(columns: columns, spacing: 12) {
                 ForEach(game.data.legends) { l in
                     VStack(alignment: .leading, spacing: 6) {
@@ -180,22 +180,22 @@ struct TrophyRoomView: View {
     @EnvironmentObject var game: GameState
 
     var body: some View {
-        ScreenContainer(title: "🗄️ Sala Trofeelor", backLabel: "Meniu", onBack: { game.go(.menu) }) {
+        ScreenContainer(title: tr("🗄️ Sala Trofeelor", "🗄️ Trophy Room"), backLabel: tr("Meniu", "Menu"), onBack: { game.go(.menu) }) {
             VStack(spacing: 10) {
                 if game.trophies.isEmpty {
-                    Text("Nicio carieră încheiată încă — începe una din Meniu!")
+                    Text(tr("Nicio carieră încheiată încă — începe una din Meniu!", "No finished careers yet — start one from the Menu!"))
                         .font(.system(size: 15))
                         .foregroundStyle(Color.hwcTextDim)
                         .padding(.top, 30)
                 } else {
                     let titles = game.trophies.filter { $0.outcome == .champion }.count
-                    Text("🏆 Titluri mondiale: \(titles) · Cariere: \(game.trophies.count)")
+                    Text(tr("🏆 Titluri mondiale: \(titles) · Cariere: \(game.trophies.count)", "🏆 World titles: \(titles) · Careers: \(game.trophies.count)"))
                         .font(.scoreboard(18, weight: .semibold))
                         .foregroundStyle(Color.hwcGold2)
                     ForEach(game.trophies) { t in
                         HStack {
                             VStack(alignment: .leading, spacing: 2) {
-                                Text("\(game.label(t.team)) · CM \(String(t.year))").font(.system(size: 15, weight: .medium))
+                                Text("\(game.label(t.team)) · \(tr("CM", "WC")) \(String(t.year))").font(.system(size: 15, weight: .medium))
                                 Text(t.date, style: .date).font(.system(size: 12)).foregroundStyle(Color.hwcTextDim)
                             }
                             Spacer()

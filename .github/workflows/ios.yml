@@ -65,9 +65,16 @@ jobs:
           mkdir -p screenshots
           for s in menu editions teams hub preview live groupTable summary museum legends trophies rules quizMenu quiz country paywall about; do
             xcrun simctl terminate "$UDID" "$BUNDLE" 2>/dev/null || true
-            xcrun simctl launch "$UDID" "$BUNDLE" -demoScreen "$s"
+            xcrun simctl launch "$UDID" "$BUNDLE" -demoScreen "$s" -demoLang en
             if [ "$s" = "live" ]; then sleep 9; else sleep 4; fi
             xcrun simctl io "$UDID" screenshot "screenshots/$s.png"
+          done
+          # aceleași ecrane în română (localizarea ro din App Store)
+          for s in menu hub live museum quiz country paywall; do
+            xcrun simctl terminate "$UDID" "$BUNDLE" 2>/dev/null || true
+            xcrun simctl launch "$UDID" "$BUNDLE" -demoScreen "$s" -demoLang ro
+            if [ "$s" = "live" ]; then sleep 9; else sleep 4; fi
+            xcrun simctl io "$UDID" screenshot "screenshots/ro_$s.png"
           done
           ls -la screenshots
       - uses: actions/upload-artifact@v4

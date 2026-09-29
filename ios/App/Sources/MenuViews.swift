@@ -15,13 +15,13 @@ struct MenuView: View {
                         .frame(width: 120, height: 120)
                         .clipShape(RoundedRectangle(cornerRadius: 27, style: .continuous))
                         .shadow(color: Color.hwcGold.opacity(0.35), radius: 18)
-                    Text("ARHIVA\nMONDIALELOR")
+                    Text(tr("ARHIVA\nMONDIALELOR", "FOOTBALL FINALS\nARCHIVE"))
                         .font(.scoreboard(44))
                         .lineLimit(2)
                         .minimumScaleFactor(0.6)
                         .multilineTextAlignment(.center)
                         .foregroundStyle(Color.hwcGold2)
-                    Text("Confirmă sau rescrie istoria — 23 de ediții, 1930-2026")
+                    Text(tr("Confirmă sau rescrie istoria — 23 de ediții, 1930-2026", "Confirm or rewrite history — 23 editions, 1930-2026"))
                         .font(.system(size: 15))
                         .foregroundStyle(Color.hwcTextDim)
                         .multilineTextAlignment(.center)
@@ -30,36 +30,36 @@ struct MenuView: View {
 
                 VStack(spacing: 12) {
                     if game.hasResumableCareer, let c = game.career {
-                        PrimaryButton(title: "Continuă: \(game.label(c.teamCode)) · \(String(c.year))", systemImage: "play.fill") {
+                        PrimaryButton(title: tr("Continuă: ", "Continue: ") + "\(game.label(c.teamCode)) · \(String(c.year))", systemImage: "play.fill") {
                             game.go(.hub)
                         }
-                        SecondaryButton(title: "Carieră nouă", systemImage: "trophy") { game.go(.editions) }
+                        SecondaryButton(title: tr("Carieră nouă", "New career"), systemImage: "trophy") { game.go(.editions) }
                     } else {
-                        PrimaryButton(title: "Carieră nouă", systemImage: "trophy.fill") { game.go(.editions) }
+                        PrimaryButton(title: tr("Carieră nouă", "New career"), systemImage: "trophy.fill") { game.go(.editions) }
                     }
                     SecondaryButton(title: "Quiz", systemImage: "questionmark.circle") { game.go(.quizMenu) }
                     if let t = game.userCountry {
-                        SecondaryButton(title: "\(t.flag) Traseul: \(t.name)", systemImage: "flag") { game.go(.country) }
+                        SecondaryButton(title: "\(t.flag) " + tr("Traseul: ", "Your country: ") + t.name, systemImage: "flag") { game.go(.country) }
                     } else {
-                        SecondaryButton(title: "Traseul țării tale", systemImage: "globe.europe.africa") { game.go(.country) }
+                        SecondaryButton(title: tr("Traseul țării tale", "Your country's journey"), systemImage: "globe.europe.africa") { game.go(.country) }
                     }
-                    SecondaryButton(title: "Muzeul Edițiilor", systemImage: "book") { game.go(.museum) }
-                    SecondaryButton(title: "Evoluția regulilor", systemImage: "list.bullet.rectangle") { game.go(.rules) }
-                    SecondaryButton(title: "Galeria Legendelor", systemImage: "star") { game.go(.legends) }
-                    SecondaryButton(title: "Sala Trofeelor", systemImage: "archivebox") { game.go(.trophies) }
-                    SecondaryButton(title: "Despre și setări", systemImage: "gearshape") { game.go(.about) }
+                    SecondaryButton(title: tr("Muzeul Edițiilor", "Museum of Editions"), systemImage: "book") { game.go(.museum) }
+                    SecondaryButton(title: tr("Evoluția regulilor", "How the rules changed"), systemImage: "list.bullet.rectangle") { game.go(.rules) }
+                    SecondaryButton(title: tr("Galeria Legendelor", "Hall of Legends"), systemImage: "star") { game.go(.legends) }
+                    SecondaryButton(title: tr("Sala Trofeelor", "Trophy Room"), systemImage: "archivebox") { game.go(.trophies) }
+                    SecondaryButton(title: tr("Despre și setări", "About & settings"), systemImage: "gearshape") { game.go(.about) }
                 }
 
                 if game.fullHistory {
-                    Text("✅ Full History — toate edițiile deblocate")
+                    Text(tr("✅ Full History — toate edițiile deblocate", "✅ Full History — every edition unlocked"))
                         .font(.system(size: 13)).foregroundStyle(Color.hwcTextDim)
                 } else {
                     VStack(spacing: 8) {
                         Button { game.showPaywall() } label: {
-                            Text("🔓 Full History — deblochează 1950–2026 (\(store.displayPrice))")
+                            Text(tr("🔓 Full History — deblochează 1950–2026", "🔓 Full History — unlock 1950–2026") + " (\(store.displayPrice))")
                                 .font(.system(size: 14, weight: .semibold)).foregroundStyle(Color.hwcGold)
                         }
-                        Button("Restaurează achizițiile") { Task { await store.restore() } }
+                        Button(tr("Restaurează achizițiile", "Restore purchases")) { Task { await store.restore() } }
                             .font(.system(size: 13)).tint(.hwcTextDim)
                         if let m = store.message {
                             Text(m).font(.system(size: 12)).foregroundStyle(Color.hwcTextDim).multilineTextAlignment(.center)
@@ -80,7 +80,7 @@ struct EditionSelectView: View {
     let columns = [GridItem(.adaptive(minimum: 150), spacing: 12)]
 
     var body: some View {
-        ScreenContainer(title: "Alege o ediție", backLabel: "Meniu", onBack: { game.go(.menu) }) {
+        ScreenContainer(title: tr("Alege o ediție", "Choose an edition"), backLabel: tr("Meniu", "Menu"), onBack: { game.go(.menu) }) {
             LazyVGrid(columns: columns, spacing: 12) {
                 ForEach(game.data.editions) { ed in
                     Button { game.openEdition(ed.year) } label: {
@@ -111,7 +111,7 @@ struct TeamSelectView: View {
 
     var body: some View {
         let host = game.data.edition(year)?.host ?? ""
-        ScreenContainer(title: "\(String(year)) · \(host)", backLabel: "Ediții", onBack: { game.go(.editions) }) {
+        ScreenContainer(title: "\(String(year)) · \(host)", backLabel: tr("Ediții", "Editions"), onBack: { game.go(.editions) }) {
             LazyVGrid(columns: columns, spacing: 12) {
                 ForEach(game.engine.eligibleTeams(year)) { team in
                     let hasRealRoster = game.engine.realRoster(team.code, year) != nil
@@ -122,8 +122,8 @@ struct TeamSelectView: View {
                             Text(team.name).font(.scoreboard(18, weight: .semibold)).foregroundStyle(Color.hwcText)
                             Text("Rating \(game.engine.teamRating(team.code, year))").font(.stat(12)).foregroundStyle(Color.hwcTextDim)
                             HStack(spacing: 4) {
-                                if hasRealRoster { Text("👥 lot real") }
-                                if hasRealPath { Text("📜 traseu real") }
+                                if hasRealRoster { Text(tr("👥 lot real", "👥 real squad")) }
+                                if hasRealPath { Text(tr("📜 traseu real", "📜 real path")) }
                             }
                             .font(.system(size: 10, weight: .medium))
                             .foregroundStyle(Color.hwcGold)

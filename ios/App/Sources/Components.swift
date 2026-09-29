@@ -107,7 +107,7 @@ struct RealBadge: View {
     let isReal: Bool
 
     var body: some View {
-        Text(isReal ? "📜 adversar real" : "🎲 adversar simulat")
+        Text(isReal ? tr("📜 adversar real", "📜 real opponent") : tr("🎲 adversar simulat", "🎲 simulated opponent"))
             .font(.system(size: 11, weight: .semibold))
             .padding(.horizontal, 8)
             .padding(.vertical, 3)
@@ -123,8 +123,8 @@ struct HistoryCompare: View {
     var body: some View {
         if let same = record.historyRepeated, let real = record.real {
             Text(same
-                 ? "📖 Istoria s-a repetat: scor identic (\(real.scoreFor)-\(real.scoreAgainst))"
-                 : "✍️ Ai rescris istoria! (real: \(real.scoreFor)-\(real.scoreAgainst))")
+                 ? tr("📖 Istoria s-a repetat: scor identic", "📖 History repeated itself: same score") + " (\(real.scoreFor)-\(real.scoreAgainst))"
+                 : tr("✍️ Ai rescris istoria! (real: ", "✍️ You rewrote history! (real: ") + "\(real.scoreFor)-\(real.scoreAgainst))")
                 .font(.system(size: 13, weight: .medium))
                 .foregroundStyle(same ? Color.hwcPitch2 : Color.hwcGold)
         }

@@ -3,8 +3,21 @@ import WorldCupCore
 
 @main
 struct HistoryOfWorldCupApp: App {
-    @StateObject private var game = GameState()
-    @StateObject private var store = Store(useStoreKit: !ProcessInfo.processInfo.arguments.contains("-demoScreen"))
+    @StateObject private var game: GameState
+    @StateObject private var store: Store
+
+    init() {
+        // limba se fixează înainte de încărcarea datelor: română pe telefoanele în română, engleză în rest
+        // (`-demoLang ro|en` forțează limba pentru capturile din CI)
+        let args = ProcessInfo.processInfo.arguments
+        if let i = args.firstIndex(of: "-demoLang"), i + 1 < args.count {
+            AppLanguage.code = args[i + 1]
+        } else {
+            AppLanguage.code = AppLanguage.resolve(Bundle.main.preferredLocalizations)
+        }
+        _game = StateObject(wrappedValue: GameState())
+        _store = StateObject(wrappedValue: Store(useStoreKit: !args.contains("-demoScreen")))
+    }
     @AppStorage("hwc_theme_v1") private var themeRaw = AppTheme.dark.rawValue
 
     var body: some Scene {
@@ -14,7 +27,7 @@ struct HistoryOfWorldCupApp: App {
                 .environmentObject(game)
                 .environmentObject(store)
                 .onReceive(store.$isUnlocked) { game.setStoreUnlocked($0) }
-                .environment(\.locale, Locale(identifier: "ro_RO"))
+                .environment(\.locale, Locale(identifier: AppLanguage.isRomanian ? "ro_RO" : "en_US"))
                 .preferredColorScheme(theme.colorScheme)
                 .overlay(alignment: .topTrailing) {
                     Button {
@@ -28,7 +41,7 @@ struct HistoryOfWorldCupApp: App {
                     .tint(.hwcGold)
                     .padding(.trailing, 12)
                     .padding(.top, 4)
-                    .accessibilityLabel("Schimbă tema")
+                    .accessibilityLabel(tr("Schimbă tema", "Change theme"))
                 }
         }
     }

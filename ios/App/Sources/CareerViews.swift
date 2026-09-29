@@ -11,66 +11,66 @@ struct HubView: View {
         if let c = game.career {
             let team = game.data.meta(c.teamCode)
             let fmt = game.data.formats[c.year]
-            ScreenContainer(title: "\(team.flag) \(team.name) · CM \(String(c.year))", backLabel: "Meniu", onBack: { game.go(.menu) }) {
+            ScreenContainer(title: "\(team.flag) \(team.name) · \(tr("CM", "WC")) \(String(c.year))", backLabel: tr("Meniu", "Menu"), onBack: { game.go(.menu) }) {
                 VStack(spacing: 14) {
                     Panel(title: c.nextMatch?.label ?? c.outcomeLabel) {
                         if let members = c.groupMembers {
-                            Text("Grupa: " + members.map { game.label($0) }.joined(separator: " · "))
+                            Text(tr("Grupa: ", "Group: ") + members.map { game.label($0) }.joined(separator: " · "))
                                 .font(.system(size: 13)).foregroundStyle(Color.hwcTextDim)
                         }
                         ForEach(Array(c.records.enumerated()), id: \.offset) { _, r in
                             FixtureRow(label: r.label, code: r.opp, isReal: r.isReal, status: r.scoreText, dimmed: false)
                         }
                         if let next = c.nextMatch {
-                            FixtureRow(label: next.label, code: next.opp, isReal: next.isReal, status: "urmează", dimmed: false)
+                            FixtureRow(label: next.label, code: next.opp, isReal: next.isReal, status: tr("urmează", "next"), dimmed: false)
                         }
                         if let fmt {
                             Text(fmt.summary).font(.system(size: 12)).foregroundStyle(Color.hwcTextDim).padding(.top, 4)
                         }
                     }
 
-                    Panel(title: "Tactică") {
-                        Text("Mentalitate").font(.system(size: 13)).foregroundStyle(Color.hwcTextDim)
-                        Picker("Mentalitate", selection: Binding(get: { c.mentality }, set: { game.setMentality($0) })) {
-                            ForEach(Mentality.allCases) { Text($0.rawValue).tag($0) }
+                    Panel(title: tr("Tactică", "Tactics")) {
+                        Text(tr("Mentalitate", "Mentality")).font(.system(size: 13)).foregroundStyle(Color.hwcTextDim)
+                        Picker(tr("Mentalitate", "Mentality"), selection: Binding(get: { c.mentality }, set: { game.setMentality($0) })) {
+                            ForEach(Mentality.allCases) { Text($0.title).tag($0) }
                         }
                         .pickerStyle(.segmented)
-                        Text("Formație").font(.system(size: 13)).foregroundStyle(Color.hwcTextDim)
-                        Picker("Formație", selection: Binding(get: { c.formation }, set: { game.setFormation($0) })) {
+                        Text(tr("Formație", "Formation")).font(.system(size: 13)).foregroundStyle(Color.hwcTextDim)
+                        Picker(tr("Formație", "Formation"), selection: Binding(get: { c.formation }, set: { game.setFormation($0) })) {
                             ForEach(Formation.allCases) { Text($0.rawValue).tag($0) }
                         }
                         .pickerStyle(.segmented)
                         let r = c.yourRatings
-                        Text("Atac \(Int(r.attack.rounded())) · Apărare \(Int(r.defense.rounded()))")
+                        Text(tr("Atac", "Attack") + " \(Int(r.attack.rounded())) · " + tr("Apărare", "Defence") + " \(Int(r.defense.rounded()))")
                             .font(.stat(13))
                             .foregroundStyle(Color.hwcText)
                         let suspended = c.squad.indices.filter { (c.suspended[$0] ?? 0) > 0 }.map { c.squad[$0].name }
                         if !suspended.isEmpty {
-                            Text("🟥 Suspendați pentru meciul următor: " + suspended.joined(separator: ", "))
+                            Text(tr("🟥 Suspendați pentru meciul următor: ", "🟥 Suspended for the next match: ") + suspended.joined(separator: ", "))
                                 .font(.system(size: 13)).foregroundStyle(Color.hwcRed)
                         }
                     }
 
-                    Panel(title: "Lot — Start XI") {
+                    Panel(title: tr("Lot — Start XI", "Squad — starting XI")) {
                         let avail = c.availablePlayers.map { $0.player }
                         ForEach(Array(avail.prefix(11).enumerated()), id: \.offset) { _, p in PlayerChip(player: p) }
-                        Text("BANCĂ").font(.scoreboard(13, weight: .semibold)).foregroundStyle(Color.hwcTextDim).padding(.top, 6)
+                        Text(tr("BANCĂ", "BENCH")).font(.scoreboard(13, weight: .semibold)).foregroundStyle(Color.hwcTextDim).padding(.top, 6)
                         ForEach(Array(avail.dropFirst(11).enumerated()), id: \.offset) { _, p in PlayerChip(player: p).opacity(0.8) }
                     }
 
                     if let next = c.nextMatch {
-                        PrimaryButton(title: "Joacă: \(next.label)", systemImage: "sportscourt.fill") { game.openPreview() }
+                        PrimaryButton(title: tr("Joacă: ", "Play: ") + next.label, systemImage: "sportscourt.fill") { game.openPreview() }
                     } else {
-                        PrimaryButton(title: "Vezi sumarul carierei", systemImage: "list.bullet") { game.go(.summary) }
+                        PrimaryButton(title: tr("Vezi sumarul carierei", "Career summary"), systemImage: "list.bullet") { game.go(.summary) }
                     }
-                    Button("Abandonează cariera", role: .destructive) { confirmExit = true }
+                    Button(tr("Abandonează cariera", "Abandon career"), role: .destructive) { confirmExit = true }
                         .font(.system(size: 14))
                         .padding(.top, 4)
                 }
             }
-            .confirmationDialog("Sigur vrei să abandonezi cariera curentă?", isPresented: $confirmExit, titleVisibility: .visible) {
-                Button("Abandonează", role: .destructive) { game.abandonCareer() }
-                Button("Renunță", role: .cancel) {}
+            .confirmationDialog(tr("Sigur vrei să abandonezi cariera curentă?", "Abandon your current career?"), isPresented: $confirmExit, titleVisibility: .visible) {
+                Button(tr("Abandonează", "Abandon"), role: .destructive) { game.abandonCareer() }
+                Button(tr("Renunță", "Cancel"), role: .cancel) {}
             }
         } else {
             MenuView()
@@ -121,15 +121,15 @@ struct MatchPreviewView: View {
                     .padding(.top, 12)
                     RealBadge(isReal: next.isReal)
                     if let note = next.note {
-                        Text(note).font(.system(size: 14).italic()).foregroundStyle(Color.hwcTextDim).multilineTextAlignment(.center)
+                        Text(localizedNote(note)).font(.system(size: 14).italic()).foregroundStyle(Color.hwcTextDim).multilineTextAlignment(.center)
                     }
-                    Text("Mentalitate: \(c.mentality.rawValue) · Formație: \(c.formation.rawValue)"
-                         + (next.knockout ? " · Eliminatoriu: la egal se joacă prelungiri" : ""))
+                    Text(tr("Mentalitate: ", "Mentality: ") + c.mentality.title + tr(" · Formație: ", " · Formation: ") + c.formation.rawValue
+                         + (next.knockout ? tr(" · Eliminatoriu: la egal se joacă prelungiri", " · Knockout: extra time if level") : ""))
                         .font(.system(size: 13)).foregroundStyle(Color.hwcTextDim).multilineTextAlignment(.center)
                     if let f = game.data.formats[c.year] {
                         Text(rulesLine(f)).font(.system(size: 13)).foregroundStyle(Color.hwcTextDim).multilineTextAlignment(.center)
                     }
-                    PrimaryButton(title: "Joacă meciul", systemImage: "play.fill") { game.playMatch() }
+                    PrimaryButton(title: tr("Joacă meciul", "Play the match"), systemImage: "play.fill") { game.playMatch() }
                 }
             }
         } else {
@@ -148,8 +148,8 @@ struct TeamColumn: View {
         VStack(spacing: 6) {
             Text(meta.flag).font(.system(size: 54))
             Text(meta.name).font(.scoreboard(20, weight: .semibold)).foregroundStyle(Color.hwcText).multilineTextAlignment(.center)
-            Text("Atac \(Int(ratings.attack.rounded()))").font(.stat(12)).foregroundStyle(Color.hwcTextDim)
-            Text("Apărare \(Int(ratings.defense.rounded()))").font(.stat(12)).foregroundStyle(Color.hwcTextDim)
+            Text(tr("Atac", "Attack") + " \(Int(ratings.attack.rounded()))").font(.stat(12)).foregroundStyle(Color.hwcTextDim)
+            Text(tr("Apărare", "Defence") + " \(Int(ratings.defense.rounded()))").font(.stat(12)).foregroundStyle(Color.hwcTextDim)
         }
         .frame(maxWidth: .infinity)
     }
@@ -182,10 +182,10 @@ struct MatchLiveView: View {
             let who: String = meta(x.team == .A ? team : m.opp)
             let text: String
             if let inn = x.inn {
-                text = x.injury ? "🚑🔁 \(x.minute)' \(x.out) accidentat, intră \(inn) (\(who))"
-                                : "🔁 \(x.minute)' Intră \(inn), iese \(x.out) (\(who))"
+                text = x.injury ? tr("🚑🔁 \(x.minute)' \(x.out) accidentat, intră \(inn) (\(who))", "🚑🔁 \(x.minute)' \(x.out) injured, \(inn) comes on (\(who))")
+                                : tr("🔁 \(x.minute)' Intră \(inn), iese \(x.out) (\(who))", "🔁 \(x.minute)' \(inn) on, \(x.out) off (\(who))")
             } else {
-                text = "🚑 \(x.minute)' \(x.out) (\(who)) accidentat — fără schimbări, echipa rămâne în 10"
+                text = tr("🚑 \(x.minute)' \(x.out) (\(who)) accidentat — fără schimbări, echipa rămâne în 10", "🚑 \(x.minute)' \(x.out) (\(who)) injured — no substitutes, the team plays on with 10")
             }
             return TickerItem(minute: x.minute, team: x.team, text: text, isGoal: false)
         }
@@ -217,7 +217,7 @@ struct MatchLiveView: View {
 
                     VStack(alignment: .leading, spacing: 8) {
                         if all.isEmpty && finished {
-                            Text("Niciun gol, niciun cartonaș.").foregroundStyle(Color.hwcTextDim)
+                            Text(tr("Niciun gol, niciun cartonaș.", "No goals, no cards.")).foregroundStyle(Color.hwcTextDim)
                         }
                         ForEach(Array(visible.enumerated()), id: \.offset) { _, e in
                             Text(e.text)
@@ -231,26 +231,26 @@ struct MatchLiveView: View {
                     if finished {
                         VStack(spacing: 6) {
                             if m.goldenGoal {
-                                Text("⚡ Gol de aur — primul gol din prelungiri a încheiat meciul.")
+                                Text(tr("⚡ Gol de aur — primul gol din prelungiri a încheiat meciul.", "⚡ Golden goal — the first goal in extra time ended the match."))
                             } else if m.extraTime {
-                                Text("⏱️ S-au jucat prelungiri.")
+                                Text(tr("⏱️ S-au jucat prelungiri.", "⏱️ The match went to extra time."))
                             }
-                            if let pens = m.pens { Text("🎯 Penalty-uri: \(pens)").font(.stat(16)) }
-                            if let lots = m.lots { Text(lots == .A ? "🪙 Tragere la sorți: câștigată!" : "🪙 Tragere la sorți: pierdută.") }
-                            if m.tied { Text("🔁 Egalitate după prelungiri — meciul se rejoacă.") }
+                            if let pens = m.pens { Text(tr("🎯 Penalty-uri: ", "🎯 Penalties: ") + pens).font(.stat(16)) }
+                            if let lots = m.lots { Text(lots == .A ? tr("🪙 Tragere la sorți: câștigată!", "🪙 Drawing of lots: won!") : tr("🪙 Tragere la sorți: pierdută.", "🪙 Drawing of lots: lost.")) }
+                            if m.tied { Text(tr("🔁 Egalitate după prelungiri — meciul se rejoacă.", "🔁 Level after extra time — the match will be replayed.")) }
                             if let won = m.won {
-                                Text(won ? "✅ Calificată mai departe!" : "❌ Pierdut")
+                                Text(won ? tr("✅ Calificată mai departe!", "✅ Through to the next round!") : tr("❌ Pierdut", "❌ Lost"))
                                     .font(.scoreboard(20)).foregroundStyle(won ? Color.hwcPitch2 : Color.hwcRed)
                             }
                             if !m.suspended.isEmpty {
-                                Text("🟥 Au lipsit (suspendați): " + m.suspended.joined(separator: ", ")).font(.system(size: 13))
+                                Text(tr("🟥 Au lipsit (suspendați): ", "🟥 Missing (suspended): ") + m.suspended.joined(separator: ", ")).font(.system(size: 13))
                             }
                         }
                         .foregroundStyle(Color.hwcGold2)
                         HistoryCompare(record: m)
-                        PrimaryButton(title: "Continuă", systemImage: "arrow.right") { game.continueAfterMatch() }
+                        PrimaryButton(title: tr("Continuă", "Continue"), systemImage: "arrow.right") { game.continueAfterMatch() }
                     } else {
-                        SecondaryButton(title: "Sări peste", systemImage: "forward.end.fill") { skip(all.count) }
+                        SecondaryButton(title: tr("Sări peste", "Skip"), systemImage: "forward.end.fill") { skip(all.count) }
                     }
                 }
                 .padding(.top, 8)
@@ -292,18 +292,21 @@ struct GroupTableView: View {
     var body: some View {
         if let c = game.career, game.tableIndex < c.tables.count {
             let t = c.tables[game.tableIndex]
-            let title = ["group": "Clasament grupă", "group2": "A doua fază a grupelor", "finalGroup": "Grupa finală"][t.type] ?? "Clasament"
-            let verdict = t.type == "finalGroup" ? c.outcomeLabel : (t.qualified ? "✅ Calificată" : "❌ Eliminată")
-            ScreenContainer(title: "\(title) — CM \(String(c.year))") {
+            let titles = AppLanguage.isRomanian
+                ? ["group": "Clasament grupă", "group2": "A doua fază a grupelor", "finalGroup": "Grupa finală"]
+                : ["group": "Group table", "group2": "Second group stage", "finalGroup": "Final group"]
+            let title = titles[t.type] ?? tr("Clasament", "Table")
+            let verdict = t.type == "finalGroup" ? c.outcomeLabel : (t.qualified ? tr("✅ Calificată", "✅ Qualified") : tr("❌ Eliminată", "❌ Knocked out"))
+            ScreenContainer(title: "\(title) — \(tr("CM", "WC")) \(String(c.year))") {
                 VStack(spacing: 14) {
                     Panel {
                         HStack {
                             Text("#").frame(width: 22, alignment: .leading)
-                            Text("Echipă")
+                            Text(tr("Echipă", "Team"))
                             Spacer()
-                            Text("M").frame(width: 26)
+                            Text(tr("M", "P")).frame(width: 26)
                             Text("G").frame(width: 50)
-                            Text("Pct").frame(width: 36)
+                            Text(tr("Pct", "Pts")).frame(width: 36)
                         }
                         .font(.scoreboard(13, weight: .semibold))
                         .foregroundStyle(Color.hwcTextDim)
@@ -324,7 +327,7 @@ struct GroupTableView: View {
                         }
                     }
                     if !t.others.isEmpty {
-                        Panel(title: "Celelalte meciuri") {
+                        Panel(title: tr("Celelalte meciuri", "Other matches")) {
                             ForEach(Array(t.others.enumerated()), id: \.offset) { _, m in
                                 HStack {
                                     Text("\(game.label(m.home)) – \(game.label(m.away))").font(.system(size: 14))
@@ -337,24 +340,24 @@ struct GroupTableView: View {
                     }
                     if let p = t.playoff {
                         if let o = p.result {
-                            Text("Baraj: \(game.label(o.home)) – \(game.label(o.away)) \(o.gh)-\(o.ga) (trece \(game.label(o.winner ?? "")))")
+                            Text(tr("Baraj: ", "Play-off: ") + "\(game.label(o.home)) – \(game.label(o.away)) \(o.gh)-\(o.ga) (" + tr("trece ", "through: ") + "\(game.label(o.winner ?? "")))")
                                 .font(.system(size: 13)).foregroundStyle(Color.hwcTextDim)
                         } else if let opp = p.opp {
-                            Text("Egalitate de puncte pe locul de calificare → baraj cu \(game.label(opp)): \(p.won == true ? "câștigat" : "pierdut").")
+                            Text(tr("Egalitate de puncte pe locul de calificare → baraj cu ", "Level on points for the qualifying place → play-off against ") + "\(game.label(opp)): " + (p.won == true ? tr("câștigat", "won") : tr("pierdut", "lost")) + ".")
                                 .font(.system(size: 13)).foregroundStyle(Color.hwcTextDim)
                         }
                     }
                     if let th = t.thirds {
-                        Text("Clasamentul locurilor 3: locul \(th.rank + 1) din \(th.rows.count) — "
-                             + (t.qualified ? "calificată printre cele mai bune locuri 3!" : "nu ajunge printre cele mai bune locuri 3."))
+                        Text(tr("Clasamentul locurilor 3: locul \(th.rank + 1) din \(th.rows.count) — ", "Third-placed teams: \(th.rank + 1) of \(th.rows.count) — ")
+                             + (t.qualified ? tr("calificată printre cele mai bune locuri 3!", "through as one of the best third-placed teams!") : tr("nu ajunge printre cele mai bune locuri 3.", "not among the best third-placed teams.")))
                             .font(.system(size: 13)).foregroundStyle(Color.hwcTextDim)
                     }
-                    Text("Victorie = \(game.data.formats[c.year]?.win ?? 2) puncte · \(verdict)")
+                    Text(tr("Victorie = \(game.data.formats[c.year]?.win ?? 2) puncte", "Win = \(game.data.formats[c.year]?.win ?? 2) points") + " · \(verdict)")
                         .font(.system(size: 13)).foregroundStyle(Color.hwcTextDim)
                     if c.isFinished {
-                        PrimaryButton(title: "Vezi sumarul carierei", systemImage: "list.bullet") { game.go(.summary) }
+                        PrimaryButton(title: tr("Vezi sumarul carierei", "Career summary"), systemImage: "list.bullet") { game.go(.summary) }
                     } else {
-                        PrimaryButton(title: "Continuă", systemImage: "arrow.right") { game.go(.hub) }
+                        PrimaryButton(title: tr("Continuă", "Continue"), systemImage: "arrow.right") { game.go(.hub) }
                     }
                 }
             }
@@ -371,16 +374,16 @@ struct CareerSummaryView: View {
 
     var body: some View {
         if let c = game.career {
-            ScreenContainer(title: "Sumar carieră") {
+            ScreenContainer(title: tr("Sumar carieră", "Career summary")) {
                 VStack(spacing: 14) {
                     VStack(spacing: 6) {
-                        Text("\(game.label(c.teamCode)) · CM \(String(c.year))").font(.scoreboard(22)).foregroundStyle(Color.hwcText)
+                        Text("\(game.label(c.teamCode)) · \(tr("CM", "WC")) \(String(c.year))").font(.scoreboard(22)).foregroundStyle(Color.hwcText)
                         Text(c.outcomeLabel).font(.scoreboard(28))
                             .foregroundStyle(c.outcome == .champion ? Color.hwcGold2 : (c.outcome == .out ? Color.hwcRed : Color.hwcText))
                         let real = c.records.filter(\.isReal)
                         if !real.isEmpty {
                             let same = real.filter { $0.historyRepeated == true }.count
-                            Text("📜 \(real.count) meciuri reale · 📖 \(same) scoruri identice cu istoria")
+                            Text(tr("📜 \(real.count) meciuri reale · 📖 \(same) scoruri identice cu istoria", "📜 \(real.count) real matches · 📖 \(same) scores identical to history"))
                                 .font(.system(size: 13)).foregroundStyle(Color.hwcTextDim)
                         }
                     }
@@ -395,7 +398,7 @@ struct CareerSummaryView: View {
                             if i < c.records.count - 1 { Divider().overlay(Color.hwcBorder) }
                         }
                     }
-                    PrimaryButton(title: "Meniu principal", systemImage: "house.fill") { game.endCareerAndGoHome() }
+                    PrimaryButton(title: tr("Meniu principal", "Main menu"), systemImage: "house.fill") { game.endCareerAndGoHome() }
                 }
             }
         } else {

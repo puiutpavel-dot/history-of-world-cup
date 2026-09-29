@@ -7,12 +7,16 @@ import Foundation
 // suspendări). Aceeași ordine a apelurilor de PRNG ⇒ aceleași rezultate ca
 // versiunea web pentru aceeași sămânță (verificat de ParityTests).
 
-public let roundLabels: [String: String] = [
-    "R32": "Șaisprezecimi", "R16": "Optimi", "QF": "Sferturi", "SF": "Semifinală", "F": "Finală", "3P": "Finala mică",
-]
-public let stageLabels: [String: String] = [
-    "group": "Faza grupelor", "group2": "A doua fază a grupelor", "finalGroup": "Grupa finală",
-]
+public var roundLabels: [String: String] {
+    AppLanguage.isRomanian
+        ? ["R32": "Șaisprezecimi", "R16": "Optimi", "QF": "Sferturi", "SF": "Semifinală", "F": "Finală", "3P": "Finala mică"]
+        : ["R32": "Round of 32", "R16": "Round of 16", "QF": "Quarter-final", "SF": "Semi-final", "F": "Final", "3P": "Third-place match"]
+}
+public var stageLabels: [String: String] {
+    AppLanguage.isRomanian
+        ? ["group": "Faza grupelor", "group2": "A doua fază a grupelor", "finalGroup": "Grupa finală"]
+        : ["group": "Group stage", "group2": "Second group stage", "finalGroup": "Final group"]
+}
 
 public enum Outcome: String, Codable, Sendable {
     case champion, runnerUp, third, fourth, out
@@ -87,10 +91,10 @@ public struct MatchRecord: Codable, Hashable, Sendable {
 
     public var scoreText: String {
         var s = "\(gf)-\(ga)"
-        if extraTime { s += goldenGoal ? " (gol de aur)" : " d.p." }
-        if let pens { s += " (pen. \(pens))" }
-        if let lots { s += lots == .A ? " (sorți: câștigat)" : " (sorți: pierdut)" }
-        if tied { s += " → rejucat" }
+        if extraTime { s += goldenGoal ? tr(" (gol de aur)", " (golden goal)") : tr(" d.p.", " a.e.t.") }
+        if let pens { s += tr(" (pen. \(pens))", " (\(pens) pens)") }
+        if let lots { s += lots == .A ? tr(" (sorți: câștigat)", " (lots: won)") : tr(" (sorți: pierdut)", " (lots: lost)") }
+        if tied { s += tr(" → rejucat", " → replay") }
         return s
     }
 
@@ -414,7 +418,7 @@ public struct Career: Codable, Sendable {
             group = GroupState(type: st.type, members: members, playerOpps: opps)
             for (i, code) in opps.enumerated() {
                 queue.append(Self.info(code, realOf[code], kind: st.type, round: nil, knockout: false,
-                                       label: "\(label) — meci \(i + 1)/\(opps.count)"))
+                                       label: "\(label) — \(tr("meci", "match")) \(i + 1)/\(opps.count)"))
             }
             for c in members where c != teamCode && !used.contains(c) { used.append(c) }
             return
@@ -690,7 +694,7 @@ public struct Career: Codable, Sendable {
                 let r = real.count > 1 ? real.last : nil
                 g.playoff = Playoff(pending: true, opp: opp, won: nil, result: nil)
                 group = g
-                queue.append(Self.info(opp, r, kind: "playoff", round: nil, knockout: true, label: "Baraj de grupă"))
+                queue.append(Self.info(opp, r, kind: "playoff", round: nil, knockout: true, label: tr("Baraj de grupă", "Group play-off")))
                 return
             }
             let o = simOther(a, b, knockout: true, engine: engine)
@@ -798,7 +802,7 @@ public struct Career: Codable, Sendable {
         if rec.tied {
             var again = info
             again.replay = true
-            again.label = "\(info.label) (rejucat)"
+            again.label = "\(info.label) \(tr("(rejucat)", "(replay)"))"
             queue.insert(again, at: 0)
             return rec
         }
@@ -844,12 +848,12 @@ public struct Career: Codable, Sendable {
     /// `outcomeLabel(state)`.
     public var outcomeLabel: String {
         switch outcome {
-        case .champion: return "🏆 Campioană mondială"
-        case .runnerUp: return "🥈 Vicecampioană"
-        case .third: return "🥉 Locul 3"
-        case .fourth: return "Locul 4"
-        case .out: return "Eliminată — \(outStage ?? "")"
-        case nil: return "În desfășurare"
+        case .champion: return tr("🏆 Campioană mondială", "🏆 World champions")
+        case .runnerUp: return tr("🥈 Vicecampioană", "🥈 Runners-up")
+        case .third: return tr("🥉 Locul 3", "🥉 Third place")
+        case .fourth: return tr("Locul 4", "Fourth place")
+        case .out: return tr("Eliminată — ", "Knocked out — ") + (outStage ?? "")
+        case nil: return tr("În desfășurare", "In progress")
         }
     }
 }

@@ -80,8 +80,8 @@ final class GameState: ObservableObject {
     func quizButtonTitle(_ year: Int) -> String {
         let y = String(year)
         if !isOpen(year) { return "🔒 Quiz \(y) · Full History" }
-        if let best = quizProgress.best(.edition, year: year) { return "Quiz \(y) · record \(best)/5" }
-        return "Quiz \(y) · 5 întrebări"
+        if let best = quizProgress.best(.edition, year: year) { return "Quiz \(y) · " + tr("record", "best") + " \(best)/5" }
+        return "Quiz \(y) · " + tr("5 întrebări", "5 questions")
     }
 
     /// stelele unei ediții în meniul de quiz
@@ -173,13 +173,13 @@ final class GameState: ObservableObject {
             title = "Quiz \(String(year ?? 0))"
         case .marathon:
             questions = data.editions.compactMap { ed in bank.filter { $0.year == ed.year }.randomElement() }
-            title = "Maraton 1930 → 2026"
+            title = tr("Maraton 1930 → 2026", "Marathon 1930 → 2026")
         case .tf:
             questions = Array(bank.filter { $0.kind == "tf" }.shuffled().prefix(10))
-            title = "Duoul greșit"
+            title = tr("Duoul greșit", "Spot the fake")
         case .phase:
             questions = Array(bank.filter { $0.kind == "phase" }.shuffled().prefix(10))
-            title = "Alege faza"
+            title = tr("Alege faza", "Name the stage")
         }
         guard !questions.isEmpty else { return }
         quiz = QuizSession(mode: mode, year: year, title: title, questions: questions)

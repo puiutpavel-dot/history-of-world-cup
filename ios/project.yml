@@ -4,6 +4,8 @@
 name: HistoryOfWorldCup
 options:
   bundleIdPrefix: com.puiutpavel
+  # engleză implicit; română pe telefoanele în română (en.lproj / ro.lproj)
+  developmentLanguage: en
   deploymentTarget:
     iOS: "17.0"
   createIntermediateGroups: true
@@ -27,7 +29,10 @@ targets:
     info:
       path: App/Info.plist
       properties:
-        CFBundleDisplayName: "Arhiva Mondialelor"
+        # numele de sub iconiță: en.lproj / ro.lproj/InfoPlist.strings
+        CFBundleDisplayName: "Finals Archive"
+        CFBundleDevelopmentRegion: en
+        CFBundleLocalizations: [en, ro]
         # versiunea vine din setările de build (TestFlight suprascrie CURRENT_PROJECT_VERSION cu numărul rulării CI)
         CFBundleShortVersionString: "$(MARKETING_VERSION)"
         CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"

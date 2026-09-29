@@ -59,6 +59,25 @@ final class ParityTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(engine.data.rosters.count, 300)
     }
 
+    /// Data_en.json: aceeași structură și ordine ca Data.json (motorul nu citește textele).
+    func testEnglishDataMatchesRomanian() throws {
+        let ro = engine.data
+        AppLanguage.code = "en"
+        defer { AppLanguage.code = "ro" }
+        let en = try GameData.load()
+        XCTAssertEqual(en.teams.map(\.code), ro.teams.map(\.code))
+        XCTAssertEqual(en.teams.map(\.curve), ro.teams.map(\.curve))
+        XCTAssertEqual(en.shadowTeams.map(\.code), ro.shadowTeams.map(\.code))
+        XCTAssertEqual(en.editions.map(\.champion), ro.editions.map(\.champion))
+        XCTAssertEqual(en.quiz.map(\.id), ro.quiz.map(\.id))
+        XCTAssertEqual(en.quiz.map(\.answer), ro.quiz.map(\.answer))
+        XCTAssertEqual(en.countries.map(\.iso), ro.countries.map(\.iso))
+        XCTAssertEqual(en.meta("BRA").name, "Brazil")
+        XCTAssertEqual(en.history?.stories.count, ro.history?.stories.count)
+        XCTAssertEqual(tr("Finală", "Final"), "Final")
+        XCTAssertEqual(localizedNote("penalty-uri 4-3"), "penalties 4-3")
+    }
+
     func testMulberry32MatchesJS() {
         for c in golden.rng {
             var r = Mulberry32(seed: c.seed)

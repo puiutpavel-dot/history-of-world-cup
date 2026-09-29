@@ -1,8 +1,10 @@
 # Metadate App Store (ro + en)
 
 ## Nume (max. 30 de caractere) — DECIS
-**Arhiva Mondialelor** (18 caractere) — termen generic în română, fără „FIFA” / „World Cup” în nume. Același nume pe ecranul iPhone (CFBundleDisplayName), în meniu, pe web și în paginile privacy/support. Bundle ID-ul rămâne `com.puiutpavel.historyofworldcup` (nu se vede public).
-- en: **Arhiva Mondialelor** — același nume și în localizarea engleză (decis; fără „World Cup” în nume). Subtitlul en explică: *Trivia & career, 1930–2026*.
+Limba principală în App Store Connect: **English (U.S.)**; localizare suplimentară: **Romanian**. Aplicația afișează engleza, iar pe telefoanele setate în română, româna.
+- en (principal): **Football Finals Archive** (23) — fără „FIFA” / „World Cup” în nume. Sub iconiță: „Finals Archive”.
+- ro: **Arhiva Mondialelor** (18). Sub iconiță: „Arhiva Mondialelor”.
+Bundle ID-ul rămâne `com.puiutpavel.historyofworldcup` (nu se vede public). App Store Connect: aplicația e creată (Apple ID 6817332563).
 
 Niciodată: „FIFA”, „FIFA World Cup™”, „Official”, „We Are 26”, numele mingilor sau mascotelor ca brand.
 
@@ -62,7 +64,7 @@ Historical data: Fjelstul World Cup Database (CC-BY-SA 4.0).
 ## Categorie, vârstă, confidențialitate
 - Categorie principală: **Games → Trivia**; secundară: **Games → Sports**.
 - Chestionarul de vârstă: „None” la toate (fără violență reprezentată, fără jocuri de noroc, fără conținut generat de utilizatori, fără browser web) → **4+**. Textele istorice menționează scurt evenimente grave (ex. uciderea lui Escobar în 1994); dacă vrei marjă, bifează „Infrequent/Mild Mature/Suggestive Themes” → 9+.
-- App Privacy: **Data Not Collected**. Privacy Policy URL: `https://puiutpavel-dot.github.io/history-of-world-cup/privacy.html`. Support URL: `https://puiutpavel-dot.github.io/history-of-world-cup/support.html`.
+- App Privacy: **Data Not Collected**. Privacy Policy URL (en): `https://puiutpavel-dot.github.io/history-of-world-cup/privacy-en.html`, (ro): `…/privacy.html`. Support URL (en): `https://puiutpavel-dot.github.io/history-of-world-cup/support-en.html`, (ro): `…/support.html`.
 - Export compliance: fără criptare non-exceptată (`ITSAppUsesNonExemptEncryption = NO` deja în Info.plist).
 - Doar iPhone (pe iPad rulează în modul de compatibilitate).
 

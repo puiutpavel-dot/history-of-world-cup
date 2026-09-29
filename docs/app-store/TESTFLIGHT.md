@@ -14,13 +14,13 @@ developer.apple.com → **Account → Membership details → Team ID** (10 carac
 
 ## 4. Identificatorul aplicației
 developer.apple.com → **Certificates, Identifiers & Profiles → Identifiers → +** → *App IDs* → *App* →
-- Description: `Arhiva Mondialelor`
+- Description: `Football Finals Archive`
 - Bundle ID: **Explicit** `com.puiutpavel.historyofworldcup`
 - Capabilities: lasă **In-App Purchase** bifat (e implicit).
 
 ## 5. Aplicația în App Store Connect
 https://appstoreconnect.apple.com → **Apps → + → New App**:
-- Platform: iOS · Name: **Arhiva Mondialelor** · Primary language: Romanian
+- Platform: iOS · Name: **Football Finals Archive** · Primary language: **English (U.S.)** (româna se adaugă apoi ca localizare, cu numele „Arhiva Mondialelor”)
 - Bundle ID: `com.puiutpavel.historyofworldcup` · SKU: `HWC001` · User Access: Full Access
 
 ## 6. Cheia App Store Connect API (pentru GitHub)

@@ -1,4 +1,4 @@
-# Arhiva Mondialelor 🏆
+# Arhiva Mondialelor · Football Finals Archive 🏆
 
 *(repo: history-of-world-cup)*
 
@@ -115,3 +115,6 @@ python3 -m http.server 8080
 ---
 
 Parte din proiectul **HISTORY OF WORLD CUP** (aplicație iOS nativă).
+
+## Limbi (iOS)
+Aplicația iOS e în **engleză** (implicit) și **română** (pe telefoanele setate în română; se poate schimba și din Setări → aplicația → Limbă). Textele de interfață sunt în cod, prin `tr("ro", "en")` (`WorldCupCore/Localization.swift`); conținutul (ediții, echipe, povești, reguli, legende, quiz, traseul țării) vine din `Data.json` (ro) sau `Data_en.json` (en), generate de `tools/export_ios_data.js` din prototip + `i18n_en.js`. Motorul nu citește textele, deci simularea e identică în ambele limbi. Prototipul web rămâne în română.

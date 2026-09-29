@@ -58,20 +58,41 @@ const FAMOUS_FALSE = {
   2026: "2026: din fiecare grupă treceau doar primele două echipe.",
 };
 
-const PHASE_ANSWERS = ["Semifinale", "Sferturi", "Optimi", "Șaisprezecimi", "A doua fază a grupelor", "Grupa finală", "Direct optimi, fără grupe"];
+/* textele quizului în română; i18n_en.js are același set în engleză (pentru iOS) */
+const QUIZ_RO = {
+  editions: null, // implicit EDITIONS
+  name: (code) => getTeamMeta(code).name,
+  finalScores: FINAL_SCORES, surprises: QUIZ_SURPRISES, famousFalse: FAMOUS_FALSE,
+  phase: { SF: "Semifinale", QF: "Sferturi", R16: "Optimi", R32: "Șaisprezecimi",
+    group2: "A doua fază a grupelor", finalGroup: "Grupa finală", koStart: "Direct optimi, fără grupe" },
+  scorerExclude: /jucători/,
+  host: (y) => `Unde s-a jucat Campionatul Mondial din ${y}?`,
+  final1950: (champ, runner) => `1950 nu a avut finală: titlul s-a decis în ultimul meci al grupei finale, ${champ} – ${runner}. Scorul?`,
+  final: (y, champ, runner) => `Finala din ${y}: ${champ} – ${runner}. Care a fost scorul?`,
+  phaseQ: (y) => `Ce urma după prima fază a turneului în ${y}?`,
+  scorer: (y) => `Cine a fost golgheterul Mondialului din ${y}?`,
+  teams: (y) => `Câte echipe au jucat turneul final în ${y}?`,
+  tfQ: (y) => `Care afirmație despre Mondialul din ${y} e falsă?`,
+  tfHost: (y, h) => `${y}: turneul s-a jucat în ${h}.`,
+  tfTeams: (y, n) => `${y}: la turneul final au jucat ${n}${n < 20 ? "" : " de"} echipe.`,
+  tfChamp: (y, t) => `${y}: campioană a fost ${t}.`,
+  tfSubs: (y, n) => (n === 0 ? `${y}: nu era permisă nicio schimbare.` : `${y}: erau permise ${n} schimbări pe meci.`),
+  tfWin: (y, p) => `${y}: o victorie aducea ${p} puncte.`,
+  tfThird: (y, yes) => (yes ? `${y}: s-a jucat meci pentru locul 3.` : `${y}: nu s-a jucat meci pentru locul 3.`),
+};
 
-function phaseAfterFirst(fmt) {
+function phaseAfterFirst(fmt, L) {
   const st = fmt.stages;
-  if (st[0].type === "ko") return "Direct optimi, fără grupe";
+  if (st[0].type === "ko") return L.phase.koStart;
   const next = st[1];
-  if (next.type === "group2") return "A doua fază a grupelor";
-  if (next.type === "finalGroup") return "Grupa finală";
-  return { SF: "Semifinale", QF: "Sferturi", R16: "Optimi", R32: "Șaisprezecimi" }[next.round];
+  if (next.type === "group2") return L.phase.group2;
+  if (next.type === "finalGroup") return L.phase.finalGroup;
+  return L.phase[next.round];
 }
 
-function scorerName(ed) {
+function scorerName(ed, L) {
   const m = /^(.*?)(?: \([A-Z]{3}\))? — \d+$/.exec(ed.topScorer);
-  return m && !/jucători/.test(m[1]) ? m[1] : null;
+  return m && !L.scorerExclude.test(m[1]) ? m[1] : null;
 }
 
 /* Fisher-Yates determinist */
@@ -88,54 +109,52 @@ function mcq(rng, year, kind, q, correct, pool) {
   return { id: `${year}-${kind}`, year, kind, q, options, answer: options.indexOf(correct) };
 }
 
-function buildQuizBank() {
+/* L = textele unei limbi (QUIZ_RO implicit); întrebările și ordinea lor sunt aceleași în orice limbă */
+function buildQuizBank(L = QUIZ_RO) {
   const out = [];
-  const hosts = EDITIONS.map((e) => e.host);
-  const finals = Object.values(FINAL_SCORES);
-  const scorers = EDITIONS.map(scorerName).filter(Boolean);
+  const eds = L.editions || EDITIONS;
+  const hosts = eds.map((e) => e.host);
+  const finals = Object.values(L.finalScores);
+  const scorers = eds.map((e) => scorerName(e, L)).filter(Boolean);
+  const phaseAnswers = ["SF", "QF", "R16", "R32", "group2", "finalGroup", "koStart"].map((k) => L.phase[k]);
   const teamCounts = ["13", "15", "16", "24", "32", "48"];
-  for (const ed of EDITIONS) {
+  for (const ed of eds) {
     const y = ed.year, fmt = FORMATS[y];
     const rng = mulberry32(seedFor(`quiz-${y}`));
-    const champ = getTeamMeta(ed.champion).name, runner = getTeamMeta(ed.runnerUp).name;
-    out.push(mcq(rng, y, "host", `Unde s-a jucat Campionatul Mondial din ${y}?`, ed.host, hosts));
-    out.push(mcq(rng, y, "final", y === 1950
-      ? `1950 nu a avut finală: titlul s-a decis în ultimul meci al grupei finale, ${champ} – ${runner}. Scorul?`
-      : `Finala din ${y}: ${champ} – ${runner}. Care a fost scorul?`, FINAL_SCORES[y], finals));
-    out.push(mcq(rng, y, "phase", `Ce urma după prima fază a turneului în ${y}?`, phaseAfterFirst(fmt), PHASE_ANSWERS));
-    const sc = scorerName(ed);
-    if (sc) out.push(mcq(rng, y, "scorer", `Cine a fost golgheterul Mondialului din ${y}?`, sc, scorers));
-    else out.push(mcq(rng, y, "teams", `Câte echipe au jucat turneul final în ${y}?`, String(fmt.teams), teamCounts));
-    const s = QUIZ_SURPRISES[y];
+    const champ = L.name(ed.champion), runner = L.name(ed.runnerUp);
+    out.push(mcq(rng, y, "host", L.host(y), ed.host, hosts));
+    out.push(mcq(rng, y, "final", y === 1950 ? L.final1950(champ, runner) : L.final(y, champ, runner), L.finalScores[y], finals));
+    out.push(mcq(rng, y, "phase", L.phaseQ(y), phaseAfterFirst(fmt, L), phaseAnswers));
+    const sc = scorerName(ed, L);
+    if (sc) out.push(mcq(rng, y, "scorer", L.scorer(y), sc, scorers));
+    else out.push(mcq(rng, y, "teams", L.teams(y), String(fmt.teams), teamCounts));
+    const s = L.surprises[y];
     const opts = shuffled(s.slice(1), rng);
     out.push({ id: `${y}-surprise`, year: y, kind: "surprise", q: s[0], options: opts, answer: opts.indexOf(s[1]) });
-    out.push(tfQuestion(ed, fmt, rng, hosts));
+    out.push(tfQuestion(ed, fmt, rng, hosts, L));
   }
   return out;
 }
 
 /* „Care afirmație e falsă?” — 2 afirmații adevărate + 1 falsă, din date */
-function tfQuestion(ed, fmt, rng, hosts) {
+function tfQuestion(ed, fmt, rng, hosts, L) {
   const y = ed.year;
-  const champ = getTeamMeta(ed.champion).name, runner = getTeamMeta(ed.runnerUp).name;
-  const subsText = (n) => (n === 0 ? `${y}: nu era permisă nicio schimbare.` : `${y}: erau permise ${n} schimbări pe meci.`);
+  const champ = L.name(ed.champion), runner = L.name(ed.runnerUp);
   const otherSubs = { 0: 2, 2: 3, 3: 5, 5: 3 }[fmt.subs];
   const otherTeams = [16, 24, 32, 48, 13].find((n) => n !== fmt.teams && Math.abs(n - fmt.teams) >= 3);
   const otherHost = shuffled(hosts.filter((h) => h !== ed.host), rng)[0];
-  const teamsText = (n) => `${y}: la turneul final au jucat ${n}${n < 20 ? "" : " de"} echipe.`;
   const facts = [
-    [`${y}: turneul s-a jucat în ${ed.host}.`, `${y}: turneul s-a jucat în ${otherHost}.`],
-    [teamsText(fmt.teams), teamsText(otherTeams)],
-    [`${y}: campioană a fost ${champ}.`, `${y}: campioană a fost ${runner}.`],
-    [subsText(fmt.subs), subsText(otherSubs)],
-    [`${y}: o victorie aducea ${fmt.win} puncte.`, `${y}: o victorie aducea ${5 - fmt.win} puncte.`],
-    [fmt.third ? `${y}: s-a jucat meci pentru locul 3.` : `${y}: nu s-a jucat meci pentru locul 3.`,
-     fmt.third ? `${y}: nu s-a jucat meci pentru locul 3.` : `${y}: s-a jucat meci pentru locul 3.`],
+    [L.tfHost(y, ed.host), L.tfHost(y, otherHost)],
+    [L.tfTeams(y, fmt.teams), L.tfTeams(y, otherTeams)],
+    [L.tfChamp(y, champ), L.tfChamp(y, runner)],
+    [L.tfSubs(y, fmt.subs), L.tfSubs(y, otherSubs)],
+    [L.tfWin(y, fmt.win), L.tfWin(y, 5 - fmt.win)],
+    [L.tfThird(y, fmt.third), L.tfThird(y, !fmt.third)],
   ];
   const picked = shuffled(facts, rng).slice(0, 3);
   const falseIdx = Math.floor(rng() * 3);
-  const options = picked.map((f, i) => (i === falseIdx ? (FAMOUS_FALSE[y] || f[1]) : f[0]));
-  return { id: `${y}-tf`, year: y, kind: "tf", q: `Care afirmație despre Mondialul din ${y} e falsă?`, options, answer: falseIdx };
+  const options = picked.map((f, i) => (i === falseIdx ? (L.famousFalse[y] || f[1]) : f[0]));
+  return { id: `${y}-tf`, year: y, kind: "tf", q: L.tfQ(y), options, answer: falseIdx };
 }
 
 /* ---------- Țara utilizatorului ---------- */
