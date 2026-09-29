@@ -11,11 +11,11 @@ struct QuizMenuView: View {
         ScreenContainer(title: "🧠 Quiz", backLabel: "Meniu", onBack: { game.go(.menu) }) {
             VStack(alignment: .leading, spacing: 12) {
                 QuizModeCard(title: "🏃 Maraton 1930 → 2026", subtitle: "23 de întrebări, câte una pe ediție",
-                             best: game.quizProgress.best(.marathon, year: nil), total: 23) { game.startQuiz(.marathon) }
+                             best: game.quizProgress.best(.marathon, year: nil), total: 23, locked: !game.fullHistory) { game.startQuiz(.marathon) }
                 QuizModeCard(title: "🕵️ Duoul greșit", subtitle: "3 afirmații, una e falsă — 10 runde",
-                             best: game.quizProgress.best(.tf, year: nil), total: 10) { game.startQuiz(.tf) }
+                             best: game.quizProgress.best(.tf, year: nil), total: 10, locked: !game.fullHistory) { game.startQuiz(.tf) }
                 QuizModeCard(title: "🧩 Alege faza", subtitle: "Îți dau anul, tu spui ce urma după prima fază — 10 runde",
-                             best: game.quizProgress.best(.phase, year: nil), total: 10) { game.startQuiz(.phase) }
+                             best: game.quizProgress.best(.phase, year: nil), total: 10, locked: !game.fullHistory) { game.startQuiz(.phase) }
 
                 Text("Quiz pe ediție — 5 întrebări: gazdă, finală, format, golgheter, o surpriză")
                     .font(.system(size: 14, weight: .semibold)).foregroundStyle(Color.hwcTextDim)
@@ -27,7 +27,9 @@ struct QuizMenuView: View {
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(String(ed.year)).font(.scoreboard(26)).foregroundStyle(Color.hwcGold2)
                                 Text(ed.host).font(.system(size: 13)).foregroundStyle(Color.hwcTextDim).lineLimit(1)
-                                Text(String(repeating: "⭐", count: best ?? 0) + String(repeating: "☆", count: 5 - (best ?? 0)))
+                                Text(game.isOpen(ed.year)
+                                     ? String(repeating: "⭐", count: best ?? 0) + String(repeating: "☆", count: 5 - (best ?? 0))
+                                     : "🔒 Full History")
                                     .font(.system(size: 11))
                             }
                             .frame(maxWidth: .infinity, alignment: .leading)
@@ -48,6 +50,7 @@ struct QuizModeCard: View {
     let subtitle: String
     let best: Int?
     let total: Int
+    var locked = false
     let action: () -> Void
 
     var body: some View {
@@ -55,7 +58,7 @@ struct QuizModeCard: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(title).font(.system(size: 16, weight: .bold)).foregroundStyle(Color.hwcText)
                 Text(subtitle).font(.system(size: 14)).foregroundStyle(Color.hwcTextDim)
-                Text(best.map { "Record: \($0) / \(total)" } ?? "Nejucat încă")
+                Text(locked ? "🔒 Full History" : best.map { "Record: \($0) / \(total)" } ?? "Nejucat încă")
                     .font(.stat(12)).foregroundStyle(Color.hwcGold)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -248,7 +251,8 @@ struct TrackEntryCard: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
             if playable {
-                SecondaryButton(title: "Joacă această campanie", systemImage: "play.fill") {
+                SecondaryButton(title: game.isOpen(entry.year) ? "Joacă această campanie" : "🔒 Joacă această campanie",
+                                systemImage: "play.fill") {
                     game.startCareer(team: entry.code, year: entry.year)
                 }
             }

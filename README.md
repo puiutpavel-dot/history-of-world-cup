@@ -69,6 +69,23 @@ Portul nativ e în lucru în folderul [`ios/`](ios/):
 
 **Cu Mac:** `node tools/export_ios_data.js && node tools/make_golden.js && python3 tools/make_icon.py && brew install xcodegen && cd ios && xcodegen && open HistoryOfWorldCup.xcodeproj`.
 
+## Monetizare iOS — o singură achiziție
+
+Decizia: **descărcare gratuită + un singur IAP „Full History” la 4,99 $** (non-consumable). Fără reclame, fără abonament, fără alte pachete.
+
+- **Gratuit:** Mondialele 1930, 1934, 1938 (carieră + quiz pe ediție), Muzeul, Evoluția regulilor, Galeria Legendelor, traseul țării (de citit).
+- **Full History:** toate cele 23 de ediții în carieră, toate quizurile pe ediție + Maraton, Duoul greșit, Alege faza, „Joacă această campanie” la orice ediție, actualizările viitoare.
+- Cod: `ios/App/Sources/Store.swift` (StoreKit 2: `Product.products`, `purchase()`, `Transaction.currentEntitlements`, `Transaction.updates`, `AppStore.sync()` pentru **Restaurează achizițiile** — vizibil în meniu și pe ecranul de deblocare). Rambursările / revocările re-blochează conținutul. Ultima stare se păstrează local pentru pornire offline.
+- Test local fără cont Apple: `ios/App/StoreKit/FullHistory.storekit` (legat de schema Xcode prin `project.yml`).
+- Prototipul web rămâne demo gratuit complet.
+
+Pași în App Store Connect (când există contul Apple Developer):
+1. Semnează *Paid Applications Agreement* și completează datele fiscale și bancare.
+2. Înscrie-te în **App Store Small Business Program** (comision 15% sub 1 mil. $ / an).
+3. *In-App Purchases* → **Non-Consumable**, Product ID `com.puiutpavel.historyofworldcup.fullhistory`, nume „Full History”, preț **4,99 $** cu SUA ca țară de bază (Apple calculează automat prețul în celelalte țări), **Family Sharing activat**, localizări ro + en, captură a ecranului de deblocare pentru review.
+4. Aplicația: preț **Gratuit**. Subtitlu (max. 30 de caractere): „1930–2026. O singură plată.” În descriere: „Fără reclame, fără abonament, fără pachete.”
+5. Testare: TestFlight cu un cont *Sandbox Tester*.
+
 ## Surse și licențe
 
 - **Rezultatele meciurilor reale** (`real_fixtures.js`): [Fjelstul World Cup Database](https://www.github.com/jfjelstul/worldcup), © 2023 Joshua C. Fjelstul, Ph.D., licență [CC-BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/legalcode). Modificări: selecție pe echipele jocului, coduri FIFA, maparea formatelor istorice pe bracketul jocului, note în română. Fișierul de date derivat este distribuit tot sub CC-BY-SA 4.0. Regenerare: `git clone --depth 1 https://github.com/jfjelstul/worldcup /tmp/worldcup && python3 tools/build_real_fixtures.py /tmp/worldcup/data-csv/team_appearances.csv`.

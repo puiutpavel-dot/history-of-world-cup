@@ -4,6 +4,7 @@ import WorldCupCore
 @main
 struct HistoryOfWorldCupApp: App {
     @StateObject private var game = GameState()
+    @StateObject private var store = Store(useStoreKit: !ProcessInfo.processInfo.arguments.contains("-demoScreen"))
     @AppStorage("hwc_theme_v1") private var themeRaw = AppTheme.dark.rawValue
 
     var body: some Scene {
@@ -11,6 +12,8 @@ struct HistoryOfWorldCupApp: App {
             let theme = AppTheme(rawValue: themeRaw) ?? .dark
             RootView()
                 .environmentObject(game)
+                .environmentObject(store)
+                .onReceive(store.$isUnlocked) { game.setStoreUnlocked($0) }
                 .environment(\.locale, Locale(identifier: "ro_RO"))
                 .preferredColorScheme(theme.colorScheme)
                 .overlay(alignment: .topTrailing) {
@@ -53,6 +56,7 @@ struct RootView: View {
             case .quiz: QuizPlayView()
             case .quizResult: QuizResultView()
             case .country: CountryView()
+            case .paywall: PaywallView()
             }
         }
         .transition(.opacity)

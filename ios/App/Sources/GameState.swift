@@ -8,10 +8,16 @@ import WorldCupCore
 final class GameState: ObservableObject {
     enum Screen: Equatable {
         case menu, editions, teams(year: Int), hub, preview, live, groupTable, summary, museum, legends, trophies, rules,
-             quizMenu, quiz, quizResult, country
+             quizMenu, quiz, quizResult, country, paywall
     }
 
     @Published var screen: Screen = .menu
+    /// „Full History” cumpărat (sincronizat din `Store`); 1930-1938 sunt mereu gratuite
+    @Published private(set) var fullHistory = false
+    static let freeYears: Set<Int> = [1930, 1934, 1938]
+    private var paywallReturn: Screen = .menu
+    /// capturile din CI fixează starea de deblocare (nu citesc App Store-ul)
+    private var demoUnlock: Bool?
     /// ediția deschisă inițial în Muzeu (folosit la capturile din CI)
     var museumOpenYear: Int?
     @Published private(set) var career: Career?
@@ -55,9 +61,30 @@ final class GameState: ObservableObject {
 
     var hasResumableCareer: Bool { career.map { !$0.isFinished } ?? false }
 
+    // MARK: Full History (achiziția unică)
+
+    func isOpen(_ year: Int) -> Bool { fullHistory || Self.freeYears.contains(year) }
+
+    func setStoreUnlocked(_ value: Bool) {
+        fullHistory = demoUnlock ?? value
+    }
+
+    func showPaywall() {
+        if screen != .paywall { paywallReturn = screen }
+        go(.paywall)
+    }
+
+    func closePaywall() { go(paywallReturn) }
+
+    /// ecranul de echipe al unei ediții (edițiile blocate duc la deblocare)
+    func openEdition(_ year: Int) {
+        if isOpen(year) { go(.teams(year: year)) } else { showPaywall() }
+    }
+
     // MARK: Carieră
 
     func startCareer(team: String, year: Int) {
+        guard isOpen(year) else { return showPaywall() }
         career = Career.new(teamCode: team, year: year, engine: engine)
         lastMatch = nil
         persistCareer()
@@ -120,6 +147,8 @@ final class GameState: ObservableObject {
     // MARK: Quiz
 
     func startQuiz(_ mode: QuizMode, year: Int? = nil) {
+        let allowed = mode == .edition ? isOpen(year ?? 0) : fullHistory
+        guard allowed else { return showPaywall() }
         let bank = data.quiz
         let questions: [QuizQuestion]
         let title: String
@@ -209,8 +238,11 @@ final class GameState: ObservableObject {
     }
 
     /// Stări demonstrative pentru capturile de ecran automate din CI:
-    /// `-demoScreen menu|editions|teams|hub|preview|live|groupTable|summary|museum|legends|trophies|rules|quizMenu|quiz|country`.
+    /// `-demoScreen menu|editions|teams|hub|preview|live|groupTable|summary|museum|legends|trophies|rules|quizMenu|quiz|country|paywall`.
     private func runDemo(_ name: String) {
+        // capturile arată jocul deblocat, cu excepția ecranelor care prezintă blocarea
+        demoUnlock = !["paywall", "editions", "quizMenu"].contains(name)
+        fullHistory = demoUnlock ?? false
         var c = Career(teamCode: "BRA", year: 1970, seed: 42, engine: engine)
         switch name {
         case "editions": screen = .editions
@@ -222,6 +254,7 @@ final class GameState: ObservableObject {
             pickAnswer(quiz?.current.answer ?? 0)
             screen = .quiz
         case "country": countryOverride = "RO"; screen = .country
+        case "paywall": screen = .paywall
         case "rules": screen = .rules
         case "legends": screen = .legends
         case "hub":

@@ -3,6 +3,7 @@ import WorldCupCore
 
 struct MenuView: View {
     @EnvironmentObject var game: GameState
+    @EnvironmentObject var store: Store
 
     var body: some View {
         ScrollView {
@@ -45,6 +46,23 @@ struct MenuView: View {
                     SecondaryButton(title: "Galeria Legendelor", systemImage: "star") { game.go(.legends) }
                     SecondaryButton(title: "Sala Trofeelor", systemImage: "archivebox") { game.go(.trophies) }
                 }
+
+                if game.fullHistory {
+                    Text("✅ Full History — toate edițiile deblocate")
+                        .font(.system(size: 13)).foregroundStyle(Color.hwcTextDim)
+                } else {
+                    VStack(spacing: 8) {
+                        Button { game.showPaywall() } label: {
+                            Text("🔓 Full History — deblochează 1950–2026 (\(store.displayPrice))")
+                                .font(.system(size: 14, weight: .semibold)).foregroundStyle(Color.hwcGold)
+                        }
+                        Button("Restaurează achizițiile") { Task { await store.restore() } }
+                            .font(.system(size: 13)).tint(.hwcTextDim)
+                        if let m = store.message {
+                            Text(m).font(.system(size: 12)).foregroundStyle(Color.hwcTextDim).multilineTextAlignment(.center)
+                        }
+                    }
+                }
             }
             .padding(.horizontal, 24)
             .frame(maxWidth: 520)
@@ -62,11 +80,12 @@ struct EditionSelectView: View {
         ScreenContainer(title: "Alege o ediție", backLabel: "Meniu", onBack: { game.go(.menu) }) {
             LazyVGrid(columns: columns, spacing: 12) {
                 ForEach(game.data.editions) { ed in
-                    Button { game.go(.teams(year: ed.year)) } label: {
+                    Button { game.openEdition(ed.year) } label: {
                         VStack(alignment: .leading, spacing: 4) {
                             Text(String(ed.year)).font(.scoreboard(30)).foregroundStyle(Color.hwcGold2)
                             Text(ed.host).font(.system(size: 14)).foregroundStyle(Color.hwcText).lineLimit(1)
-                            Text("🏆 \(game.label(ed.champion))").font(.system(size: 13)).foregroundStyle(Color.hwcTextDim)
+                            Text(game.isOpen(ed.year) ? "🏆 \(game.label(ed.champion))" : "🔒 Full History")
+                                .font(.system(size: 13)).foregroundStyle(game.isOpen(ed.year) ? Color.hwcTextDim : Color.hwcGold)
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(12)

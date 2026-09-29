@@ -1,0 +1,43 @@
+{
+  "identifier" : "5B1F6E2A",
+  "nonRenewingSubscriptions" : [
+
+  ],
+  "products" : [
+    {
+      "displayPrice" : "4.99",
+      "familyShareable" : true,
+      "internalID" : "6C3D2A91",
+      "localizations" : [
+        {
+          "description" : "Toate cele 23 de ediții (1930–2026) și toate quizurile. O singură plată, fără reclame.",
+          "displayName" : "Full History",
+          "locale" : "ro"
+        },
+        {
+          "description" : "All 23 editions (1930–2026) and every quiz. One purchase, no ads.",
+          "displayName" : "Full History",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "com.puiutpavel.historyofworldcup.fullhistory",
+      "referenceName" : "Full History",
+      "type" : "NonConsumable"
+    }
+  ],
+  "settings" : {
+    "_failTransactionsEnabled" : false,
+    "_locale" : "ro",
+    "_storefront" : "USA",
+    "_storeKitErrors" : [
+
+    ]
+  },
+  "subscriptionGroups" : [
+
+  ],
+  "version" : {
+    "major" : 3,
+    "minor" : 0
+  }
+}

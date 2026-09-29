@@ -48,3 +48,6 @@ schemes:
     build:
       targets:
         HistoryOfWorldCup: all
+    run:
+      # testare locală a achiziției „Full History” fără App Store Connect (Xcode → Run)
+      storeKitConfiguration: App/StoreKit/FullHistory.storekit
