@@ -18,6 +18,7 @@ const data = {
   })),
   shadowTeams: Object.entries(P.SHADOW_TEAMS).map(([code, t]) => ({ code, name: t.name, flag: t.flag })),
   legends: P.LEGENDS,
+  formats: P.EDITIONS.map((e) => ({ year: e.year, ...P.FORMATS[e.year] })),
 };
 
 const fixtures = Object.entries(P.REAL_FIXTURES).map(([key, c]) => {

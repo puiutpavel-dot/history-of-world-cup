@@ -251,6 +251,71 @@ public struct Engine: Sendable {
         return SimulatedMatch(scoreA: goalsA, scoreB: goalsB, events: sorted)
     }
 
+    /// `simulateExtraTime(...)` — prelungiri: 30 de minute, o treime din intensitatea golurilor.
+    public static func simulateExtraTime(teamAName: String, teamAAttack: Double, teamADefense: Double,
+                                         teamBName: String, teamBAttack: Double, teamBDefense: Double,
+                                         rng: inout Mulberry32) -> SimulatedMatch {
+        let lambdaA = max(0.2, (teamAAttack - teamBDefense) / 12 + 1.35) / 3
+        let lambdaB = max(0.2, (teamBAttack - teamADefense) / 12 + 1.35) / 3
+        let goalsA = poissonSample(&rng, lambdaA)
+        let goalsB = poissonSample(&rng, lambdaB)
+        var minutesA: [Int] = []
+        var minutesB: [Int] = []
+        while minutesA.count < goalsA {
+            let m = rng.int(91, 120)
+            if !minutesA.contains(m) { minutesA.append(m) }
+        }
+        while minutesB.count < goalsB {
+            let m = rng.int(91, 120)
+            if !minutesB.contains(m) { minutesB.append(m) }
+        }
+        let events = minutesA.map { MatchEvent(minute: $0, team: .A, teamName: teamAName, scorer: nil) }
+            + minutesB.map { MatchEvent(minute: $0, team: .B, teamName: teamBName, scorer: nil) }
+        let sorted = events.enumerated()
+            .sorted { $0.element.minute != $1.element.minute ? $0.element.minute < $1.element.minute : $0.offset < $1.offset }
+            .map(\.element)
+        return SimulatedMatch(scoreA: goalsA, scoreB: goalsB, events: sorted)
+    }
+
+    /// Un cartonaș generat de `simulateCards`: k = indexul jucătorului în lista celor 11.
+    public struct RawCard: Hashable, Sendable {
+        public let minute: Int
+        public let type: String
+        public let k: Int
+    }
+
+    /// `simulateCards(eleven, rng)` — ~1 galben pe meci, al doilea galben = roșu, rar roșu direct.
+    public static func simulateCards(count: Int, _ rng: inout Mulberry32) -> [RawCard] {
+        var cards: [RawCard] = []
+        if count == 0 { return cards }
+        let n = min(poissonSample(&rng, 1.0), 5)
+        var booked: [Int: Int] = [:]
+        var sentOff = Set<Int>()
+        for _ in 0..<n {
+            let k = Int((rng.next() * Double(count)).rounded(.down))
+            let minute = rng.int(1, 90)
+            if sentOff.contains(k) { continue }
+            if let first = booked[k] {
+                cards.append(RawCard(minute: min(90, max(minute, first + 1)), type: "Y2R", k: k))
+                sentOff.insert(k)
+            } else {
+                booked[k] = minute
+                cards.append(RawCard(minute: minute, type: "Y", k: k))
+            }
+        }
+        if rng.next() < 0.02 {
+            let k = Int((rng.next() * Double(count)).rounded(.down))
+            let minute = rng.int(1, 90)
+            if !sentOff.contains(k) {
+                cards.append(RawCard(minute: minute, type: "R", k: k))
+                sentOff.insert(k)
+            }
+        }
+        return cards.enumerated()
+            .sorted { $0.element.minute != $1.element.minute ? $0.element.minute < $1.element.minute : $0.offset < $1.offset }
+            .map(\.element)
+    }
+
     /// `assignScorers(events, squadA, squadB, rng)` — atacanții au pondere mai mare.
     public static func assignScorers(_ events: [MatchEvent], _ squadA: [Player], _ squadB: [Player],
                                      _ rng: inout Mulberry32) -> [MatchEvent] {
@@ -299,38 +364,6 @@ public struct Engine: Sendable {
     public func realKnockoutMatch(_ teamCode: String, _ year: Int, _ roundIndex: Int) -> FixtureMatch? {
         guard let k = data.campaign(teamCode, year)?.knockout, roundIndex < k.count else { return nil }
         return k[roundIndex]
-    }
-
-    /// `buildKnockoutPlan(teamCode, year)` — drumul real aliniat pe sferturi → semifinală → finală.
-    /// QF/SF/F merg pe slotul lor; GR2 (1974-82) și FR (1950) completează de la coadă sloturile
-    /// libere dinaintea primului slot ocupat; R16 ocupă sferturile doar dacă echipa s-a oprit în optimi.
-    public func knockoutPlan(_ teamCode: String, _ year: Int) -> [FixtureMatch?] {
-        var plan: [FixtureMatch?] = [nil, nil, nil]
-        guard let camp = data.campaign(teamCode, year) else { return plan }
-        let slot = ["QF": 0, "SF": 1, "F": 2]
-        var leftovers: [FixtureMatch] = []
-        var r16: [FixtureMatch] = []
-        for m in camp.knockout {
-            if let round = m.round, let s = slot[round] {
-                plan[s] = m
-            } else if m.round == "R16" {
-                r16.append(m)
-            } else {
-                leftovers.append(m)
-            }
-        }
-        let first = plan.firstIndex { $0 != nil } ?? 3
-        var i = leftovers.count - 1
-        var s = first - 1
-        while s >= 0 && i >= 0 {
-            if plan[s] == nil {
-                plan[s] = leftovers[i]
-                i -= 1
-            }
-            s -= 1
-        }
-        if plan.allSatisfy({ $0 == nil }), let last = r16.last { plan[0] = last }
-        return plan
     }
 
     /// `drawOpponent(rng, year, excludeCodes, preferCurated)` — „fără retur”.

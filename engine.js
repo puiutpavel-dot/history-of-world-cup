@@ -16,6 +16,13 @@ function mulberry32(seed) {
   };
 }
 
+/* sămânță FNV-1a dintr-un text (unități UTF-16, ca charCodeAt) */
+function seedFor(str) {
+  let h = 2166136261;
+  for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return h >>> 0;
+}
+
 function randInt(rng, min, max) { return Math.floor(rng() * (max - min + 1)) + min; }
 function choice(rng, arr) { return arr[Math.floor(rng() * arr.length)]; }
 
@@ -191,6 +198,49 @@ function simulateMatch(teamAName, teamAAttack, teamADefense, teamBName, teamBAtt
   return { scoreA: goalsA, scoreB: goalsB, events };
 }
 
+/* prelungiri: 30 de minute, cu o treime din intensitatea golurilor din 90' */
+function simulateExtraTime(teamAName, teamAAttack, teamADefense, teamBName, teamBAttack, teamBDefense, rng) {
+  const lambdaA = Math.max(0.2, (teamAAttack - teamBDefense) / 12 + 1.35) / 3;
+  const lambdaB = Math.max(0.2, (teamBAttack - teamADefense) / 12 + 1.35) / 3;
+  const goalsA = poissonSample(rng, lambdaA);
+  const goalsB = poissonSample(rng, lambdaB);
+  const minutesA = [], minutesB = [];
+  while (minutesA.length < goalsA) { const m = randInt(rng, 91, 120); if (!minutesA.includes(m)) minutesA.push(m); }
+  while (minutesB.length < goalsB) { const m = randInt(rng, 91, 120); if (!minutesB.includes(m)) minutesB.push(m); }
+  const events = minutesA.map((minute) => ({ minute, team: "A", teamName: teamAName }))
+    .concat(minutesB.map((minute) => ({ minute, team: "B", teamName: teamBName })));
+  events.sort((a, b) => a.minute - b.minute);
+  return { scoreA: goalsA, scoreB: goalsB, events };
+}
+
+/* cartonașe pentru cei 11 de pe teren: ~1 galben pe meci, al doilea galben = roșu,
+   plus o mică șansă de roșu direct. k = indexul jucătorului în lista primită. */
+function simulateCards(eleven, rng) {
+  const cards = [];
+  if (!eleven.length) return cards;
+  const n = Math.min(poissonSample(rng, 1.0), 5);
+  const booked = {}, sentOff = {};
+  for (let i = 0; i < n; i++) {
+    const k = Math.floor(rng() * eleven.length);
+    const minute = randInt(rng, 1, 90);
+    if (sentOff[k]) continue;
+    if (booked[k] !== undefined) {
+      cards.push({ minute: Math.min(90, Math.max(minute, booked[k] + 1)), type: "Y2R", k });
+      sentOff[k] = true;
+    } else {
+      booked[k] = minute;
+      cards.push({ minute, type: "Y", k });
+    }
+  }
+  if (rng() < 0.02) {
+    const k = Math.floor(rng() * eleven.length);
+    const minute = randInt(rng, 1, 90);
+    if (!sentOff[k]) { cards.push({ minute, type: "R", k }); sentOff[k] = true; }
+  }
+  cards.sort((a, b) => a.minute - b.minute);
+  return cards;
+}
+
 function assignScorers(events, squadA, squadB, rng) {
   const attackersA = squadA.slice(0, 11).filter((p) => p.pos !== "GK");
   const attackersB = squadB.slice(0, 11).filter((p) => p.pos !== "GK");
@@ -240,32 +290,6 @@ function getRealKnockoutMatch(teamCode, year, roundIndex) {
   return camp && camp.knockout[roundIndex] ? camp.knockout[roundIndex] : null;
 }
 
-/* Planul eliminatoriu al jocului (sferturi → semifinală → finală) din drumul
-   real, aliniat după runda reală: QF/SF/F merg pe slotul lor; meciurile din
-   formatele istorice (a doua fază a grupelor 1974-82 = "GR2", turneul final
-   1950 = "FR") completează, de la coadă spre început, sloturile libere dinaintea
-   primului slot ocupat; optimile ("R16") ocupă sferturile doar dacă echipa s-a
-   oprit în optimi. Sloturile rămase null = adversar tras la sorți. */
-function buildKnockoutPlan(teamCode, year) {
-  const camp = REAL_FIXTURES[fixtureKey(teamCode, year)];
-  const plan = [null, null, null];
-  if (!camp) return plan;
-  const slot = { QF: 0, SF: 1, F: 2 };
-  const leftovers = [], r16 = [];
-  for (const m of camp.knockout) {
-    if (m.round in slot) plan[slot[m.round]] = m;
-    else if (m.round === "R16") r16.push(m);
-    else leftovers.push(m);
-  }
-  let first = plan.findIndex((m) => m);
-  if (first === -1) first = 3;
-  for (let s = first - 1, i = leftovers.length - 1; s >= 0 && i >= 0; s--) {
-    if (!plan[s]) plan[s] = leftovers[i--];
-  }
-  if (plan.every((m) => !m) && r16.length) plan[0] = r16[r16.length - 1];
-  return plan;
-}
-
 /* alege un adversar simulat, evitând echipele deja folosite ("fără retur") */
 function drawOpponent(rng, year, excludeCodes, preferCurated) {
   const pool = Object.keys(TEAMS).filter((c) => !excludeCodes.includes(c));
@@ -276,11 +300,11 @@ function drawOpponent(rng, year, excludeCodes, preferCurated) {
 
 if (typeof module !== "undefined" && module.exports) {
   module.exports = {
-    mulberry32, randInt, choice,
+    mulberry32, seedFor, randInt, choice,
     getTeamRating, getShadowRating, getRatingAt,
     generateSquad, squadStrength, tacticalRatings,
-    simulateMatch, assignScorers, simulatePenalties, poissonSample,
-    getRealGroupOpponents, getRealGroupMatch, getRealKnockoutMatch, drawOpponent, fixtureKey, buildKnockoutPlan,
+    simulateMatch, simulateExtraTime, simulateCards, assignScorers, simulatePenalties, poissonSample,
+    getRealGroupOpponents, getRealGroupMatch, getRealKnockoutMatch, drawOpponent, fixtureKey,
     getRealRoster,
   };
 }

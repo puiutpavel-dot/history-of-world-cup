@@ -18,7 +18,7 @@ struct MenuView: View {
                         .font(.scoreboard(44))
                         .multilineTextAlignment(.center)
                         .foregroundStyle(Color.hwcGold2)
-                    Text("Confirmă sau rescrie istoria — 22 ediții, 1930-2022")
+                    Text("Confirmă sau rescrie istoria — 23 de ediții, 1930-2026")
                         .font(.system(size: 15))
                         .foregroundStyle(Color.hwcTextDim)
                         .multilineTextAlignment(.center)

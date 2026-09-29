@@ -31,6 +31,9 @@ struct MuseumView: View {
                                 Text("⚽ Golgheter: \(ed.topScorer)")
                                 Text("🔴 Minge oficială: \(ed.ball)")
                                 Text(ed.note).italic().foregroundStyle(Color.hwcTextDim)
+                                if let f = game.data.formats[ed.year] {
+                                    Text("📋 **Format:** \(f.summary)")
+                                }
                             }
                             .font(.system(size: 14))
                             .foregroundStyle(Color.hwcText)

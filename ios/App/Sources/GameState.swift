@@ -12,8 +12,10 @@ final class GameState: ObservableObject {
 
     @Published var screen: Screen = .menu
     @Published private(set) var career: Career?
-    @Published private(set) var preview: MatchPreview?
     @Published private(set) var lastMatch: MatchRecord?
+    /// indexul clasamentului afișat pe ecranul de clasament
+    @Published private(set) var tableIndex = 0
+    private var tablesBefore = 0
     @Published private(set) var trophies: [TrophyEntry] = []
 
     let engine = Engine()
@@ -47,7 +49,6 @@ final class GameState: ObservableObject {
     func startCareer(team: String, year: Int) {
         career = Career.new(teamCode: team, year: year, engine: engine)
         lastMatch = nil
-        preview = nil
         persistCareer()
         go(.hub)
     }
@@ -70,14 +71,14 @@ final class GameState: ObservableObject {
 
     func openPreview() {
         guard career != nil else { return }
-        preview = career!.preview(engine: engine)
         persistCareer()
         go(.preview)
     }
 
     func playMatch() {
         guard var c = career, !c.isFinished else { return }
-        lastMatch = c.playCurrentMatch(engine: engine)
+        tablesBefore = c.tables.count
+        lastMatch = c.playNext(engine: engine)
         career = c
         if c.isFinished { addTrophy(TrophyEntry(career: c)) }
         persistCareer()
@@ -86,8 +87,9 @@ final class GameState: ObservableObject {
 
     /// `afterMatch()` — unde mergem după ticker.
     func continueAfterMatch() {
-        guard let c = career, let m = lastMatch else { return go(.menu) }
-        if m.stage == .group && c.groupMatchIndex == 3 {
+        guard let c = career, lastMatch != nil else { return go(.menu) }
+        if c.tables.count > tablesBefore {
+            tableIndex = c.tables.count - 1
             go(.groupTable)
         } else if c.isFinished {
             go(.summary)
@@ -144,14 +146,14 @@ final class GameState: ObservableObject {
         case "hub":
             career = c; screen = .hub
         case "preview":
-            preview = c.preview(engine: engine); career = c; screen = .preview
+            career = c; screen = .preview
         case "live":
-            lastMatch = c.playCurrentMatch(engine: engine); career = c; screen = .live
+            lastMatch = c.playNext(engine: engine); career = c; screen = .live
         case "groupTable":
-            for _ in 0..<3 { lastMatch = c.playCurrentMatch(engine: engine) }
-            career = c; screen = .groupTable
+            while c.tables.isEmpty && !c.isFinished { lastMatch = c.playNext(engine: engine) }
+            career = c; tableIndex = max(0, c.tables.count - 1); screen = .groupTable
         case "summary", "trophies":
-            while !c.isFinished { lastMatch = c.playCurrentMatch(engine: engine) }
+            while !c.isFinished { lastMatch = c.playNext(engine: engine) }
             career = c
             trophies = [TrophyEntry(career: c)]
             screen = name == "summary" ? .summary : .trophies

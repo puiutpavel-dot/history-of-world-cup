@@ -78,6 +78,38 @@ public struct Player: Codable, Hashable, Sendable {
     public var bio: String?
 }
 
+/// O etapă din drumul unei echipe prin turneu (vezi FORMATS în data.js).
+public struct StageSpec: Codable, Hashable, Sendable {
+    /// "group" | "group2" | "finalGroup" | "ko"
+    public let type: String
+    public let size: Int?
+    public let groups: Int?
+    public let advance: Int?
+    public let bestThirds: Int?
+    public let seededOnly: Bool?
+    public let sizeFromReal: Bool?
+    public let winnerTo: String?
+    public let secondTo: String?
+    public let round: String?
+}
+
+/// Regulamentul unei ediții: etape, punctaj, departajare, cartonașe, egalități în eliminatorii.
+public struct TournamentFormat: Codable, Hashable, Sendable {
+    public let year: Int
+    public let teams: Int
+    public let win: Int
+    /// "gd" | "ga" | "playoff"
+    public let tiebreak: String
+    /// "replay" | "lots" | "penalties"
+    public let koTie: String
+    /// "none" | "accumulate" | "reset"
+    public let cards: String
+    public let third: Bool
+    public let byes: [String: [String]]?
+    public let stages: [StageSpec]
+    public let summary: String
+}
+
 public struct TeamMeta: Hashable, Sendable {
     public let name: String
     public let flag: String

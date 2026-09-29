@@ -1,20 +1,30 @@
 # History of World Cup 🏆
 
-Prototip web jucabil pentru o aplicație iOS nativă despre istoria Campionatului Mondial de Fotbal (1930-2022) — trivia, management de echipă și simulare de meciuri, cu mecanica "confirmă sau rescrie istoria".
+Prototip web jucabil pentru o aplicație iOS nativă despre istoria Campionatului Mondial de Fotbal (1930-2026) — trivia, management de echipă și simulare de meciuri, cu mecanica "confirmă sau rescrie istoria".
 
 **[▶️ Joacă prototipul](https://puiutpavel-dot.github.io/history-of-world-cup/)** (GitHub Pages)
 
 ## Conceptul jocului
 
-Jucătorul alege o ediție a Cupei Mondiale (1930-2022) și o națională disponibilă în acea eră. Pentru **orice combinație echipă+an care a avut loc cu adevărat istoric** (peste 300 de loturi, acoperind toate cele 23 de națiuni curate la fiecare ediție la care au participat real, plus ~24 de loturi pentru echipe "shadow" adversare în campaniile curate), lotul e **real, cu jucători istorici reali** (18-26 fotbaliști per lot, nume + poziție reale, verificate încrucișat pe surse). Doar combinațiile echipă+an care sunt teoretic selectabile în joc dar care **nu au avut loc real** (echipa nu s-a calificat sau nu a existat încă la acea ediție) primesc un lot generat, cu rating calculat dintr-o curbă istorică de putere per echipă/an — iar fotbaliștii **legendari reali** (Pelé, Maradona, Beckenbauer, Cruyff, Zidane, Messi ș.a.) apar automat în lotul echipei lor, la anul corect, indiferent de tipul de lot.
+Jucătorul alege o ediție a Cupei Mondiale (1930-2026) și o națională disponibilă în acea eră. Pentru **orice combinație echipă+an care a avut loc cu adevărat istoric** (peste 300 de loturi, acoperind toate cele 23 de națiuni curate la fiecare ediție la care au participat real, plus ~24 de loturi pentru echipe "shadow" adversare în campaniile curate), lotul e **real, cu jucători istorici reali** (18-26 fotbaliști per lot, nume + poziție reale, verificate încrucișat pe surse). Doar combinațiile echipă+an care sunt teoretic selectabile în joc dar care **nu au avut loc real** (echipa nu s-a calificat sau nu a existat încă la acea ediție) primesc un lot generat, cu rating calculat dintr-o curbă istorică de putere per echipă/an — iar fotbaliștii **legendari reali** (Pelé, Maradona, Beckenbauer, Cruyff, Zidane, Messi ș.a.) apar automat în lotul echipei lor, la anul corect, indiferent de tipul de lot.
 
-Bucla de joc: alege mentalitate + formație → joacă 3 meciuri în grupă (celelalte se simulează automat pentru clasament) → sferturi → semifinală → finală (penalty-uri la egalitate) → cariera intră în Sala Trofeelor.
+Bucla de joc: alege mentalitate + formație înaintea fiecărui meci și parcurge turneul **în formatul real al ediției alese** (`FORMATS` în `data.js`, motorul în `career.js`):
+
+- **1930**: grupe de 3-4, doar câștigătoarea trece → semifinale → finală (fără loc 3);
+- **1934 / 1938**: fără grupe — optimi, sferturi, semifinale, locul 3, finală; la egalitate prelungiri, apoi meci rejucat (1938: Suedia are bye în optimi);
+- **1950**: grupe inegale → grupa finală de 4, toți contra toți (fără finală separată);
+- **1954**: grupe de 4 în care capii de serie joacă doar cu necapii (2 meciuri), baraj la egalitate de puncte → sferturi → semifinale → locul 3 → finală;
+- **1958 – 1970**: grupe de 4 (1958 cu baraj, 1962/1966 cu media golurilor, din 1970 golaveraj) → sferturi → semifinale → locul 3 → finală;
+- **1974 / 1978**: grupe → a doua fază a grupelor (câștigătoarea joacă finala, locul 2 finala mică); **1982**: 24 de echipe, a doua fază cu grupe de 3 → semifinale;
+- **1986 – 1994**: 24 de echipe, trec primele 2 + cele mai bune 4 locuri 3 → optimi …; **1998 – 2022**: 32 de echipe, 8 grupe → optimi …; **2026**: 48 de echipe, 12 grupe, + cele mai bune 8 locuri 3 → șaisprezecimi → optimi → sferturi → semifinale → locul 3 → finală.
+
+Punctaj 2/1/0 până în 1990, 3/1/0 din 1994. Cartonașe din 1970: două galbene = suspendare la meciul următor (până în 1990 cumulate pe tot turneul, din 1994 șterse după grupe), roșu = suspendare. Egalitățile din eliminatorii: prelungiri, apoi meci rejucat (1930-1938, 1974), tragere la sorți (1954-1970) sau penalty-uri (din 1978). Cariera se încheie cu locul real ocupat (campioană, vicecampioană, locul 3/4 sau faza în care a fost eliminată) și intră în Sala Trofeelor.
 
 ### "Confirmă sau rescrie istoria"
 
 Ori de câte ori e posibil, adversarii din traseul jucătorului sunt **exact adversarii reali** pe care echipa aleasă i-a întâlnit în ediția respectivă (ordine reală, opoziție reală) — dar scorul rămâne **simulat**, în funcție de tactica aleasă. Fiecare meci arată un badge 📜 *adversar real* sau 🎲 *adversar simulat*, iar rezultatul e comparat cu scorul istoric real.
 
-Ecrane suplimentare: **Muzeul Edițiilor** (toate cele 22 de ediții, cu gazdă/scor din finală/golgheter/minge oficială/rezumat istoric) și **Galeria Legendelor** (18 fotbaliști istorici cu bio scurt).
+Ecrane suplimentare: **Muzeul Edițiilor** (toate cele 23 de ediții, 1930-2026, cu gazdă/golgheter/minge oficială/rezumat istoric și formatul turneului) și **Galeria Legendelor** (18 fotbaliști istorici cu bio scurt).
 
 ## Scope v1 — notă importantă
 
@@ -72,7 +82,7 @@ python3 -m http.server 8080
 ## Următorii pași
 
 1. ~~Extinde `real_fixtures.js` la toate campaniile reale~~ — făcut (278 de campanii). Următorul pas posibil: loturi reale și pentru adversarii „shadow” noi.
-2. Stabilește scope-ul exact pentru v1 iOS (câte ediții/echipe la lansare, dacă păstrăm turneul simplificat grupă→sferturi→semifinală→finală sau extindem la 32 de echipe/optimi).
+2. ~~Formatul real al fiecărei ediții (inclusiv 2026)~~ — făcut: `FORMATS` în `data.js` + `career.js`.
 3. ~~Port Swift al motorului de simulare + teste unitare XCTest~~ — în `ios/WorldCupCore/`, verificat automat în CI.
 4. ~~Construire UI SwiftUI ecran cu ecran~~ — prima versiune în `ios/App/`; urmează rafinarea pe baza capturilor din CI / TestFlight.
 5. Cont Apple Developer + semnare + TestFlight (se poate face tot din GitHub Actions, fără Mac).

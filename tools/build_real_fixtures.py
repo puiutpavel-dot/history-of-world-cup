@@ -12,18 +12,14 @@ Rulare:
   git clone --depth 1 https://github.com/jfjelstul/worldcup /tmp/worldcup
   python3 tools/build_real_fixtures.py /tmp/worldcup/data-csv/team_appearances.csv
 
-Reguli de mapare pe bracketul fix al jocului (3 meciuri în grupă → sferturi →
-semifinală → finală; motorul folosește primele 3 meciuri din `group` și
-ultimele 3 din `knockout`):
+Structură (motorul de carieră folosește formatul real al fiecărei ediții,
+vezi FORMATS în data.js și career.js):
   - `group`: meciurile din faza grupelor, în ordine cronologică (inclusiv
-    barajul de grupă din 1954);
-  - `knockout`: optimi, sferturi, a doua fază a grupelor (1974-1982), turneul
-    final (1950), semifinale, finală — cronologic; finala mică e exclusă
-    (nu face parte din drumul spre titlu);
-  - meciurile rejucate (1934/1938): se păstrează doar rejucarea;
-  - edițiile fără faza grupelor (1934, 1938): optimile trec în `group`;
-  - alinierea pe sferturi/semifinală/finală se face în motor, după `round`
-    (buildKnockoutPlan în engine.js / Engine.knockoutPlan în Swift).
+    barajul de grupă din 1954/1958);
+  - `knockout`: restul drumului, cronologic, cu `round` = R32 / R16 / QF /
+    GR2 (a doua fază a grupelor 1974-1982) / FR (grupa finală 1950) / SF /
+    3P (finala mică) / F;
+  - meciurile rejucate (1934/1938): se păstrează doar rejucarea.
 """
 import csv
 import json
@@ -44,9 +40,8 @@ CODE = {
 
 STAGE = {
     "group stage": "G", "round of 16": "R16", "quarter-finals": "QF", "second group stage": "GR2",
-    "final round": "FR", "semi-finals": "SF", "final": "F",
+    "final round": "FR", "semi-finals": "SF", "third-place match": "3P", "final": "F",
 }
-STAGE_RO = {"R16": "optimi de finală", "QF": "sferturi de finală", "GR2": "a doua fază a grupelor", "SF": "semifinală"}
 
 
 def code(c):
@@ -68,8 +63,10 @@ def existing_notes():
     src = open(path, encoding="utf-8").read()
     for key, body in re.findall(r"\n  ([A-Z]{3}_\d{4}): \{(.*?)\n  \},", src, re.S):
         for m in re.finditer(r'opp: "([A-Z]{3})", scoreFor: (\d+), scoreAgainst: (\d+)(?:, note: "((?:[^"\\]|\\.)*)")?', body):
-            if m.group(4):
-                notes[(key, m.group(1), int(m.group(2)), int(m.group(3)))] = json.loads(f'"{m.group(4)}"')
+            # notele „în realitate: …” veneau din maparea veche pe bracket — nu sunt note de mână
+            note = re.sub(r"^în realitate: [^;]*(; )?", "", json.loads(f'"{m.group(4)}"')) if m.group(4) else ""
+            if note:
+                notes[(key, m.group(1), int(m.group(2)), int(m.group(3)))] = note
     return notes
 
 
@@ -85,7 +82,7 @@ def main(csv_path, out=os.path.join(ROOT, "real_fixtures.js")):
     by_campaign = defaultdict(list)
     for r in rows:
         team = code(r["team_code"])
-        if team in curated and r["stage_name"] != "third-place match" and r["replayed"] != "1":
+        if team in curated and r["replayed"] != "1":
             by_campaign[(team, int(r["tournament_id"][3:]))].append(r)
 
     campaigns = {}
@@ -107,13 +104,6 @@ def main(csv_path, out=os.path.join(ROOT, "real_fixtures.js")):
             m = {"round": st, "opp": opp, "scoreFor": gf, "scoreAgainst": ga,
                  "note": manual.get((key, opp, gf, ga)) or (", ".join(auto) or None)}
             (group if st == "G" else knockout).append(m)
-        # ediții fără faza grupelor (1934, 1938): optimile devin „meciurile din grupă”
-        while not any(m["round"] == "G" for m in group) and knockout and knockout[0]["round"] == "R16":
-            m = knockout.pop(0)
-            extra = f"în realitate: {STAGE_RO.get(m['round'], m['round'])}"
-            m["note"] = f"{extra}; {m['note']}" if m["note"] else extra
-            m["round"] = "G"
-            group.append(m)
         for m in group:
             m.pop("round")
         campaigns[key] = {"group": group, "knockout": knockout}
@@ -146,11 +136,11 @@ def main(csv_path, out=os.path.join(ROOT, "real_fixtures.js")):
         "   bracketul jocului, note în română. Acest fișier de date este, la rândul",
         "   lui, distribuit sub CC-BY-SA 4.0.",
         "",
-        "   Cheie: \"<COD_ECHIPA>_<AN>\". group = meciuri din grupă (motorul folosește",
-        "   primele 3), knockout = drumul eliminatoriu (motorul îl aliniază",
-        "   după `round` pe sferturi → semifinală → finală — vezi",
-        "   buildKnockoutPlan în engine.js). Scorurile sunt informative (comparate",
-        "   cu rezultatul simulat) — NU determină simularea.",
+        "   Cheie: \"<COD_ECHIPA>_<AN>\". group = meciuri din grupă, knockout = restul",
+        "   drumului, cu round = R32/R16/QF/GR2/FR/SF/3P/F. Motorul de carieră",
+        "   (career.js) ia adversarul real pentru fiecare etapă a formatului ediției.",
+        "   Scorurile sunt informative (comparate cu rezultatul simulat) — NU",
+        "   determină simularea.",
         "   ============================================================ */",
         "",
         "const REAL_FIXTURES = {",

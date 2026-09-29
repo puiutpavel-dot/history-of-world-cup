@@ -28,8 +28,84 @@ const EDITIONS = [
   { year: 2010, host: "Africa de Sud",  champion: "ESP", runnerUp: "NED", third: "GER", topScorer: "Thomas Müller (GER) — 5", ball: "Jabulani", note: "Primul titlu al Spaniei, generația de aur tiki-taka." },
   { year: 2014, host: "Brazilia",       champion: "GER", runnerUp: "ARG", third: "NED", topScorer: "James Rodríguez (COL) — 6", ball: "Brazuca", note: "Germania 7-1 Brazilia în semifinală — al patrulea titlu german." },
   { year: 2018, host: "Rusia",          champion: "FRA", runnerUp: "CRO", third: "BEL", topScorer: "Harry Kane (ENG) — 6", ball: "Telstar 18", note: "Franța lui Mbappé și Griezmann câștigă al doilea titlu." },
-  { year: 2022, host: "Qatar",          champion: "ARG", runnerUp: "FRA", third: "MAR", topScorer: "Kylian Mbappé (FRA) — 8", ball: "Al Rihla", note: "Argentina lui Messi câștigă al treilea titlu, finală istorică 3-3 (pen. 4-2) cu Franța." },
+  { year: 2022, host: "Qatar",          champion: "ARG", runnerUp: "FRA", third: "CRO", topScorer: "Kylian Mbappé (FRA) — 8", ball: "Al Rihla", note: "Argentina lui Messi câștigă al treilea titlu, finală istorică 3-3 (pen. 4-2) cu Franța." },
+  { year: 2026, host: "Canada / Mexic / SUA", champion: "ESP", runnerUp: "ARG", third: "ENG", topScorer: "Kylian Mbappé (FRA) — 10", ball: "Trionda", note: "Prima ediție cu 48 de echipe și șaisprezecimi. Spania învinge Argentina 1-0 după prelungiri și câștigă al doilea titlu; Anglia ia bronzul după 6-4 cu Franța." },
 ];
+
+/* ---------- FORMATS: regulamentul fiecărei ediții ----------
+   stages = drumul unei echipe prin turneu:
+     group      — faza grupelor: size (echipe în grupă), groups (câte grupe),
+                  advance (câte trec), bestThirds (câte locuri 3 trec, din toate grupele),
+                  seededOnly (1954: capii de serie joacă doar cu necapii → 2 meciuri),
+                  sizeFromReal (1930/1950: grupe inegale — mărimea vine din grupa reală)
+     group2     — a doua fază a grupelor (1974-1982): winnerTo = runda următoare,
+                  secondTo = "3P" dacă locul 2 joacă finala mică
+     finalGroup — grupa finală din 1950: locul 1 e campioana
+     ko         — meci eliminatoriu: round = R32 / R16 / QF / SF / F
+   win = puncte pentru victorie (egal = 1, înfrângere = 0)
+   tiebreak = "gd" (golaveraj: diferență, apoi goluri marcate), "ga" (media golurilor),
+              "playoff" (baraj la egalitate de puncte pe locul de calificare)
+   koTie = cum se decide o egalitate după prelungiri: "replay" (meci rejucat),
+           "lots" (tragere la sorți), "penalties"
+   cards = "none" | "accumulate" (2 galbene = suspendare, tot turneul) |
+           "reset" (galbenele se șterg după grupe)
+   third = există finala mică
+   byes = echipe scutite de o rundă (1938: Suedia în optimi) */
+const FORMATS = {
+  1930: { teams: 13, win: 2, tiebreak: "gd", koTie: "replay", cards: "none", third: false,
+    stages: [{ type: "group", size: 3, groups: 4, advance: 1, sizeFromReal: true }, { type: "ko", round: "SF" }, { type: "ko", round: "F" }],
+    summary: "13 echipe, fără calificări. 4 grupe (una de 4, trei de 3); doar câștigătoarea grupei trece. Semifinale, finală. Fără optimi, sferturi sau loc 3. Punctaj 2/1/0, fără cartonașe." },
+  1934: { teams: 16, win: 2, tiebreak: "gd", koTie: "replay", cards: "none", third: true,
+    stages: [{ type: "ko", round: "R16" }, { type: "ko", round: "QF" }, { type: "ko", round: "SF" }, { type: "ko", round: "F" }],
+    summary: "16 echipe, prima ediție cu calificări. Fără grupe: optimi, sferturi, semifinale, locul 3, finală. La egalitate: prelungiri, apoi meci rejucat. Fără cartonașe." },
+  1938: { teams: 15, win: 2, tiebreak: "gd", koTie: "replay", cards: "none", third: true, byes: { R16: ["SWE"] },
+    stages: [{ type: "ko", round: "R16" }, { type: "ko", round: "QF" }, { type: "ko", round: "SF" }, { type: "ko", round: "F" }],
+    summary: "15 echipe (Austria s-a retras după Anschluss; Suedia a primit bye în optimi). Fără grupe: optimi, sferturi, semifinale, locul 3, finală. La egalitate: prelungiri, apoi meci rejucat. Fără cartonașe." },
+  1950: { teams: 13, win: 2, tiebreak: "gd", koTie: "replay", cards: "none", third: false,
+    stages: [{ type: "group", size: 4, groups: 4, advance: 1, sizeFromReal: true }, { type: "finalGroup", size: 4 }],
+    summary: "13 echipe (retrageri). 4 grupe inegale; câștigătoarele merg în grupa finală de 4, jucată toți contra toți — prima clasată e campioană. Fără optimi, sferturi, semifinale sau finală separată. Punctaj 2/1/0." },
+  1954: { teams: 16, win: 2, tiebreak: "playoff", koTie: "lots", cards: "none", third: true,
+    stages: [{ type: "group", size: 4, groups: 4, advance: 2, seededOnly: true }, { type: "ko", round: "QF" }, { type: "ko", round: "SF" }, { type: "ko", round: "F" }],
+    summary: "16 echipe. 4 grupe de 4, dar capii de serie joacă doar cu necapii (2 meciuri). Primele 2 trec; la egalitate de puncte, baraj. Sferturi, semifinale, locul 3, finală. Punctaj 2/1/0, fără cartonașe." },
+  1958: { teams: 16, win: 2, tiebreak: "playoff", koTie: "lots", cards: "none", third: true,
+    stages: [{ type: "group", size: 4, groups: 4, advance: 2 }, { type: "ko", round: "QF" }, { type: "ko", round: "SF" }, { type: "ko", round: "F" }],
+    summary: "16 echipe. 4 grupe de 4, toți contra toți; primele 2 trec, la egalitate de puncte se joacă baraj. Sferturi, semifinale, locul 3, finală. Punctaj 2/1/0, fără cartonașe." },
+  1962: { teams: 16, win: 2, tiebreak: "ga", koTie: "lots", cards: "none", third: true,
+    stages: [{ type: "group", size: 4, groups: 4, advance: 2 }, { type: "ko", round: "QF" }, { type: "ko", round: "SF" }, { type: "ko", round: "F" }],
+    summary: "16 echipe. 4 grupe de 4; primele 2 trec, departajare prin media golurilor. Sferturi, semifinale, locul 3, finală. Punctaj 2/1/0, fără cartonașe." },
+  1966: { teams: 16, win: 2, tiebreak: "ga", koTie: "lots", cards: "none", third: true,
+    stages: [{ type: "group", size: 4, groups: 4, advance: 2 }, { type: "ko", round: "QF" }, { type: "ko", round: "SF" }, { type: "ko", round: "F" }],
+    summary: "16 echipe. 4 grupe de 4; primele 2 trec, departajare prin media golurilor. Sferturi, semifinale, locul 3, finală. Punctaj 2/1/0, fără cartonașe." },
+  1970: { teams: 16, win: 2, tiebreak: "gd", koTie: "lots", cards: "accumulate", third: true,
+    stages: [{ type: "group", size: 4, groups: 4, advance: 2 }, { type: "ko", round: "QF" }, { type: "ko", round: "SF" }, { type: "ko", round: "F" }],
+    summary: "16 echipe. 4 grupe de 4; primele 2 trec, departajare prin diferența de goluri (nu media). Sferturi, semifinale, locul 3, finală. Punctaj 2/1/0. Prima ediție cu cartonașe galbene și roșii." },
+  1974: { teams: 16, win: 2, tiebreak: "gd", koTie: "replay", cards: "accumulate", third: true,
+    stages: [{ type: "group", size: 4, groups: 4, advance: 2 }, { type: "group2", size: 4, groups: 2, winnerTo: "F", secondTo: "3P" }, { type: "ko", round: "F" }],
+    summary: "16 echipe. 4 grupe de 4 (primele 2 trec), apoi 2 grupe de 4: câștigătoarele joacă finala, locurile 2 joacă pentru locul 3. Fără optimi, sferturi sau semifinale clasice. Punctaj 2/1/0; primul cartonaș roșu din istoria Mondialelor." },
+  1978: { teams: 16, win: 2, tiebreak: "gd", koTie: "penalties", cards: "accumulate", third: true,
+    stages: [{ type: "group", size: 4, groups: 4, advance: 2 }, { type: "group2", size: 4, groups: 2, winnerTo: "F", secondTo: "3P" }, { type: "ko", round: "F" }],
+    summary: "Același format ca în 1974: 4 grupe, apoi 2 grupe de 4, apoi locul 3 și finala. Fără optimi, sferturi sau semifinale clasice. Punctaj 2/1/0, cartonașe în uz." },
+  1982: { teams: 24, win: 2, tiebreak: "gd", koTie: "penalties", cards: "accumulate", third: true,
+    stages: [{ type: "group", size: 4, groups: 6, advance: 2 }, { type: "group2", size: 3, groups: 4, winnerTo: "SF" }, { type: "ko", round: "SF" }, { type: "ko", round: "F" }],
+    summary: "24 de echipe, prima extindere. 6 grupe de 4 (primele 2 trec), apoi 4 grupe de 3 — câștigătoarele merg în semifinale. Semifinale, locul 3, finală. Punctaj 2/1/0, cartonașe în uz." },
+  1986: { teams: 24, win: 2, tiebreak: "gd", koTie: "penalties", cards: "accumulate", third: true,
+    stages: [{ type: "group", size: 4, groups: 6, advance: 2, bestThirds: 4 }, { type: "ko", round: "R16" }, { type: "ko", round: "QF" }, { type: "ko", round: "SF" }, { type: "ko", round: "F" }],
+    summary: "24 de echipe. 6 grupe; trec primele 2 plus cele mai bune 4 locuri 3. Optimi, sferturi, semifinale, locul 3, finală — prima ediție modernă cu optimi după grupe. Punctaj 2/1/0, cartonașe în uz." },
+  1990: { teams: 24, win: 2, tiebreak: "gd", koTie: "penalties", cards: "accumulate", third: true,
+    stages: [{ type: "group", size: 4, groups: 6, advance: 2, bestThirds: 4 }, { type: "ko", round: "R16" }, { type: "ko", round: "QF" }, { type: "ko", round: "SF" }, { type: "ko", round: "F" }],
+    summary: "Același format ca în 1986: 6 grupe, primele 2 + 4 locuri 3, apoi optimi, sferturi, semifinale, locul 3, finală. Ultima ediție cu 2 puncte la victorie; două galbene pe tot turneul însemnau suspendare, inclusiv în fazele târzii." },
+  1994: { teams: 24, win: 3, tiebreak: "gd", koTie: "penalties", cards: "reset", third: true,
+    stages: [{ type: "group", size: 4, groups: 6, advance: 2, bestThirds: 4 }, { type: "ko", round: "R16" }, { type: "ko", round: "QF" }, { type: "ko", round: "SF" }, { type: "ko", round: "F" }],
+    summary: "24 de echipe, același drum ca în 1986/1990. Punctaj nou: 3/1/0. Galbenele din grupe se șterg la faza eliminatorie." },
+  1998: { teams: 32, win: 3, tiebreak: "gd", koTie: "penalties", cards: "reset", third: true,
+    stages: [{ type: "group", size: 4, groups: 8, advance: 2 }, { type: "ko", round: "R16" }, { type: "ko", round: "QF" }, { type: "ko", round: "SF" }, { type: "ko", round: "F" }],
+    summary: "32 de echipe. 8 grupe de 4, primele 2 trec. Optimi, sferturi, semifinale, locul 3, finală. Punctaj 3/1/0, galbenele se șterg după grupe." },
+  2026: { teams: 48, win: 3, tiebreak: "gd", koTie: "penalties", cards: "reset", third: true,
+    stages: [{ type: "group", size: 4, groups: 12, advance: 2, bestThirds: 8 }, { type: "ko", round: "R32" }, { type: "ko", round: "R16" }, { type: "ko", round: "QF" }, { type: "ko", round: "SF" }, { type: "ko", round: "F" }],
+    summary: "48 de echipe. 12 grupe de 4; trec primele 2 plus cele mai bune 8 locuri 3 (32 de echipe). Șaisprezecimi, optimi, sferturi, semifinale, locul 3, finală. Punctaj 3/1/0, galbenele se șterg după grupe." },
+};
+for (const y of [2002, 2006, 2010, 2014, 2018, 2022]) FORMATS[y] = FORMATS[1998];
+function getFormat(year) { return FORMATS[year]; }
 
 /* ---------- TEAMS: curbe de putere (puncte de control interpolate) ----------
    rating pe scară 40-99. Punctele lipsă dintre ani se interpolează liniar
@@ -156,5 +232,5 @@ function getTeamMeta(code) {
 }
 
 if (typeof module !== "undefined" && module.exports) {
-  module.exports = { EDITIONS, TEAMS, LEGENDS, SHADOW_TEAMS, getTeamMeta };
+  module.exports = { EDITIONS, TEAMS, LEGENDS, SHADOW_TEAMS, FORMATS, getFormat, getTeamMeta };
 }

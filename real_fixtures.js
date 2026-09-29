@@ -4,7 +4,7 @@
    notele scrise de mână (ex. „Maracanazo”) sunt păstrate la regenerare.
 
    Traseul real al fiecăreia dintre cele 23 națiuni curate la fiecare
-   ediție la care a participat: 278 campanii, 1173 meciuri reale.
+   ediție la care a participat: 278 campanii, 1209 meciuri reale.
 
    Sursa: Fjelstul World Cup Database, © 2023 Joshua C. Fjelstul, Ph.D.,
    https://www.github.com/jfjelstul/worldcup — licență CC-BY-SA 4.0
@@ -13,11 +13,11 @@
    bracketul jocului, note în română. Acest fișier de date este, la rândul
    lui, distribuit sub CC-BY-SA 4.0.
 
-   Cheie: "<COD_ECHIPA>_<AN>". group = meciuri din grupă (motorul folosește
-   primele 3), knockout = drumul eliminatoriu (motorul îl aliniază
-   după `round` pe sferturi → semifinală → finală — vezi
-   buildKnockoutPlan în engine.js). Scorurile sunt informative (comparate
-   cu rezultatul simulat) — NU determină simularea.
+   Cheie: "<COD_ECHIPA>_<AN>". group = meciuri din grupă, knockout = restul
+   drumului, cu round = R32/R16/QF/GR2/FR/SF/3P/F. Motorul de carieră
+   (career.js) ia adversarul real pentru fiecare etapă a formatului ediției.
+   Scorurile sunt informative (comparate cu rezultatul simulat) — NU
+   determină simularea.
    ============================================================ */
 
 const REAL_FIXTURES = {
@@ -95,79 +95,81 @@ const REAL_FIXTURES = {
 
   ARG_1934: {
     group: [
-      { opp: "SWE", scoreFor: 2, scoreAgainst: 3, note: "în realitate: optimi de finală" },
     ],
     knockout: [
+      { round: "R16", opp: "SWE", scoreFor: 2, scoreAgainst: 3 },
     ],
   },
 
   AUT_1934: {
     group: [
-      { opp: "FRA", scoreFor: 3, scoreAgainst: 2, note: "în realitate: optimi de finală; prelungiri" },
     ],
     knockout: [
+      { round: "R16", opp: "FRA", scoreFor: 3, scoreAgainst: 2, note: "prelungiri" },
       { round: "QF", opp: "HUN", scoreFor: 2, scoreAgainst: 1 },
       { round: "SF", opp: "ITA", scoreFor: 0, scoreAgainst: 1 },
+      { round: "3P", opp: "GER", scoreFor: 2, scoreAgainst: 3 },
     ],
   },
 
   BEL_1934: {
     group: [
-      { opp: "GER", scoreFor: 2, scoreAgainst: 5, note: "în realitate: optimi de finală" },
     ],
     knockout: [
+      { round: "R16", opp: "GER", scoreFor: 2, scoreAgainst: 5 },
     ],
   },
 
   BRA_1934: {
     group: [
-      { opp: "ESP", scoreFor: 1, scoreAgainst: 3, note: "în realitate: optimi de finală" },
     ],
     knockout: [
+      { round: "R16", opp: "ESP", scoreFor: 1, scoreAgainst: 3 },
     ],
   },
 
   ESP_1934: {
     group: [
-      { opp: "BRA", scoreFor: 3, scoreAgainst: 1, note: "în realitate: optimi de finală" },
     ],
     knockout: [
+      { round: "R16", opp: "BRA", scoreFor: 3, scoreAgainst: 1 },
       { round: "QF", opp: "ITA", scoreFor: 0, scoreAgainst: 1, note: "meci rejucat" },
     ],
   },
 
   FRA_1934: {
     group: [
-      { opp: "AUT", scoreFor: 2, scoreAgainst: 3, note: "în realitate: optimi de finală; prelungiri" },
     ],
     knockout: [
+      { round: "R16", opp: "AUT", scoreFor: 2, scoreAgainst: 3, note: "prelungiri" },
     ],
   },
 
   GER_1934: {
     group: [
-      { opp: "BEL", scoreFor: 5, scoreAgainst: 2, note: "în realitate: optimi de finală" },
     ],
     knockout: [
+      { round: "R16", opp: "BEL", scoreFor: 5, scoreAgainst: 2 },
       { round: "QF", opp: "SWE", scoreFor: 2, scoreAgainst: 1 },
       { round: "SF", opp: "TCH", scoreFor: 1, scoreAgainst: 3 },
+      { round: "3P", opp: "AUT", scoreFor: 3, scoreAgainst: 2 },
     ],
   },
 
   HUN_1934: {
     group: [
-      { opp: "EGY", scoreFor: 4, scoreAgainst: 2, note: "în realitate: optimi de finală" },
     ],
     knockout: [
+      { round: "R16", opp: "EGY", scoreFor: 4, scoreAgainst: 2 },
       { round: "QF", opp: "AUT", scoreFor: 1, scoreAgainst: 2 },
     ],
   },
 
   ITA_1934: {
     group: [
-      { opp: "USA", scoreFor: 7, scoreAgainst: 1, note: "în realitate: optimi de finală" },
     ],
     knockout: [
+      { round: "R16", opp: "USA", scoreFor: 7, scoreAgainst: 1 },
       { round: "QF", opp: "ESP", scoreFor: 1, scoreAgainst: 0, note: "meci rejucat" },
       { round: "SF", opp: "AUT", scoreFor: 1, scoreAgainst: 0 },
       { round: "F", opp: "TCH", scoreFor: 2, scoreAgainst: 1, note: "prelungiri" },
@@ -176,26 +178,26 @@ const REAL_FIXTURES = {
 
   NED_1934: {
     group: [
-      { opp: "SUI", scoreFor: 2, scoreAgainst: 3, note: "în realitate: optimi de finală" },
     ],
     knockout: [
+      { round: "R16", opp: "SUI", scoreFor: 2, scoreAgainst: 3 },
     ],
   },
 
   SWE_1934: {
     group: [
-      { opp: "ARG", scoreFor: 3, scoreAgainst: 2, note: "în realitate: optimi de finală" },
     ],
     knockout: [
+      { round: "R16", opp: "ARG", scoreFor: 3, scoreAgainst: 2 },
       { round: "QF", opp: "GER", scoreFor: 1, scoreAgainst: 2 },
     ],
   },
 
   TCH_1934: {
     group: [
-      { opp: "ROU", scoreFor: 2, scoreAgainst: 1, note: "în realitate: optimi de finală" },
     ],
     knockout: [
+      { round: "R16", opp: "ROU", scoreFor: 2, scoreAgainst: 1 },
       { round: "QF", opp: "SUI", scoreFor: 3, scoreAgainst: 2 },
       { round: "SF", opp: "GER", scoreFor: 3, scoreAgainst: 1 },
       { round: "F", opp: "ITA", scoreFor: 1, scoreAgainst: 2, note: "prelungiri" },
@@ -204,52 +206,53 @@ const REAL_FIXTURES = {
 
   USA_1934: {
     group: [
-      { opp: "ITA", scoreFor: 1, scoreAgainst: 7, note: "în realitate: optimi de finală" },
     ],
     knockout: [
+      { round: "R16", opp: "ITA", scoreFor: 1, scoreAgainst: 7 },
     ],
   },
 
   BEL_1938: {
     group: [
-      { opp: "FRA", scoreFor: 1, scoreAgainst: 3, note: "în realitate: optimi de finală" },
     ],
     knockout: [
+      { round: "R16", opp: "FRA", scoreFor: 1, scoreAgainst: 3 },
     ],
   },
 
   BRA_1938: {
     group: [
-      { opp: "POL", scoreFor: 6, scoreAgainst: 5, note: "în realitate: optimi de finală; prelungiri" },
     ],
     knockout: [
+      { round: "R16", opp: "POL", scoreFor: 6, scoreAgainst: 5, note: "prelungiri" },
       { round: "QF", opp: "TCH", scoreFor: 2, scoreAgainst: 1, note: "meci rejucat" },
       { round: "SF", opp: "ITA", scoreFor: 1, scoreAgainst: 2 },
+      { round: "3P", opp: "SWE", scoreFor: 4, scoreAgainst: 2 },
     ],
   },
 
   FRA_1938: {
     group: [
-      { opp: "BEL", scoreFor: 3, scoreAgainst: 1, note: "în realitate: optimi de finală" },
     ],
     knockout: [
+      { round: "R16", opp: "BEL", scoreFor: 3, scoreAgainst: 1 },
       { round: "QF", opp: "ITA", scoreFor: 1, scoreAgainst: 3 },
     ],
   },
 
   GER_1938: {
     group: [
-      { opp: "SUI", scoreFor: 2, scoreAgainst: 4, note: "în realitate: optimi de finală; meci rejucat" },
     ],
     knockout: [
+      { round: "R16", opp: "SUI", scoreFor: 2, scoreAgainst: 4, note: "meci rejucat" },
     ],
   },
 
   HUN_1938: {
     group: [
-      { opp: "DEI", scoreFor: 6, scoreAgainst: 0, note: "în realitate: optimi de finală" },
     ],
     knockout: [
+      { round: "R16", opp: "DEI", scoreFor: 6, scoreAgainst: 0 },
       { round: "QF", opp: "SUI", scoreFor: 2, scoreAgainst: 0 },
       { round: "SF", opp: "SWE", scoreFor: 5, scoreAgainst: 1 },
       { round: "F", opp: "ITA", scoreFor: 2, scoreAgainst: 4 },
@@ -258,9 +261,9 @@ const REAL_FIXTURES = {
 
   ITA_1938: {
     group: [
-      { opp: "NOR", scoreFor: 2, scoreAgainst: 1, note: "în realitate: optimi de finală; prelungiri" },
     ],
     knockout: [
+      { round: "R16", opp: "NOR", scoreFor: 2, scoreAgainst: 1, note: "prelungiri" },
       { round: "QF", opp: "FRA", scoreFor: 3, scoreAgainst: 1 },
       { round: "SF", opp: "BRA", scoreFor: 2, scoreAgainst: 1 },
       { round: "F", opp: "HUN", scoreFor: 4, scoreAgainst: 2 },
@@ -269,17 +272,17 @@ const REAL_FIXTURES = {
 
   NED_1938: {
     group: [
-      { opp: "TCH", scoreFor: 0, scoreAgainst: 3, note: "în realitate: optimi de finală; prelungiri" },
     ],
     knockout: [
+      { round: "R16", opp: "TCH", scoreFor: 0, scoreAgainst: 3, note: "prelungiri" },
     ],
   },
 
   POL_1938: {
     group: [
-      { opp: "BRA", scoreFor: 5, scoreAgainst: 6, note: "în realitate: optimi de finală; prelungiri" },
     ],
     knockout: [
+      { round: "R16", opp: "BRA", scoreFor: 5, scoreAgainst: 6, note: "prelungiri" },
     ],
   },
 
@@ -289,14 +292,15 @@ const REAL_FIXTURES = {
     knockout: [
       { round: "QF", opp: "CUB", scoreFor: 8, scoreAgainst: 0 },
       { round: "SF", opp: "HUN", scoreFor: 1, scoreAgainst: 5 },
+      { round: "3P", opp: "BRA", scoreFor: 2, scoreAgainst: 4 },
     ],
   },
 
   TCH_1938: {
     group: [
-      { opp: "NED", scoreFor: 3, scoreAgainst: 0, note: "în realitate: optimi de finală; prelungiri" },
     ],
     knockout: [
+      { round: "R16", opp: "NED", scoreFor: 3, scoreAgainst: 0, note: "prelungiri" },
       { round: "QF", opp: "BRA", scoreFor: 1, scoreAgainst: 2, note: "meci rejucat" },
     ],
   },
@@ -397,6 +401,7 @@ const REAL_FIXTURES = {
     knockout: [
       { round: "QF", opp: "SUI", scoreFor: 7, scoreAgainst: 5 },
       { round: "SF", opp: "GER", scoreFor: 1, scoreAgainst: 6 },
+      { round: "3P", opp: "URU", scoreFor: 3, scoreAgainst: 1 },
     ],
   },
 
@@ -518,6 +523,7 @@ const REAL_FIXTURES = {
     knockout: [
       { round: "QF", opp: "ENG", scoreFor: 4, scoreAgainst: 2 },
       { round: "SF", opp: "HUN", scoreFor: 2, scoreAgainst: 4, note: "prelungiri" },
+      { round: "3P", opp: "AUT", scoreFor: 1, scoreAgainst: 3 },
     ],
   },
 
@@ -574,6 +580,7 @@ const REAL_FIXTURES = {
     knockout: [
       { round: "QF", opp: "NIR", scoreFor: 4, scoreAgainst: 0 },
       { round: "SF", opp: "BRA", scoreFor: 2, scoreAgainst: 5 },
+      { round: "3P", opp: "GER", scoreFor: 6, scoreAgainst: 3 },
     ],
   },
 
@@ -586,6 +593,7 @@ const REAL_FIXTURES = {
     knockout: [
       { round: "QF", opp: "YUG", scoreFor: 1, scoreAgainst: 0 },
       { round: "SF", opp: "SWE", scoreFor: 1, scoreAgainst: 3 },
+      { round: "3P", opp: "FRA", scoreFor: 3, scoreAgainst: 6 },
     ],
   },
 
@@ -850,6 +858,7 @@ const REAL_FIXTURES = {
     knockout: [
       { round: "QF", opp: "PRK", scoreFor: 5, scoreAgainst: 3 },
       { round: "SF", opp: "ENG", scoreFor: 1, scoreAgainst: 2 },
+      { round: "3P", opp: "URS", scoreFor: 2, scoreAgainst: 1 },
     ],
   },
 
@@ -907,6 +916,7 @@ const REAL_FIXTURES = {
     knockout: [
       { round: "QF", opp: "ENG", scoreFor: 3, scoreAgainst: 2, note: "prelungiri" },
       { round: "SF", opp: "ITA", scoreFor: 3, scoreAgainst: 4, note: "prelungiri" },
+      { round: "3P", opp: "URU", scoreFor: 1, scoreAgainst: 0 },
     ],
   },
 
@@ -973,6 +983,7 @@ const REAL_FIXTURES = {
     knockout: [
       { round: "QF", opp: "URS", scoreFor: 1, scoreAgainst: 0, note: "prelungiri" },
       { round: "SF", opp: "BRA", scoreFor: 1, scoreAgainst: 3 },
+      { round: "3P", opp: "GER", scoreFor: 0, scoreAgainst: 1 },
     ],
   },
 
@@ -999,6 +1010,7 @@ const REAL_FIXTURES = {
       { round: "GR2", opp: "GDR", scoreFor: 1, scoreAgainst: 0 },
       { round: "GR2", opp: "ARG", scoreFor: 2, scoreAgainst: 1 },
       { round: "GR2", opp: "NED", scoreFor: 0, scoreAgainst: 2 },
+      { round: "3P", opp: "POL", scoreFor: 0, scoreAgainst: 1 },
     ],
   },
 
@@ -1050,6 +1062,7 @@ const REAL_FIXTURES = {
       { round: "GR2", opp: "SWE", scoreFor: 1, scoreAgainst: 0 },
       { round: "GR2", opp: "YUG", scoreFor: 2, scoreAgainst: 1 },
       { round: "GR2", opp: "GER", scoreFor: 0, scoreAgainst: 1 },
+      { round: "3P", opp: "BRA", scoreFor: 1, scoreAgainst: 0 },
     ],
   },
 
@@ -1113,6 +1126,7 @@ const REAL_FIXTURES = {
       { round: "GR2", opp: "PER", scoreFor: 3, scoreAgainst: 0 },
       { round: "GR2", opp: "ARG", scoreFor: 0, scoreAgainst: 0 },
       { round: "GR2", opp: "POL", scoreFor: 3, scoreAgainst: 1 },
+      { round: "3P", opp: "ITA", scoreFor: 2, scoreAgainst: 1 },
     ],
   },
 
@@ -1169,6 +1183,7 @@ const REAL_FIXTURES = {
       { round: "GR2", opp: "GER", scoreFor: 0, scoreAgainst: 0 },
       { round: "GR2", opp: "AUT", scoreFor: 1, scoreAgainst: 0 },
       { round: "GR2", opp: "NED", scoreFor: 1, scoreAgainst: 2 },
+      { round: "3P", opp: "BRA", scoreFor: 1, scoreAgainst: 2 },
     ],
   },
 
@@ -1301,6 +1316,7 @@ const REAL_FIXTURES = {
       { round: "GR2", opp: "AUT", scoreFor: 1, scoreAgainst: 0 },
       { round: "GR2", opp: "NIR", scoreFor: 4, scoreAgainst: 1 },
       { round: "SF", opp: "GER", scoreFor: 3, scoreAgainst: 3, note: "penalty-uri 4-5" },
+      { round: "3P", opp: "POL", scoreFor: 2, scoreAgainst: 3 },
     ],
   },
 
@@ -1352,6 +1368,7 @@ const REAL_FIXTURES = {
       { round: "GR2", opp: "BEL", scoreFor: 3, scoreAgainst: 0 },
       { round: "GR2", opp: "URS", scoreFor: 0, scoreAgainst: 0 },
       { round: "SF", opp: "ITA", scoreFor: 0, scoreAgainst: 2 },
+      { round: "3P", opp: "FRA", scoreFor: 3, scoreAgainst: 2 },
     ],
   },
 
@@ -1389,6 +1406,7 @@ const REAL_FIXTURES = {
       { round: "R16", opp: "URS", scoreFor: 4, scoreAgainst: 3, note: "prelungiri" },
       { round: "QF", opp: "ESP", scoreFor: 1, scoreAgainst: 1, note: "penalty-uri 5-4" },
       { round: "SF", opp: "ARG", scoreFor: 0, scoreAgainst: 2 },
+      { round: "3P", opp: "FRA", scoreFor: 2, scoreAgainst: 4, note: "prelungiri" },
     ],
   },
 
@@ -1438,6 +1456,7 @@ const REAL_FIXTURES = {
       { round: "R16", opp: "ITA", scoreFor: 2, scoreAgainst: 0 },
       { round: "QF", opp: "BRA", scoreFor: 1, scoreAgainst: 1, note: "penalty-uri 4-3" },
       { round: "SF", opp: "GER", scoreFor: 0, scoreAgainst: 2 },
+      { round: "3P", opp: "BEL", scoreFor: 4, scoreAgainst: 2, note: "prelungiri" },
     ],
   },
 
@@ -1597,6 +1616,7 @@ const REAL_FIXTURES = {
       { round: "R16", opp: "BEL", scoreFor: 1, scoreAgainst: 0, note: "prelungiri" },
       { round: "QF", opp: "CMR", scoreFor: 3, scoreAgainst: 2, note: "prelungiri" },
       { round: "SF", opp: "GER", scoreFor: 1, scoreAgainst: 1, note: "penalty-uri 3-4" },
+      { round: "3P", opp: "ITA", scoreFor: 1, scoreAgainst: 2 },
     ],
   },
 
@@ -1635,6 +1655,7 @@ const REAL_FIXTURES = {
       { round: "R16", opp: "URU", scoreFor: 2, scoreAgainst: 0 },
       { round: "QF", opp: "IRL", scoreFor: 1, scoreAgainst: 0 },
       { round: "SF", opp: "ARG", scoreFor: 1, scoreAgainst: 1, note: "penalty-uri 3-4" },
+      { round: "3P", opp: "ENG", scoreFor: 2, scoreAgainst: 1 },
     ],
   },
 
@@ -1829,6 +1850,7 @@ const REAL_FIXTURES = {
       { round: "R16", opp: "KSA", scoreFor: 3, scoreAgainst: 1 },
       { round: "QF", opp: "ROU", scoreFor: 2, scoreAgainst: 2, note: "penalty-uri 5-4" },
       { round: "SF", opp: "BRA", scoreFor: 0, scoreAgainst: 1 },
+      { round: "3P", opp: "BUL", scoreFor: 4, scoreAgainst: 0 },
     ],
   },
 
@@ -1899,6 +1921,7 @@ const REAL_FIXTURES = {
       { round: "R16", opp: "ROU", scoreFor: 1, scoreAgainst: 0 },
       { round: "QF", opp: "GER", scoreFor: 3, scoreAgainst: 0 },
       { round: "SF", opp: "FRA", scoreFor: 1, scoreAgainst: 2 },
+      { round: "3P", opp: "NED", scoreFor: 2, scoreAgainst: 1 },
     ],
   },
 
@@ -2012,6 +2035,7 @@ const REAL_FIXTURES = {
       { round: "R16", opp: "YUG", scoreFor: 2, scoreAgainst: 1 },
       { round: "QF", opp: "ARG", scoreFor: 2, scoreAgainst: 1 },
       { round: "SF", opp: "BRA", scoreFor: 1, scoreAgainst: 1, note: "penalty-uri 2-4" },
+      { round: "3P", opp: "CRO", scoreFor: 1, scoreAgainst: 2 },
     ],
   },
 
@@ -2150,6 +2174,7 @@ const REAL_FIXTURES = {
       { round: "R16", opp: "ITA", scoreFor: 2, scoreAgainst: 1, note: "prelungiri" },
       { round: "QF", opp: "ESP", scoreFor: 0, scoreAgainst: 0, note: "penalty-uri 5-3" },
       { round: "SF", opp: "GER", scoreFor: 0, scoreAgainst: 1 },
+      { round: "3P", opp: "TUR", scoreFor: 2, scoreAgainst: 3 },
     ],
   },
 
@@ -2205,6 +2230,7 @@ const REAL_FIXTURES = {
       { round: "R16", opp: "JPN", scoreFor: 1, scoreAgainst: 0 },
       { round: "QF", opp: "SEN", scoreFor: 1, scoreAgainst: 0, note: "prelungiri" },
       { round: "SF", opp: "BRA", scoreFor: 0, scoreAgainst: 1 },
+      { round: "3P", opp: "KOR", scoreFor: 3, scoreAgainst: 2 },
     ],
   },
 
@@ -2311,6 +2337,7 @@ const REAL_FIXTURES = {
       { round: "R16", opp: "SWE", scoreFor: 2, scoreAgainst: 0 },
       { round: "QF", opp: "ARG", scoreFor: 1, scoreAgainst: 1, note: "penalty-uri 4-2" },
       { round: "SF", opp: "ITA", scoreFor: 0, scoreAgainst: 2, note: "prelungiri" },
+      { round: "3P", opp: "POR", scoreFor: 3, scoreAgainst: 1 },
     ],
   },
 
@@ -2390,6 +2417,7 @@ const REAL_FIXTURES = {
       { round: "R16", opp: "NED", scoreFor: 1, scoreAgainst: 0 },
       { round: "QF", opp: "ENG", scoreFor: 0, scoreAgainst: 0, note: "penalty-uri 3-1" },
       { round: "SF", opp: "FRA", scoreFor: 0, scoreAgainst: 1 },
+      { round: "3P", opp: "GER", scoreFor: 1, scoreAgainst: 3 },
     ],
   },
 
@@ -2483,6 +2511,7 @@ const REAL_FIXTURES = {
       { round: "R16", opp: "ENG", scoreFor: 4, scoreAgainst: 1 },
       { round: "QF", opp: "ARG", scoreFor: 4, scoreAgainst: 0 },
       { round: "SF", opp: "ESP", scoreFor: 0, scoreAgainst: 1 },
+      { round: "3P", opp: "URU", scoreFor: 3, scoreAgainst: 2 },
     ],
   },
 
@@ -2564,6 +2593,7 @@ const REAL_FIXTURES = {
       { round: "R16", opp: "KOR", scoreFor: 2, scoreAgainst: 1 },
       { round: "QF", opp: "GHA", scoreFor: 1, scoreAgainst: 1, note: "penalty-uri 4-2" },
       { round: "SF", opp: "NED", scoreFor: 2, scoreAgainst: 3 },
+      { round: "3P", opp: "GER", scoreFor: 2, scoreAgainst: 3 },
     ],
   },
 
@@ -2614,6 +2644,7 @@ const REAL_FIXTURES = {
       { round: "R16", opp: "CHI", scoreFor: 1, scoreAgainst: 1, note: "penalty-uri 3-2" },
       { round: "QF", opp: "COL", scoreFor: 2, scoreAgainst: 1 },
       { round: "SF", opp: "GER", scoreFor: 1, scoreAgainst: 7 },
+      { round: "3P", opp: "NED", scoreFor: 0, scoreAgainst: 3 },
     ],
   },
 
@@ -2724,6 +2755,7 @@ const REAL_FIXTURES = {
       { round: "R16", opp: "MEX", scoreFor: 2, scoreAgainst: 1 },
       { round: "QF", opp: "CRC", scoreFor: 0, scoreAgainst: 0, note: "penalty-uri 4-3" },
       { round: "SF", opp: "ARG", scoreFor: 0, scoreAgainst: 0, note: "penalty-uri 2-4" },
+      { round: "3P", opp: "BRA", scoreFor: 3, scoreAgainst: 0 },
     ],
   },
 
@@ -2780,6 +2812,7 @@ const REAL_FIXTURES = {
       { round: "R16", opp: "JPN", scoreFor: 3, scoreAgainst: 2 },
       { round: "QF", opp: "BRA", scoreFor: 2, scoreAgainst: 1 },
       { round: "SF", opp: "FRA", scoreFor: 0, scoreAgainst: 1 },
+      { round: "3P", opp: "ENG", scoreFor: 2, scoreAgainst: 0 },
     ],
   },
 
@@ -2819,6 +2852,7 @@ const REAL_FIXTURES = {
       { round: "R16", opp: "COL", scoreFor: 1, scoreAgainst: 1, note: "penalty-uri 4-3" },
       { round: "QF", opp: "SWE", scoreFor: 2, scoreAgainst: 0 },
       { round: "SF", opp: "CRO", scoreFor: 1, scoreAgainst: 2, note: "prelungiri" },
+      { round: "3P", opp: "BEL", scoreFor: 0, scoreAgainst: 2 },
     ],
   },
 
@@ -2990,6 +3024,7 @@ const REAL_FIXTURES = {
       { round: "R16", opp: "JPN", scoreFor: 1, scoreAgainst: 1, note: "penalty-uri 3-1" },
       { round: "QF", opp: "BRA", scoreFor: 1, scoreAgainst: 1, note: "penalty-uri 4-2" },
       { round: "SF", opp: "ARG", scoreFor: 0, scoreAgainst: 3 },
+      { round: "3P", opp: "MAR", scoreFor: 2, scoreAgainst: 1 },
     ],
   },
 
@@ -3072,6 +3107,7 @@ const REAL_FIXTURES = {
       { round: "R16", opp: "ESP", scoreFor: 0, scoreAgainst: 0, note: "penalty-uri 3-0" },
       { round: "QF", opp: "POR", scoreFor: 1, scoreAgainst: 0 },
       { round: "SF", opp: "FRA", scoreFor: 0, scoreAgainst: 2 },
+      { round: "3P", opp: "CRO", scoreFor: 1, scoreAgainst: 2 },
     ],
   },
 

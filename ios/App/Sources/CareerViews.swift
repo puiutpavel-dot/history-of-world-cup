@@ -1,7 +1,7 @@
 import SwiftUI
 import WorldCupCore
 
-// MARK: - Hub (lot + tactici)
+// MARK: - Hub (drum, tactici, lot)
 
 struct HubView: View {
     @EnvironmentObject var game: GameState
@@ -10,18 +10,22 @@ struct HubView: View {
     var body: some View {
         if let c = game.career {
             let team = game.data.meta(c.teamCode)
+            let fmt = game.data.formats[c.year]
             ScreenContainer(title: "\(team.flag) \(team.name) · CM \(String(c.year))", backLabel: "Meniu", onBack: { game.go(.menu) }) {
                 VStack(spacing: 14) {
-                    Panel(title: "Etapă curentă: \(c.stage.label)") {
-                        if c.stage == .group {
-                            ForEach(Array(c.groupOpponents.enumerated()), id: \.offset) { i, g in
-                                let played = i < c.groupResults.count ? c.groupResults[i] : nil
-                                FixtureRow(label: nil, code: g.code, isReal: g.isReal,
-                                           status: played?.scoreText ?? (i == c.groupMatchIndex ? "urmează" : "—"),
-                                           dimmed: false)
-                            }
-                        } else {
-                            KnockoutSummary(career: c)
+                    Panel(title: c.nextMatch?.label ?? c.outcomeLabel) {
+                        if let members = c.groupMembers {
+                            Text("Grupa: " + members.map { game.label($0) }.joined(separator: " · "))
+                                .font(.system(size: 13)).foregroundStyle(Color.hwcTextDim)
+                        }
+                        ForEach(Array(c.records.enumerated()), id: \.offset) { _, r in
+                            FixtureRow(label: r.label, code: r.opp, isReal: r.isReal, status: r.scoreText, dimmed: false)
+                        }
+                        if let next = c.nextMatch {
+                            FixtureRow(label: next.label, code: next.opp, isReal: next.isReal, status: "urmează", dimmed: false)
+                        }
+                        if let fmt {
+                            Text(fmt.summary).font(.system(size: 12)).foregroundStyle(Color.hwcTextDim).padding(.top, 4)
                         }
                     }
 
@@ -40,19 +44,24 @@ struct HubView: View {
                         Text("Atac \(Int(r.attack.rounded())) · Apărare \(Int(r.defense.rounded()))")
                             .font(.stat(13))
                             .foregroundStyle(Color.hwcText)
+                        let suspended = c.squad.indices.filter { (c.suspended[$0] ?? 0) > 0 }.map { c.squad[$0].name }
+                        if !suspended.isEmpty {
+                            Text("🟥 Suspendați pentru meciul următor: " + suspended.joined(separator: ", "))
+                                .font(.system(size: 13)).foregroundStyle(Color.hwcRed)
+                        }
                     }
 
                     Panel(title: "Lot — Start XI") {
-                        ForEach(Array(c.squad.prefix(11).enumerated()), id: \.offset) { _, p in PlayerChip(player: p) }
+                        let avail = c.availablePlayers.map { $0.player }
+                        ForEach(Array(avail.prefix(11).enumerated()), id: \.offset) { _, p in PlayerChip(player: p) }
                         Text("BANCĂ").font(.scoreboard(13, weight: .semibold)).foregroundStyle(Color.hwcTextDim).padding(.top, 6)
-                        ForEach(Array(c.squad.dropFirst(11).enumerated()), id: \.offset) { _, p in PlayerChip(player: p).opacity(0.8) }
+                        ForEach(Array(avail.dropFirst(11).enumerated()), id: \.offset) { _, p in PlayerChip(player: p).opacity(0.8) }
                     }
 
-                    if !c.isFinished {
-                        PrimaryButton(title: c.stage == .group ? "Joacă meciul \(c.groupMatchIndex + 1)/3 din grupă" : "Joacă \(c.stage.label)",
-                                      systemImage: "sportscourt.fill") {
-                            game.openPreview()
-                        }
+                    if let next = c.nextMatch {
+                        PrimaryButton(title: "Joacă: \(next.label)", systemImage: "sportscourt.fill") { game.openPreview() }
+                    } else {
+                        PrimaryButton(title: "Vezi sumarul carierei", systemImage: "list.bullet") { game.go(.summary) }
                     }
                     Button("Abandonează cariera", role: .destructive) { confirmExit = true }
                         .font(.system(size: 14))
@@ -87,36 +96,10 @@ struct FixtureRow: View {
                 RealBadge(isReal: isReal)
             }
             Spacer()
-            Text(status).font(.stat(15)).foregroundStyle(Color.hwcGold2)
+            Text(status).font(.stat(14)).foregroundStyle(Color.hwcGold2).multilineTextAlignment(.trailing)
         }
         .padding(.vertical, 4)
         .opacity(dimmed ? 0.5 : 1)
-    }
-}
-
-struct KnockoutSummary: View {
-    let career: Career
-    let rounds: [Stage] = [.QF, .SF, .F]
-
-    var body: some View {
-        ForEach(Array(rounds.enumerated()), id: \.offset) { i, round in
-            if i < career.knockoutResults.count {
-                let r = career.knockoutResults[i]
-                FixtureRow(label: round.shortLabel, code: r.opp, isReal: r.isReal, status: r.scoreText, dimmed: false)
-            } else if i == career.knockoutIndex && !career.isFinished {
-                if let plan = career.knockoutPlan[i], !career.usedOpponents.contains(plan.opp) {
-                    FixtureRow(label: round.shortLabel, code: plan.opp, isReal: true, status: "urmează", dimmed: false)
-                } else {
-                    HStack {
-                        Text("\(round.shortLabel): adversar tras la sorți").font(.system(size: 14)).foregroundStyle(Color.hwcText)
-                        Spacer()
-                        Text("urmează").font(.stat(14)).foregroundStyle(Color.hwcGold2)
-                    }
-                }
-            } else {
-                Text("\(round.shortLabel): —").font(.system(size: 14)).foregroundStyle(Color.hwcTextDim)
-            }
-        }
     }
 }
 
@@ -126,21 +109,23 @@ struct MatchPreviewView: View {
     @EnvironmentObject var game: GameState
 
     var body: some View {
-        if let c = game.career, let p = game.preview {
-            ScreenContainer(title: p.opponent.roundLabel, backLabel: "Hub", onBack: { game.go(.hub) }) {
+        if let c = game.career, let next = c.nextMatch {
+            let oppRatings = Engine.tacticalRatings(Career.opponentSquad(next.opp, c.year, engine: game.engine), .echilibrat, .f442)
+            ScreenContainer(title: next.label, backLabel: "Hub", onBack: { game.go(.hub) }) {
                 VStack(spacing: 18) {
                     HStack(alignment: .top) {
                         TeamColumn(code: c.teamCode, ratings: c.yourRatings)
                         Text("VS").font(.scoreboard(34)).foregroundStyle(Color.hwcRed).padding(.top, 24)
-                        TeamColumn(code: p.opponent.code, ratings: p.opponentRatings)
+                        TeamColumn(code: next.opp, ratings: oppRatings)
                     }
                     .padding(.top, 12)
-                    RealBadge(isReal: p.opponent.isReal)
-                    if let note = p.opponent.note {
+                    RealBadge(isReal: next.isReal)
+                    if let note = next.note {
                         Text(note).font(.system(size: 14).italic()).foregroundStyle(Color.hwcTextDim).multilineTextAlignment(.center)
                     }
-                    Text("Mentalitate: \(c.mentality.rawValue) · Formație: \(c.formation.rawValue)")
-                        .font(.system(size: 13)).foregroundStyle(Color.hwcTextDim)
+                    Text("Mentalitate: \(c.mentality.rawValue) · Formație: \(c.formation.rawValue)"
+                         + (next.knockout ? " · Eliminatoriu: la egal se joacă prelungiri" : ""))
+                        .font(.system(size: 13)).foregroundStyle(Color.hwcTextDim).multilineTextAlignment(.center)
                     PrimaryButton(title: "Joacă meciul", systemImage: "play.fill") { game.playMatch() }
                 }
             }
@@ -167,7 +152,14 @@ struct TeamColumn: View {
     }
 }
 
-// MARK: - Meci live (ticker)
+// MARK: - Meci live (ticker cu goluri și cartonașe)
+
+struct TickerItem: Hashable {
+    let minute: Int
+    let team: Side
+    let text: String
+    let isGoal: Bool
+}
 
 struct MatchLiveView: View {
     @EnvironmentObject var game: GameState
@@ -175,12 +167,26 @@ struct MatchLiveView: View {
     @State private var finished = false
     @State private var ticker: Task<Void, Never>?
 
+    static func items(_ m: MatchRecord, team: String, meta: (String) -> String) -> [TickerItem] {
+        let goals = m.events.map { e in
+            TickerItem(minute: e.minute, team: e.team, text: "⚽ \(e.minute)' \(e.scorer ?? "?") (\(meta(e.team == .A ? team : m.opp)))", isGoal: true)
+        }
+        let icon = ["Y": "🟨", "R": "🟥", "Y2R": "🟨🟥"]
+        let cards = m.cards.map { c in
+            TickerItem(minute: c.minute, team: c.team, text: "\(icon[c.type] ?? "") \(c.minute)' \(c.player) (\(meta(c.team == .A ? team : m.opp)))", isGoal: false)
+        }
+        return (goals + cards).enumerated()
+            .sorted { $0.element.minute != $1.element.minute ? $0.element.minute < $1.element.minute : $0.offset < $1.offset }
+            .map(\.element)
+    }
+
     var body: some View {
         if let c = game.career, let m = game.lastMatch {
-            let visible = Array(m.events.prefix(shown))
-            let a = visible.filter { $0.team == .A }.count
-            let b = visible.count - a
-            ScreenContainer(title: m.stage == .group ? "Grupă" : m.stage.label) {
+            let all = Self.items(m, team: c.teamCode) { game.data.meta($0).name }
+            let visible = Array(all.prefix(shown))
+            let a = visible.filter { $0.isGoal && $0.team == .A }.count
+            let b = visible.filter { $0.isGoal && $0.team == .B }.count
+            ScreenContainer(title: m.label) {
                 VStack(spacing: 16) {
                     HStack {
                         Text(game.data.meta(c.teamCode).flag).font(.system(size: 40))
@@ -196,11 +202,11 @@ struct MatchLiveView: View {
                     .background(Color.black.opacity(0.85), in: RoundedRectangle(cornerRadius: 14))
 
                     VStack(alignment: .leading, spacing: 8) {
-                        if m.events.isEmpty && finished {
-                            Text("Niciun gol — 0-0 la final.").foregroundStyle(Color.hwcTextDim)
+                        if all.isEmpty && finished {
+                            Text("Niciun gol, niciun cartonaș.").foregroundStyle(Color.hwcTextDim)
                         }
                         ForEach(Array(visible.enumerated()), id: \.offset) { _, e in
-                            Text("⚽ \(e.minute)' \(e.scorer ?? "?") (\(e.teamName))")
+                            Text(e.text)
                                 .font(.system(size: 15))
                                 .foregroundStyle(e.team == .A ? Color.hwcText : Color.hwcTextDim)
                                 .transition(.move(edge: .bottom).combined(with: .opacity))
@@ -209,34 +215,41 @@ struct MatchLiveView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
 
                     if finished {
-                        if let pens = m.pens {
-                            Text("Penalty-uri: \(pens)").font(.stat(16)).foregroundStyle(Color.hwcGold2)
+                        VStack(spacing: 6) {
+                            if m.extraTime { Text("⏱️ S-au jucat prelungiri.") }
+                            if let pens = m.pens { Text("🎯 Penalty-uri: \(pens)").font(.stat(16)) }
+                            if let lots = m.lots { Text(lots == .A ? "🪙 Tragere la sorți: câștigată!" : "🪙 Tragere la sorți: pierdută.") }
+                            if m.tied { Text("🔁 Egalitate după prelungiri — meciul se rejoacă.") }
+                            if let won = m.won {
+                                Text(won ? "✅ Calificată mai departe!" : "❌ Pierdut")
+                                    .font(.scoreboard(20)).foregroundStyle(won ? Color.hwcPitch2 : Color.hwcRed)
+                            }
+                            if !m.suspended.isEmpty {
+                                Text("🟥 Au lipsit (suspendați): " + m.suspended.joined(separator: ", ")).font(.system(size: 13))
+                            }
                         }
-                        if let won = m.won {
-                            Text(won ? "✅ Calificată mai departe!" : "❌ Eliminată")
-                                .font(.scoreboard(20)).foregroundStyle(won ? Color.hwcPitch2 : Color.hwcRed)
-                        }
+                        .foregroundStyle(Color.hwcGold2)
                         HistoryCompare(record: m)
                         PrimaryButton(title: "Continuă", systemImage: "arrow.right") { game.continueAfterMatch() }
                     } else {
-                        SecondaryButton(title: "Sări peste", systemImage: "forward.end.fill") { skip(m) }
+                        SecondaryButton(title: "Sări peste", systemImage: "forward.end.fill") { skip(all.count) }
                     }
                 }
                 .padding(.top, 8)
             }
-            .onAppear { start(m) }
+            .onAppear { start(all.count) }
             .onDisappear { ticker?.cancel() }
         } else {
             MenuView()
         }
     }
 
-    private func start(_ m: MatchRecord) {
+    private func start(_ count: Int) {
         shown = 0
         finished = false
         ticker?.cancel()
         ticker = Task { @MainActor in
-            for i in 0..<m.events.count {
+            for i in 0..<count {
                 try? await Task.sleep(nanoseconds: 550_000_000)
                 if Task.isCancelled { return }
                 withAnimation(.spring(duration: 0.3)) { shown = i + 1 }
@@ -246,22 +259,24 @@ struct MatchLiveView: View {
         }
     }
 
-    private func skip(_ m: MatchRecord) {
+    private func skip(_ count: Int) {
         ticker?.cancel()
-        shown = m.events.count
+        shown = count
         finished = true
     }
 }
 
-// MARK: - Clasament grupă
+// MARK: - Clasament (după fiecare fază de grupe)
 
 struct GroupTableView: View {
     @EnvironmentObject var game: GameState
 
     var body: some View {
-        if let c = game.career, let standings = c.standings {
-            let advanced = (c.groupRank ?? 9) <= 1
-            ScreenContainer(title: "Clasament grupă — CM \(String(c.year))") {
+        if let c = game.career, game.tableIndex < c.tables.count {
+            let t = c.tables[game.tableIndex]
+            let title = ["group": "Clasament grupă", "group2": "A doua fază a grupelor", "finalGroup": "Grupa finală"][t.type] ?? "Clasament"
+            let verdict = t.type == "finalGroup" ? c.outcomeLabel : (t.qualified ? "✅ Calificată" : "❌ Eliminată")
+            ScreenContainer(title: "\(title) — CM \(String(c.year))") {
                 VStack(spacing: 14) {
                     Panel {
                         HStack {
@@ -274,7 +289,7 @@ struct GroupTableView: View {
                         }
                         .font(.scoreboard(13, weight: .semibold))
                         .foregroundStyle(Color.hwcTextDim)
-                        ForEach(Array(standings.enumerated()), id: \.offset) { i, r in
+                        ForEach(Array(t.rows.enumerated()), id: \.offset) { i, r in
                             HStack {
                                 Text("\(i + 1)").frame(width: 22, alignment: .leading)
                                 Text(game.label(r.code)).lineLimit(1).minimumScaleFactor(0.8)
@@ -287,24 +302,41 @@ struct GroupTableView: View {
                             .foregroundStyle(r.code == c.teamCode ? Color.hwcGold2 : Color.hwcText)
                             .padding(.vertical, 6)
                             .padding(.horizontal, 6)
-                            .background(i < 2 ? Color.hwcPitch.opacity(0.18) : Color.clear, in: RoundedRectangle(cornerRadius: 6))
+                            .background(r.code == c.teamCode ? Color.hwcPitch.opacity(0.18) : Color.clear, in: RoundedRectangle(cornerRadius: 6))
                         }
                     }
-                    Panel(title: "Celelalte meciuri din grupă") {
-                        ForEach(Array(c.otherGroupResults.enumerated()), id: \.offset) { _, m in
-                            HStack {
-                                Text("\(game.label(m.home)) – \(game.label(m.away))").font(.system(size: 14))
-                                Spacer()
-                                Text("\(m.goalsHome)-\(m.goalsAway)").font(.stat(14))
+                    if !t.others.isEmpty {
+                        Panel(title: "Celelalte meciuri") {
+                            ForEach(Array(t.others.enumerated()), id: \.offset) { _, m in
+                                HStack {
+                                    Text("\(game.label(m.home)) – \(game.label(m.away))").font(.system(size: 14))
+                                    Spacer()
+                                    Text("\(m.gh)-\(m.ga)").font(.stat(14))
+                                }
+                                .foregroundStyle(Color.hwcText)
                             }
-                            .foregroundStyle(Color.hwcText)
                         }
                     }
-                    Text("Primele 2 echipe se califică în sferturi.").font(.system(size: 13)).foregroundStyle(Color.hwcTextDim)
-                    if advanced {
-                        PrimaryButton(title: "Continuă spre sferturi", systemImage: "arrow.right") { game.go(.hub) }
-                    } else {
+                    if let p = t.playoff {
+                        if let o = p.result {
+                            Text("Baraj: \(game.label(o.home)) – \(game.label(o.away)) \(o.gh)-\(o.ga) (trece \(game.label(o.winner ?? "")))")
+                                .font(.system(size: 13)).foregroundStyle(Color.hwcTextDim)
+                        } else if let opp = p.opp {
+                            Text("Egalitate de puncte pe locul de calificare → baraj cu \(game.label(opp)): \(p.won == true ? "câștigat" : "pierdut").")
+                                .font(.system(size: 13)).foregroundStyle(Color.hwcTextDim)
+                        }
+                    }
+                    if let th = t.thirds {
+                        Text("Clasamentul locurilor 3: locul \(th.rank + 1) din \(th.rows.count) — "
+                             + (t.qualified ? "calificată printre cele mai bune locuri 3!" : "nu ajunge printre cele mai bune locuri 3."))
+                            .font(.system(size: 13)).foregroundStyle(Color.hwcTextDim)
+                    }
+                    Text("Victorie = \(game.data.formats[c.year]?.win ?? 2) puncte · \(verdict)")
+                        .font(.system(size: 13)).foregroundStyle(Color.hwcTextDim)
+                    if c.isFinished {
                         PrimaryButton(title: "Vezi sumarul carierei", systemImage: "list.bullet") { game.go(.summary) }
+                    } else {
+                        PrimaryButton(title: "Continuă", systemImage: "arrow.right") { game.go(.hub) }
                     }
                 }
             }
@@ -325,8 +357,9 @@ struct CareerSummaryView: View {
                 VStack(spacing: 14) {
                     VStack(spacing: 6) {
                         Text("\(game.label(c.teamCode)) · CM \(String(c.year))").font(.scoreboard(22)).foregroundStyle(Color.hwcText)
-                        Text(summaryTitle(c)).font(.scoreboard(28)).foregroundStyle(c.outcome == .champion ? Color.hwcGold2 : Color.hwcRed)
-                        let real = c.allResults.filter(\.isReal)
+                        Text(c.outcomeLabel).font(.scoreboard(28))
+                            .foregroundStyle(c.outcome == .champion ? Color.hwcGold2 : (c.outcome == .out ? Color.hwcRed : Color.hwcText))
+                        let real = c.records.filter(\.isReal)
                         if !real.isEmpty {
                             let same = real.filter { $0.historyRepeated == true }.count
                             Text("📜 \(real.count) meciuri reale · 📖 \(same) scoruri identice cu istoria")
@@ -336,13 +369,12 @@ struct CareerSummaryView: View {
                     .padding(.vertical, 12)
 
                     Panel {
-                        ForEach(Array(c.allResults.enumerated()), id: \.offset) { i, r in
+                        ForEach(Array(c.records.enumerated()), id: \.offset) { i, r in
                             VStack(alignment: .leading, spacing: 4) {
-                                FixtureRow(label: r.stage == .group ? "Grupă \(i + 1)" : r.stage.shortLabel,
-                                           code: r.opp, isReal: r.isReal, status: r.scoreText, dimmed: false)
+                                FixtureRow(label: r.label, code: r.opp, isReal: r.isReal, status: r.scoreText, dimmed: false)
                                 HistoryCompare(record: r)
                             }
-                            if i < c.allResults.count - 1 { Divider().overlay(Color.hwcBorder) }
+                            if i < c.records.count - 1 { Divider().overlay(Color.hwcBorder) }
                         }
                     }
                     PrimaryButton(title: "Meniu principal", systemImage: "house.fill") { game.endCareerAndGoHome() }
@@ -350,15 +382,6 @@ struct CareerSummaryView: View {
             }
         } else {
             MenuView()
-        }
-    }
-
-    private func summaryTitle(_ c: Career) -> String {
-        switch c.outcome {
-        case .champion: return "🏆 Campioană Mondială!"
-        case .eliminatedGroup: return "Eliminată în faza grupelor"
-        case .eliminatedKnockout: return "Eliminată în \(c.stage.eliminationPlace)"
-        case nil: return "În desfășurare"
         }
     }
 }
