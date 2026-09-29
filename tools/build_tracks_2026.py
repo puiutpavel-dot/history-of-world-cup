@@ -40,15 +40,23 @@ def main(out=os.path.join(ROOT, "tracks_2026.js")):
         s = m["score"]
         a, b = s.get("et") or s["ft"]
         pens = s.get("p")
-        for team, opp, gf, ga, pf, pa in ((m["team1"], m["team2"], a, b, *(pens or (0, 0))),
-                                          (m["team2"], m["team1"], b, a, *(reversed(pens) if pens else (0, 0)))):
+        # golurile (fără loviturile de departajare): goals1 = creditate echipei 1 (inclusiv autogolurile adversarului)
+        def minute_key(g):
+            base, _, extra = g["minute"].partition("+")
+            return (int(base), int(extra or 0))
+        allg = sorted([(g, 1) for g in m.get("goals1") or []] + [(g, 2) for g in m.get("goals2") or []], key=lambda x: minute_key(x[0]))
+        assert sum(1 for _, s in allg if s == 1) == a and sum(1 for _, s in allg if s == 2) == b, (m["team1"], m["team2"], s)
+        for side, (team, opp, gf, ga, pf, pa) in enumerate(((m["team1"], m["team2"], a, b, *(pens or (0, 0))),
+                                                            (m["team2"], m["team1"], b, a, *(reversed(pens) if pens else (0, 0)))), 1):
             note = []
             if "et" in s and not pens:
                 note.append("după prelungiri")
             if pens:
                 note.append(f"penalty-uri {pf}-{pa}")
             t = tracks[CODE[team]]
-            t["matches"].append({"round": rnd, "opp": CODE[opp], "gf": gf, "ga": ga, "note": ", ".join(note) or None})
+            goals = [{"m": g["minute"], "t": 1 if s == side else 0, "n": g["name"],
+                      "k": "og" if g.get("owngoal") else "p" if g.get("penalty") else None} for g, s in allg]
+            t["matches"].append({"round": rnd, "opp": CODE[opp], "gf": gf, "ga": ga, "note": ", ".join(note) or None, "goals": goals})
             won = gf > ga or (pens is not None and pf > pa)
             if rnd == "F":
                 t["finish"] = "champion" if won else "runnerUp"

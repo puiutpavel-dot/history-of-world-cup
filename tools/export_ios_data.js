@@ -49,7 +49,7 @@ function buildData(lang) {
         best: t.best ? { year: t.best.year, finish: t.best.finish, label: finishLabel[t.best.finish] } : null,
         entries: t.entries.map((e) => ({
           year: e.year, code: e.code, finish: e.finish, finishLabel: finishLabel[e.finish],
-          matches: e.matches.map((m) => ({ round: trackRound[m.round], opp: m.opp, gf: m.gf, ga: m.ga, note: note(m.note) })),
+          matches: e.matches.map((m) => ({ round: trackRound[m.round], opp: m.opp, gf: m.gf, ga: m.ga, note: note(m.note), goals: m.goals || [] })),
         })),
       };
     }),

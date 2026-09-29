@@ -20,6 +20,8 @@ final class GameState: ObservableObject {
     private var demoUnlock: Bool?
     /// ediția deschisă inițial în Muzeu (folosit la capturile din CI)
     var museumOpenYear: Int?
+    /// capturile din CI: meciul curent afișat oprit la această fracțiune (0…1)
+    var demoMatchProgress: Double?
     @Published private(set) var career: Career?
     /// turneul real în desfășurare (modul principal: rezultate reale + quiz după fiecare meci)
     @Published private(set) var run: RealRun?
@@ -346,6 +348,15 @@ final class GameState: ObservableObject {
         switch name {
         case "editions": screen = .editions
         case "teams": screen = .teams(year: 1970)
+        case "runLive":
+            // finala din 1970 (Brazilia–Italia 4-1), oprită în jurul minutului 70
+            startRun(team: "BRA", year: 1970)
+            while let r = run, !r.isLastMatch {
+                revealRunMatch(); answerRun(r.question.answer); nextRunMatch()
+            }
+            revealRunMatch()
+            demoMatchProgress = 0.78
+            screen = .run
         case "run", "runQuiz", "runSummary":
             startRun(team: "BRA", year: 1970)
             if name != "run" {

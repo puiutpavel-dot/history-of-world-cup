@@ -124,3 +124,6 @@ Pe iOS, jocul principal nu mai e cariera simulată: alegi o ediție (1930–2026
 
 ## Mondialul 2026 meci cu meci
 `tracks_2026.js` (generat de `tools/build_tracks_2026.py`) conține toate cele 104 meciuri din 2026 pentru cele 48 de echipe, în formatul din `country_tracks.js`. Sursa: [openfootball/worldcup.json](https://github.com/openfootball/worldcup.json) (domeniu public), copie în `tools/data/openfootball_wc2026.json`. Scriptul verifică podiumul (Spania, Argentina, Anglia, Franța). Noi în date: RD Congo (`COD`), Capul Verde (`CPV`), Curaçao (`CUW`), Iordania (`JOR`), Uzbekistan (`UZB`); faza nouă `R32` (șaisprezecimi).
+
+## Meciurile în 19 secunde, cu marcatorii
+În „Retrăiește un Mondial”, fiecare meci se derulează în 19 secunde: cronometrul merge până la 90' (sau 120' dacă s-au jucat prelungiri), iar golurile apar la minutul lor, cu marcatorul (pen. / autogol). „Sări la final” oprește derularea. Golurile vin din `goals.csv` (Fjelstul, 1930–2022) și din `goals1`/`goals2` (openfootball, 2026), atașate fiecărui meci din `country_tracks.js` / `tracks_2026.js` ca `goals: [{m, t, n, k}]`; generatoarele verifică faptul că numărul de goluri se potrivește cu scorul fiecărui meci.

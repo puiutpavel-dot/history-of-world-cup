@@ -217,6 +217,31 @@ public struct TrackMatch: Codable, Hashable, Sendable {
     public let gf: Int
     public let ga: Int
     public let note: String?
+    /// golurile meciului, cronologic (fără loviturile de departajare)
+    public let goals: [TrackGoal]?
+
+    /// meciul a avut prelungiri (goluri după minutul 90 sau notă de prelungiri / penalty-uri)
+    public var hadExtraTime: Bool {
+        if (goals ?? []).contains(where: { $0.base > 90 }) { return true }
+        guard let note else { return false }
+        return ["prelungiri", "extra time", "penalt"].contains { note.contains($0) }
+    }
+}
+
+/// Un gol dintr-un meci real: t = 1 dacă a marcat echipa traseului, 0 adversarul.
+public struct TrackGoal: Codable, Hashable, Sendable {
+    /// minutul, ex. „67” sau „90+3”
+    public let m: String
+    public let t: Int
+    /// marcatorul
+    public let n: String
+    /// „p” = penalty, „og” = autogol
+    public let k: String?
+
+    public var base: Int { Int(m.split(separator: "+").first ?? "") ?? 0 }
+    public var extra: Int { m.contains("+") ? Int(m.split(separator: "+").last ?? "") ?? 0 : 0 }
+    /// poziția pe cronometru (prelungirile de timp se comprimă în minutul respectiv)
+    public var clock: Double { Double(base) + Double(min(extra, 9)) / 10 }
 }
 
 public struct TrackEntry: Codable, Hashable, Sendable {

@@ -63,14 +63,14 @@ jobs:
           xcrun simctl status_bar "$UDID" override --time 9:41 --batteryLevel 100 --cellularBars 4 || true
           xcrun simctl install "$UDID" "$APP"
           mkdir -p screenshots
-          for s in menu editions teams run runQuiz runSummary museum legends trophies rules quizMenu quiz country paywall about; do
+          for s in menu editions teams run runLive runQuiz runSummary museum legends trophies rules quizMenu quiz country paywall about; do
             xcrun simctl terminate "$UDID" "$BUNDLE" 2>/dev/null || true
             xcrun simctl launch "$UDID" "$BUNDLE" -demoScreen "$s" -demoLang en
             if [ "$s" = "live" ]; then sleep 9; else sleep 4; fi
             xcrun simctl io "$UDID" screenshot "screenshots/$s.png"
           done
           # aceleași ecrane în română (localizarea ro din App Store)
-          for s in menu run runQuiz museum quiz country paywall; do
+          for s in menu run runLive runQuiz museum quiz country paywall; do
             xcrun simctl terminate "$UDID" "$BUNDLE" 2>/dev/null || true
             xcrun simctl launch "$UDID" "$BUNDLE" -demoScreen "$s" -demoLang ro
             if [ "$s" = "live" ]; then sleep 9; else sleep 4; fi
@@ -90,7 +90,7 @@ jobs:
             echo
             echo "Generate automat de workflow-ul iOS pentru commit-ul \`${GITHUB_SHA::7}\` ($(date -u '+%Y-%m-%d %H:%M UTC'))."
             echo
-            for s in menu editions teams run runQuiz runSummary museum legends trophies rules quizMenu quiz country paywall about; do
+            for s in menu editions teams run runLive runQuiz runSummary museum legends trophies rules quizMenu quiz country paywall about; do
               if [ -f "$s.png" ]; then
                 printf '### %s\n\n<img src="%s.png" width="320">\n\n' "$s" "$s"
               fi

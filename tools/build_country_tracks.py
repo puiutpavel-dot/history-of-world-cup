@@ -9,7 +9,12 @@ Modificări: coduri FIFA, etichete în română, locul final calculat din meciur
 
 Rulare:
   curl -sSLo /tmp/team_appearances.csv https://raw.githubusercontent.com/jfjelstul/worldcup/35a8667f518b07469182ae16d35574dd0e7a00fb/data-csv/team_appearances.csv
-  python3 tools/build_country_tracks.py /tmp/team_appearances.csv
+  curl -sSLo /tmp/goals.csv https://raw.githubusercontent.com/jfjelstul/worldcup/35a8667f518b07469182ae16d35574dd0e7a00fb/data-csv/goals.csv
+  python3 tools/build_country_tracks.py /tmp/team_appearances.csv /tmp/goals.csv
+
+Golurile (al doilea fișier, opțional): în fiecare meci, „goals” = [{m, t, n, k}] în ordine
+cronologică — m = minutul („90+2”), t = 1 dacă a marcat echipa traseului, 0 adversarul,
+n = marcatorul, k = „p” (penalty) / „og” (autogol) / null. Loviturile de departajare nu sunt goluri.
 """
 import csv
 import json
@@ -30,7 +35,25 @@ STAGE = {
 DEPTH = {"G": 0, "R16": 1, "QF": 2, "GR2": 2, "SF": 3, "FR": 3, "3P": 4, "F": 5}
 
 
-def main(csv_path, out=os.path.join(ROOT, "country_tracks.js")):
+def load_goals(goals_path):
+    """match_id → listă de goluri (echipa creditată, minut, marcator, tip), în ordine cronologică."""
+    by_match = defaultdict(list)
+    if not goals_path:
+        return by_match
+    for g in csv.DictReader(open(goals_path, encoding="utf-8")):
+        if "Men's" not in g["tournament_name"]:
+            continue
+        reg, stop = int(g["minute_regulation"]), int(g["minute_stoppage"])
+        name = g["family_name"] if g["given_name"] == "not applicable" else f"{g['given_name']} {g['family_name']}"
+        kind = "og" if g["own_goal"] == "1" else "p" if g["penalty"] == "1" else None
+        by_match[g["match_id"]].append((reg, stop, code(g["team_code"]), f"{reg}+{stop}" if stop else str(reg), name, kind))
+    for gs in by_match.values():
+        gs.sort(key=lambda x: (x[0], x[1]))
+    return by_match
+
+
+def main(csv_path, goals_path=None, out=os.path.join(ROOT, "country_tracks.js")):
+    goals = load_goals(goals_path)
     rows = [r for r in csv.DictReader(open(csv_path, encoding="utf-8")) if "Men's" in r["tournament_name"]]
     by = defaultdict(list)
     for r in rows:
@@ -64,8 +87,14 @@ def main(csv_path, out=os.path.join(ROOT, "country_tracks.js")):
                 note.append("egal — meciul s-a rejucat")
             if r["penalty_shootout"] == "1":
                 note.append(f"penalty-uri {r['penalties_for']}-{r['penalties_against']}")
-            matches.append({"round": st, "opp": code(r["opponent_code"]), "gf": int(r["goals_for"]),
-                            "ga": int(r["goals_against"]), "note": ", ".join(note) or None})
+            match = {"round": st, "opp": code(r["opponent_code"]), "gf": int(r["goals_for"]),
+                     "ga": int(r["goals_against"]), "note": ", ".join(note) or None}
+            if goals_path:
+                gs = goals.get(r["match_id"], [])
+                match["goals"] = [{"m": m, "t": 1 if tc == team else 0, "n": n, "k": k} for _, _, tc, m, n, k in gs]
+                mine = sum(1 for g in match["goals"] if g["t"] == 1)
+                assert mine == match["gf"] and len(gs) - mine == match["ga"], (r["match_id"], team, mine, match)
+            matches.append(match)
             if st == "F":
                 finish = "champion" if r["result"] == "win" or (r["penalty_shootout"] == "1" and int(r["penalties_for"]) > int(r["penalties_against"])) else "runnerUp"
             if st == "3P":
@@ -99,4 +128,4 @@ def main(csv_path, out=os.path.join(ROOT, "country_tracks.js")):
 
 
 if __name__ == "__main__":
-    main(sys.argv[1])
+    main(sys.argv[1], sys.argv[2] if len(sys.argv) > 2 else None)
