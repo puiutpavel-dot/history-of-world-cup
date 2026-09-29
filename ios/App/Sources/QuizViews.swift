@@ -223,7 +223,7 @@ struct TrackEntryCard: View {
     var body: some View {
         let name = game.data.meta(entry.code).name
         let moments = game.data.story(entry.year)?.moments.filter { $0.contains(name) } ?? []
-        let playable = game.engine.eligibleTeams(entry.year).contains { $0.code == entry.code }
+        let playable = !entry.matches.isEmpty
         VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .firstTextBaseline) {
                 Text(String(entry.year)).font(.scoreboard(22)).foregroundStyle(Color.hwcGold2)
@@ -256,7 +256,7 @@ struct TrackEntryCard: View {
             if playable {
                 let playTitle = (game.isOpen(entry.year) ? "" : "🔒 ") + tr("Joacă această campanie", "Play this campaign")
                 SecondaryButton(title: playTitle, systemImage: "play.fill") {
-                    game.startCareer(team: entry.code, year: entry.year)
+                    game.startRun(team: entry.code, year: entry.year)
                 }
             }
         }

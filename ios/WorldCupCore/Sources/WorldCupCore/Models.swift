@@ -200,6 +200,15 @@ public struct QuizQuestion: Codable, Hashable, Identifiable, Sendable {
     public let q: String
     public let options: [String]
     public let answer: Int
+
+    public init(id: String, year: Int, kind: String, q: String, options: [String], answer: Int) {
+        self.id = id
+        self.year = year
+        self.kind = kind
+        self.q = q
+        self.options = options
+        self.answer = answer
+    }
 }
 
 public struct TrackMatch: Codable, Hashable, Sendable {

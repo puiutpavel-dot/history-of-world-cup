@@ -875,4 +875,13 @@ public struct TrophyEntry: Codable, Hashable, Identifiable, Sendable {
         outcome = career.outcome ?? .out
         label = career.outcomeLabel
     }
+
+    public init(id: UUID = UUID(), date: Date = Date(), team: String, year: Int, outcome: Outcome, label: String) {
+        self.id = id
+        self.date = date
+        self.team = team
+        self.year = year
+        self.outcome = outcome
+        self.label = label
+    }
 }

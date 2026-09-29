@@ -8,7 +8,7 @@ import WorldCupCore
 final class GameState: ObservableObject {
     enum Screen: Equatable {
         case menu, editions, teams(year: Int), hub, preview, live, groupTable, summary, museum, legends, trophies, rules,
-             quizMenu, quiz, quizResult, country, paywall, about
+             quizMenu, quiz, quizResult, country, paywall, about, run, runSummary
     }
 
     @Published var screen: Screen = .menu
@@ -21,6 +21,8 @@ final class GameState: ObservableObject {
     /// ediția deschisă inițial în Muzeu (folosit la capturile din CI)
     var museumOpenYear: Int?
     @Published private(set) var career: Career?
+    /// turneul real în desfășurare (modul principal: rezultate reale + quiz după fiecare meci)
+    @Published private(set) var run: RealRun?
     @Published private(set) var lastMatch: MatchRecord?
     /// indexul clasamentului afișat pe ecranul de clasament
     @Published private(set) var tableIndex = 0
@@ -35,6 +37,7 @@ final class GameState: ObservableObject {
     var data: GameData { engine.data }
 
     private let careerKey = "hwc_active_career_v1"
+    private let runKey = "hwc_real_run_v1"
     private let trophyKey = "hwc_trophy_room_v1"
     private let quizKey = "hwc_quiz_v1"
     private let countryKey = "hwc_country_v1"
@@ -47,6 +50,9 @@ final class GameState: ObservableObject {
         countryOverride = defaults.string(forKey: countryKey)
         if let saved = load(Career.self, key: careerKey), !saved.isFinished {
             career = saved
+        }
+        if let saved = load(RealRun.self, key: runKey), !saved.finished {
+            run = saved
         }
         if let i = arguments.firstIndex(of: "-demoScreen"), i + 1 < arguments.count {
             runDemo(arguments[i + 1])
@@ -93,7 +99,84 @@ final class GameState: ObservableObject {
 
     /// ecranul de echipe al unei ediții (edițiile blocate duc la deblocare)
     func openEdition(_ year: Int) {
+        guard hasRealMatches(year) else { return }
         if isOpen(year) { go(.teams(year: year)) } else { showPaywall() }
+    }
+
+    // MARK: Turneul real (modul principal)
+
+    var hasResumableRun: Bool { run.map { !$0.finished } ?? false }
+
+    /// ediția are meciurile reale în baza de date (2026: încă nu)
+    func hasRealMatches(_ year: Int) -> Bool { !data.tracks(year: year).isEmpty }
+
+    /// echipele unei ediții: întâi cele care au ajuns mai departe, apoi alfabetic
+    func playableTeams(_ year: Int) -> [TrackEntry] {
+        let rank = Dictionary(uniqueKeysWithValues: RunQuestions.finishOrder.enumerated().map { ($1, $0) })
+        return data.tracks(year: year).sorted {
+            let a = rank[$0.finish] ?? 99, b = rank[$1.finish] ?? 99
+            return a != b ? a < b : data.meta($0.code).name < data.meta($1.code).name
+        }
+    }
+
+    func startRun(team: String, year: Int) {
+        guard isOpen(year) else { return showPaywall() }
+        guard let e = data.track(team, year), !e.matches.isEmpty else { return }
+        run = RealRun(team: team, year: year, matches: e.matches, finish: e.finish, finishLabel: e.finishLabel,
+                      questions: RunQuestions.build(team: team, year: year, matches: e.matches, data: data))
+        persistRun()
+        go(.run)
+    }
+
+    func revealRunMatch() {
+        guard var r = run, !r.revealed else { return }
+        withAnimation(.spring(duration: 0.5)) {
+            r.revealed = true
+            run = r
+        }
+        persistRun()
+    }
+
+    func answerRun(_ i: Int) {
+        guard var r = run, r.revealed, r.picked == nil else { return }
+        r.picked = i
+        let ok = i == r.question.answer
+        r.answers.append(ok)
+        if ok { r.correct += 1 } else { r.lives -= 1 }
+        run = r
+        persistRun()
+    }
+
+    func nextRunMatch() {
+        guard var r = run, r.picked != nil else { return }
+        if r.outOfLives || r.isLastMatch {
+            r.finished = true
+            run = r
+            addTrophy(TrophyEntry(team: r.team, year: r.year, outcome: r.outcome, label: r.summaryLabel))
+            defaults.removeObject(forKey: runKey)
+            go(.runSummary)
+            return
+        }
+        r.idx += 1
+        r.revealed = false
+        r.picked = nil
+        run = r
+        persistRun()
+    }
+
+    func abandonRun() {
+        run = nil
+        defaults.removeObject(forKey: runKey)
+        go(.menu)
+    }
+
+    func endRunAndGoHome() {
+        if run?.finished == true { run = nil }
+        go(.menu)
+    }
+
+    private func persistRun() {
+        if let run, !run.finished { save(run, key: runKey) }
     }
 
     // MARK: Carieră
@@ -263,6 +346,20 @@ final class GameState: ObservableObject {
         switch name {
         case "editions": screen = .editions
         case "teams": screen = .teams(year: 1970)
+        case "run", "runQuiz", "runSummary":
+            startRun(team: "BRA", year: 1970)
+            if name != "run" {
+                revealRunMatch()
+                answerRun(run?.question.answer ?? 0)
+            }
+            if name == "runSummary" {
+                while let r = run, !r.finished {
+                    if !r.revealed { revealRunMatch() }
+                    if run?.picked == nil { answerRun(run?.question.answer ?? 0) }
+                    nextRunMatch()
+                }
+            }
+            screen = name == "runSummary" ? .runSummary : .run
         case "museum": museumOpenYear = 1970; screen = .museum
         case "quizMenu": screen = .quizMenu
         case "quiz":
@@ -286,7 +383,8 @@ final class GameState: ObservableObject {
         case "summary", "trophies":
             while !c.isFinished { lastMatch = c.playNext(engine: engine) }
             career = c
-            trophies = [TrophyEntry(career: c)]
+            trophies = [TrophyEntry(team: "BRA", year: 1970, outcome: .champion, label: tr("🏆 Campioană", "🏆 Champions")),
+                        TrophyEntry(team: "ROU", year: 1994, outcome: .out, label: tr("Sferturi", "Quarter-finals"))]
             screen = name == "summary" ? .summary : .trophies
         default: screen = .menu
         }

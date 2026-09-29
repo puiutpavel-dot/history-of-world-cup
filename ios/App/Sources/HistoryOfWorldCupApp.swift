@@ -55,7 +55,7 @@ struct RootView: View {
             switch game.screen {
             case .menu: MenuView()
             case .editions: EditionSelectView()
-            case .teams(let year): TeamSelectView(year: year)
+            case .teams(let year): RunTeamSelectView(year: year)
             case .hub: HubView()
             case .preview: MatchPreviewView()
             case .live: MatchLiveView()
@@ -71,6 +71,8 @@ struct RootView: View {
             case .country: CountryView()
             case .paywall: PaywallView()
             case .about: AboutView()
+            case .run: RunView()
+            case .runSummary: RunSummaryView()
             }
         }
         .transition(.opacity)

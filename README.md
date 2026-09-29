@@ -75,8 +75,8 @@ Portul nativ e în lucru în folderul [`ios/`](ios/):
 
 Decizia: **descărcare gratuită + un singur IAP „Full History” la 4,99 $** (non-consumable). Fără reclame, fără abonament, fără alte pachete.
 
-- **Gratuit:** Mondialele 1930, 1934, 1938 (carieră + quiz pe ediție), Muzeul, Evoluția regulilor, Galeria Legendelor, traseul țării (de citit).
-- **Full History:** toate cele 23 de ediții în carieră, toate quizurile pe ediție + Maraton, Duoul greșit, Alege faza, „Joacă această campanie” la orice ediție, actualizările viitoare.
+- **Gratuit:** Mondialele 1930, 1934, 1938 (turneul real + quiz pe ediție), Muzeul, Evoluția regulilor, Galeria Legendelor, traseul țării (de citit).
+- **Full History:** toate turneele din 1950 în modul principal, toate quizurile pe ediție + Maraton, Duoul greșit, Alege faza, „Joacă această campanie” la orice ediție, actualizările viitoare.
 - Cod: `ios/App/Sources/Store.swift` (StoreKit 2: `Product.products`, `purchase()`, `Transaction.currentEntitlements`, `Transaction.updates`, `AppStore.sync()` pentru **Restaurează achizițiile** — vizibil în meniu și pe ecranul de deblocare). Rambursările / revocările re-blochează conținutul. Ultima stare se păstrează local pentru pornire offline.
 - Test local fără cont Apple: `ios/App/StoreKit/FullHistory.storekit` (legat de schema Xcode prin `project.yml`).
 - Prototipul web rămâne demo gratuit complet.
@@ -85,7 +85,7 @@ Pași în App Store Connect (când există contul Apple Developer):
 1. Semnează *Paid Applications Agreement* și completează datele fiscale și bancare.
 2. Înscrie-te în **App Store Small Business Program** (comision 15% sub 1 mil. $ / an).
 3. *In-App Purchases* → **Non-Consumable**, Product ID `com.puiutpavel.historyofworldcup.fullhistory`, nume „Full History”, preț **4,99 $** cu SUA ca țară de bază (Apple calculează automat prețul în celelalte țări), **Family Sharing activat**, localizări ro + en, captură a ecranului de deblocare pentru review.
-4. Aplicația: preț **Gratuit**. Subtitlu: „Quiz și carieră 1930–2026” (fără preț în subtitlu — ghidul 2.3.7). În descriere: „Fără reclame, fără abonament, fără pachete.”
+4. Aplicația: preț **Gratuit**. Subtitlu: „Retrăiește Mondialele 1930–2026” (fără preț în subtitlu — ghidul 2.3.7). În descriere: „Fără reclame, fără abonament, fără pachete.”
 5. Testare: TestFlight cu un cont *Sandbox Tester*.
 
 Pregătirea pentru App Review: `docs/app-store/` — `CHECKLIST.md` (ghidurile 2.1, 2.3, 3.1.1, 4.2, 5.1, 5.2), `METADATA.md` (nume, subtitlu, cuvinte-cheie, descrieri ro/en, vârstă, capturi) și `REVIEW_NOTES.md` (textul pentru reviewer). Politica de confidențialitate și pagina de suport: `privacy.html`, `support.html` (publicate prin GitHub Pages). Aplicația e un joc **neoficial**, fără legătură cu FIFA — fără logouri, embleme, trofee oficiale sau fotografii.
@@ -118,3 +118,6 @@ Parte din proiectul **HISTORY OF WORLD CUP** (aplicație iOS nativă).
 
 ## Limbi (iOS)
 Aplicația iOS e în **engleză** (implicit) și **română** (pe telefoanele setate în română; se poate schimba și din Setări → aplicația → Limbă). Textele de interfață sunt în cod, prin `tr("ro", "en")` (`WorldCupCore/Localization.swift`); conținutul (ediții, echipe, povești, reguli, legende, quiz, traseul țării) vine din `Data.json` (ro) sau `Data_en.json` (en), generate de `tools/export_ios_data.js` din prototip + `i18n_en.js`. Motorul nu citește textele, deci simularea e identică în ambele limbi. Prototipul web rămâne în română.
+
+## Modul principal pe iOS: „Retrăiește un Mondial”
+Pe iOS, jocul principal nu mai e cariera simulată: alegi o ediție (1930–2022) și una dintre echipele care au jucat-o (84 de naționale, din traseele reale — Fjelstul) și îi parcurgi meciurile reale, cu scorul real. După fiecare meci răspunzi la o întrebare ca să mergi mai departe: alternativ despre adversar (până unde a ajuns în acel an, câte titluri avea, anul debutului) și din banca de întrebări a ediției. 3 vieți pe turneu; rezultatul intră în Sala Trofeelor. Cod: `ios/App/Sources/RealRunViews.swift`. Motorul de carieră rămâne în `WorldCupCore` (testele de paritate) și în prototipul web.

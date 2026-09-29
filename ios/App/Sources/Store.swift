@@ -114,7 +114,7 @@ struct PaywallView: View {
     @EnvironmentObject var store: Store
 
     private var perks: [(String, String)] { [
-        ("trophy.fill", tr("Toate cele 23 de ediții, 1930–2026, în modul carieră", "All 23 editions, 1930–2026, in career mode")),
+        ("trophy.fill", tr("Toate turneele finale 1930–2022, cu orice echipă, meci cu meci", "Every finals tournament 1930–2022, with any team, match by match")),
         ("questionmark.circle.fill", tr("Toate quizurile: pe ediție, Maraton, Duoul greșit, Alege faza", "Every quiz: by edition, Marathon, Spot the fake, Name the stage")),
         ("flag.fill", tr("Traseul oricărei țări, jucabil la orice ediție", "Any country's journey, playable at every edition")),
         ("sparkles", tr("Tot ce vine în actualizări este inclus", "Everything in future updates is included")),

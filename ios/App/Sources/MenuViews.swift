@@ -21,7 +21,7 @@ struct MenuView: View {
                         .minimumScaleFactor(0.6)
                         .multilineTextAlignment(.center)
                         .foregroundStyle(Color.hwcGold2)
-                    Text(tr("Confirmă sau rescrie istoria — 23 de ediții, 1930-2026", "Confirm or rewrite history — 23 editions, 1930-2026"))
+                    Text(tr("Retrăiește fiecare Mondial, meci cu meci — 1930-2026", "Relive every World Cup, match by match — 1930-2026"))
                         .font(.system(size: 15))
                         .foregroundStyle(Color.hwcTextDim)
                         .multilineTextAlignment(.center)
@@ -29,13 +29,13 @@ struct MenuView: View {
                 .padding(.top, 50)
 
                 VStack(spacing: 12) {
-                    if game.hasResumableCareer, let c = game.career {
-                        PrimaryButton(title: tr("Continuă: ", "Continue: ") + "\(game.label(c.teamCode)) · \(String(c.year))", systemImage: "play.fill") {
-                            game.go(.hub)
+                    if game.hasResumableRun, let r = game.run {
+                        PrimaryButton(title: tr("Continuă: ", "Continue: ") + "\(game.label(r.team)) · \(String(r.year))", systemImage: "play.fill") {
+                            game.go(.run)
                         }
-                        SecondaryButton(title: tr("Carieră nouă", "New career"), systemImage: "trophy") { game.go(.editions) }
+                        SecondaryButton(title: tr("Retrăiește un Mondial", "Relive a World Cup"), systemImage: "trophy") { game.go(.editions) }
                     } else {
-                        PrimaryButton(title: tr("Carieră nouă", "New career"), systemImage: "trophy.fill") { game.go(.editions) }
+                        PrimaryButton(title: tr("Retrăiește un Mondial", "Relive a World Cup"), systemImage: "trophy.fill") { game.go(.editions) }
                     }
                     SecondaryButton(title: "Quiz", systemImage: "questionmark.circle") { game.go(.quizMenu) }
                     if let t = game.userCountry {
@@ -88,14 +88,17 @@ struct EditionSelectView: View {
                             Text(String(ed.year)).font(.scoreboard(30)).foregroundStyle(Color.hwcGold2)
                             Text(ed.host).font(.system(size: 14)).foregroundStyle(Color.hwcText).lineLimit(1)
                             let unlocked = game.isOpen(ed.year)
-                            let caption = unlocked ? "🏆 " + game.label(ed.champion) : "🔒 Full History"
+                            let playable = game.hasRealMatches(ed.year)
+                            let caption = !playable ? tr("⏳ Meciurile vin curând", "⏳ Matches coming soon")
+                                : unlocked ? "🏆 " + game.label(ed.champion) : "🔒 Full History"
                             Text(caption)
-                                .font(.system(size: 13)).foregroundStyle(unlocked ? Color.hwcTextDim : Color.hwcGold)
+                                .font(.system(size: 13)).foregroundStyle(unlocked || !playable ? Color.hwcTextDim : Color.hwcGold)
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(12)
                         .background(Color.hwcPanel, in: RoundedRectangle(cornerRadius: 12))
                         .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.hwcBorder))
+                        .opacity(game.hasRealMatches(ed.year) ? 1 : 0.55)
                     }
                     .buttonStyle(.plain)
                 }

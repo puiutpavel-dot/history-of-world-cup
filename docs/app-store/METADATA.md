@@ -9,28 +9,28 @@ Bundle ID-ul rămâne `com.puiutpavel.historyofworldcup` (nu se vede public). Ap
 Niciodată: „FIFA”, „FIFA World Cup™”, „Official”, „We Are 26”, numele mingilor sau mascotelor ca brand.
 
 ## Subtitlu (max. 30)
-- ro: **Quiz și carieră 1930–2026** (25)
-- en: **Trivia & career, 1930–2026** (26)
+- ro: **Retrăiește Mondialele 1930–2026** (29)
+- en: **Relive the finals, 1930–2026** (27)
 
 Fără preț sau „o singură plată” în subtitlu, nume ori capturi (ghidul 2.3.7 interzice prețuri și termeni comerciali în metadate). Prețul apare automat în App Store.
 
 ## Cuvinte-cheie (max. 100, fără spații după virgulă)
-- ro: `fotbal,istorie,quiz,trivia,campionat,mondial,mondiale,finale,echipe,golgheter,cariera,manager` (95)
-- en: `football,soccer,history,trivia,quiz,cup,finals,tournament,teams,top scorer,career,manager` (91)
+- ro: `fotbal,istorie,quiz,trivia,campionat,mondial,mondiale,finale,echipe,golgheter,meciuri,turneu` (94)
+- en: `football,soccer,history,trivia,quiz,cup,finals,tournament,teams,top scorer,matches,relive` (90)
 
 Fără nume de alte aplicații, fără „FIFA”, fără nume de jucători, fără „gratis”.
 
 ## Text promoțional (max. 170, se poate schimba fără review)
 - ro: Joacă fiecare Mondial din 1930 până în 2026, cu formatul, regulile și adversarii reali ai epocii. Confirmă sau rescrie istoria!
-- en: Play every World Cup from 1930 to 2026 with the real format, rules and opponents of each era. Confirm history — or rewrite it!
+- en: Relive every World Cup match by match, with the real results. Answer a question after each match to move on — you have 3 lives.
 
 ## Descriere (ro)
 ```
-Confirmă sau rescrie istoria Campionatului Mondial de fotbal, ediție cu ediție, din 1930 până în 2026.
+Retrăiește Campionatul Mondial de fotbal, turneu cu turneu, din 1930 până în 2022 — cu rezultatele reale.
 
-• Carieră pe formatul real al fiecărei ediții: grupe, baraje, a doua fază a grupelor, grupa finală din 1950, optimi, șaisprezecimi, finala mică.
-• Regulile epocii: fără schimbări până în 1966, gol de aur în 1998 și 2002, cartonașe din 1970, punctaj 2/1/0 sau 3/1/0.
-• Adversarii reali ai echipei tale și loturi istorice reale; scorul îl decizi tu, prin tactică.
+• Alegi o ediție și o echipă (84 de naționale) și îi retrăiești drumul real, meci cu meci.
+• După fiecare meci răspunzi la o întrebare ca să mergi mai departe — ai 3 vieți pe turneu.
+• Întrebări despre adversari (până unde au ajuns, titluri, debut) și despre ediție (gazdă, finală, format, golgheter).
 • Quiz: pe ediție, Maraton 1930 → 2026, Duoul greșit, Alege faza.
 • Traseul țării tale: toate participările reale, meci cu meci.
 • Muzeul Edițiilor și Evoluția regulilor.
@@ -44,11 +44,11 @@ Date istorice: Fjelstul World Cup Database (CC-BY-SA 4.0).
 
 ## Description (en)
 ```
-Confirm or rewrite the history of the football World Cup, edition by edition, from 1930 to 2026.
+Relive the football World Cup, tournament by tournament, from 1930 to 2022 — with the real results.
 
-• Career mode on each edition's real format: groups, play-offs, second group stage, the 1950 final round, round of 16, round of 32, third-place match.
-• Rules of each era: no substitutions until 1966, golden goal in 1998 and 2002, cards from 1970, 2 or 3 points for a win.
-• Your team's real opponents and real historical squads — the score is up to your tactics.
+• Pick an edition and a team (84 national teams) and relive its real path, match by match.
+• After every match, answer a question to move on — you have 3 lives per tournament.
+• Questions about your opponents (how far they went, titles, debut) and about the edition (host, final, format, top scorer).
 • Quiz modes: per edition, Marathon 1930 → 2026, Spot the false one, Pick the stage.
 • Your country's path: every real appearance, match by match.
 • Edition museum and the evolution of the rules.

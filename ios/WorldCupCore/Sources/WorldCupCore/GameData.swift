@@ -139,6 +139,33 @@ public final class GameData: @unchecked Sendable {
         editions.first { $0.year == year }
     }
 
+    /// Participările reale ale unei ediții (o intrare pe echipă, cu meciurile jucate).
+    /// Aceeași echipă poate apărea la mai multe țări (ex. YUG la RS și ME) — se păstrează o singură dată.
+    public func tracks(year: Int) -> [TrackEntry] {
+        var seen = Set<String>()
+        var out: [TrackEntry] = []
+        for c in countries {
+            for e in c.entries where e.year == year && !e.matches.isEmpty && !seen.contains(e.code) {
+                seen.insert(e.code)
+                out.append(e)
+            }
+        }
+        return out
+    }
+
+    /// Participarea reală a unei echipe la o ediție.
+    public func track(_ code: String, _ year: Int) -> TrackEntry? {
+        for c in countries {
+            if let e = c.entries.first(where: { $0.code == code && $0.year == year }) { return e }
+        }
+        return nil
+    }
+
+    /// Anul primei participări a unei echipe (după cod), din traseele reale.
+    public func debutYear(_ code: String) -> Int? {
+        countries.flatMap(\.entries).filter { $0.code == code && !$0.matches.isEmpty }.map(\.year).min()
+    }
+
     /// `getTeamMeta(code)` din data.js.
     public func meta(_ code: String) -> TeamMeta {
         if let t = teamsByCode[code] { return TeamMeta(name: t.name, flag: t.flag) }
