@@ -131,26 +131,73 @@ final class ParityTests: XCTestCase {
         }
     }
 
+    static func flag(_ b: Bool) -> String { b ? "1" : "0" }
+
+    static func describeRecord(_ r: MatchRecord) -> String {
+        let events: [String] = r.events.map { (e) -> String in
+            let scorer: String = e.scorer ?? ""
+            return "\(e.minute)\(e.team.rawValue)" + scorer
+        }
+        let cards: [String] = r.cards.map { (k) -> String in
+            return "\(k.minute)\(k.team.rawValue)" + k.type + k.player
+        }
+        let won: String = r.won.map { flag($0) } ?? ""
+        var parts: [String] = []
+        parts.append(r.kind)
+        parts.append(r.round ?? "")
+        parts.append(r.label)
+        parts.append(r.opp)
+        parts.append(flag(r.isReal))
+        parts.append(String(r.gf))
+        parts.append(String(r.ga))
+        parts.append(flag(r.extraTime))
+        parts.append(r.pens ?? "")
+        parts.append(r.lots?.rawValue ?? "")
+        parts.append(flag(r.replay))
+        parts.append(flag(r.tied))
+        parts.append(won)
+        parts.append(events.joined(separator: ","))
+        parts.append(cards.joined(separator: ","))
+        parts.append(r.suspended.joined(separator: ","))
+        return parts.joined(separator: "|")
+    }
+
+    static func describeTable(_ t: StageTable) -> String {
+        var playoff: String = ""
+        if let p = t.playoff {
+            if let o = p.result {
+                let w: String = o.winner ?? ""
+                playoff = "O:\(o.home)-\(o.away):\(o.gh)-\(o.ga):" + w
+            } else {
+                let opp: String = p.opp ?? ""
+                let won: Int = p.won == true ? 1 : 0
+                playoff = "P:" + opp + ":\(won)"
+            }
+        }
+        var thirds: String = ""
+        if let th = t.thirds {
+            let rows: [String] = th.rows.map { (x) -> String in "\(x.code)\(x.pts)/\(x.gf)-\(x.ga)" }
+            thirds = "\(th.rank):" + rows.joined(separator: ",")
+        }
+        let rows: [String] = t.rows.map { (x) -> String in "\(x.code):\(x.pl):\(x.gf)-\(x.ga):\(x.pts)" }
+        let others: [String] = t.others.map { (m) -> String in
+            let w: String = m.winner.map { ":" + $0 } ?? ""
+            return "\(m.home)-\(m.away):\(m.gh)-\(m.ga)" + w
+        }
+        var parts: [String] = []
+        parts.append(t.type)
+        parts.append(String(t.rank))
+        parts.append(flag(t.qualified))
+        parts.append(rows.joined(separator: ","))
+        parts.append(others.joined(separator: ","))
+        parts.append(playoff)
+        parts.append(thirds)
+        return parts.joined(separator: "|")
+    }
+
     static func describeCareer(_ c: Career) -> (records: [String], tables: [String]) {
-        let records = c.records.map { r -> String in
-            [r.kind, r.round ?? "", r.label, r.opp, r.isReal ? "1" : "0", "\(r.gf)", "\(r.ga)", r.extraTime ? "1" : "0",
-             r.pens ?? "", r.lots?.rawValue ?? "", r.replay ? "1" : "0", r.tied ? "1" : "0", r.won.map { $0 ? "1" : "0" } ?? "",
-             r.events.map { "\($0.minute)\($0.team.rawValue)\($0.scorer ?? "")" }.joined(separator: ","),
-             r.cards.map { "\($0.minute)\($0.team.rawValue)\($0.type)\($0.player)" }.joined(separator: ","),
-             r.suspended.joined(separator: ",")].joined(separator: "|")
-        }
-        let tables = c.tables.map { t -> String in
-            let playoff: String
-            if let p = t.playoff {
-                if let o = p.result { playoff = "O:\(o.home)-\(o.away):\(o.gh)-\(o.ga):\(o.winner ?? "")" }
-                else { playoff = "P:\(p.opp ?? ""):\(p.won == true ? 1 : 0)" }
-            } else { playoff = "" }
-            let thirds = t.thirds.map { "\($0.rank):" + $0.rows.map { "\($0.code)\($0.pts)/\($0.gf)-\($0.ga)" }.joined(separator: ",") } ?? ""
-            return [t.type, "\(t.rank)", t.qualified ? "1" : "0",
-                    t.rows.map { "\($0.code):\($0.pl):\($0.gf)-\($0.ga):\($0.pts)" }.joined(separator: ","),
-                    t.others.map { "\($0.home)-\($0.away):\($0.gh)-\($0.ga)" + ($0.winner.map { ":" + $0 } ?? "") }.joined(separator: ","),
-                    playoff, thirds].joined(separator: "|")
-        }
+        let records: [String] = c.records.map { describeRecord($0) }
+        let tables: [String] = c.tables.map { describeTable($0) }
         return (records, tables)
     }
 
