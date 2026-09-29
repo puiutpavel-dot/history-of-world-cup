@@ -41,13 +41,16 @@ const careers = [];
 const combos = Object.keys(P.REAL_FIXTURES).map((k) => k.split("_")).map(([t, y]) => [t, Number(y)])
   .concat([["ITA", 1934], ["NED", 1974], ["ESP", 2010], ["MAR", 2022], ["CRO", 2018], ["USA", 1930], ["HUN", 1954], ["POL", 1974]]);
 combos.forEach(([t, y], i) => {
-  for (let k = 0; k < 3; k++) {
-    const seed = seedFor(`${t}-${y}-${k}`);
-    careers.push({ tactics: k, ...runCareer(t, y, seed, tacticSets[k]) });
-  }
+  const k = i % 3;
+  const seed = seedFor(`${t}-${y}-${k}`);
+  careers.push({ tactics: k, ...runCareer(t, y, seed, tacticSets[k]) });
+});
+const knockoutPlans = Object.keys(P.REAL_FIXTURES).map((key) => {
+  const [t, y] = key.split("_");
+  return { key, plan: P.buildKnockoutPlan(t, Number(y)).map((m) => (m ? `${m.opp}${m.scoreFor}-${m.scoreAgainst}` : null)) };
 });
 
-const out = { rng, seeds, years, ratings, eligible, squadCases, matches, tacticSets, careers };
+const out = { rng, seeds, years, ratings, eligible, squadCases, matches, tacticSets, careers, knockoutPlans };
 const file = path.join(__dirname, "..", "ios", "WorldCupCore", "Tests", "WorldCupCoreTests", "Resources", "Golden.json");
 fs.mkdirSync(path.dirname(file), { recursive: true });
 fs.writeFileSync(file, JSON.stringify(out) + "\n");

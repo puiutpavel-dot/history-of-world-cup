@@ -83,12 +83,14 @@ const LEGENDS = [
 ];
 
 /* ---------- SHADOW TEAMS: adversari "doar istorici", fără curbă curatoare ----------
+   Statele istorice fără steag emoji folosesc steagul succesorului principal
+   (Iugoslavia → Serbia, URSS → Rusia, RDG → Germania, Indiile Olandeze → Indonezia).
    Rating-ul lor se deduce automat în engine.js (getShadowRating) din diferența
    de gol reală față de echipele curate — vezi real_fixtures.js. */
 const SHADOW_TEAMS = {
   PER: { name: "Peru", flag: "🇵🇪" },
   ROU: { name: "România", flag: "🇷🇴" },
-  YUG: { name: "Iugoslavia", flag: "🇾🇺" },
+  YUG: { name: "Iugoslavia", flag: "🇷🇸" },
   BUL: { name: "Bulgaria", flag: "🇧🇬" },
   UAE: { name: "Emiratele Arabe Unite", flag: "🇦🇪" },
   COL: { name: "Columbia", flag: "🇨🇴" },
@@ -105,6 +107,48 @@ const SHADOW_TEAMS = {
   TUN: { name: "Tunisia", flag: "🇹🇳" },
   SUI: { name: "Elveția", flag: "🇨🇭" },
   CHI: { name: "Chile", flag: "🇨🇱" },
+  ANG: { name: "Angola", flag: "🇦🇴" },
+  BIH: { name: "Bosnia și Herțegovina", flag: "🇧🇦" },
+  BOL: { name: "Bolivia", flag: "🇧🇴" },
+  CAN: { name: "Canada", flag: "🇨🇦" },
+  CIV: { name: "Coasta de Fildeș", flag: "🇨🇮" },
+  CMR: { name: "Camerun", flag: "🇨🇲" },
+  CUB: { name: "Cuba", flag: "🇨🇺" },
+  CZE: { name: "Cehia", flag: "🇨🇿" },
+  DEI: { name: "Indiile Olandeze de Est", flag: "🇮🇩" },
+  ECU: { name: "Ecuador", flag: "🇪🇨" },
+  EGY: { name: "Egipt", flag: "🇪🇬" },
+  GDR: { name: "Germania de Est", flag: "🇩🇪" },
+  GRE: { name: "Grecia", flag: "🇬🇷" },
+  HAI: { name: "Haiti", flag: "🇭🇹" },
+  HON: { name: "Honduras", flag: "🇭🇳" },
+  IRL: { name: "Irlanda", flag: "🇮🇪" },
+  IRN: { name: "Iran", flag: "🇮🇷" },
+  IRQ: { name: "Irak", flag: "🇮🇶" },
+  ISL: { name: "Islanda", flag: "🇮🇸" },
+  ISR: { name: "Israel", flag: "🇮🇱" },
+  JAM: { name: "Jamaica", flag: "🇯🇲" },
+  KUW: { name: "Kuweit", flag: "🇰🇼" },
+  NGA: { name: "Nigeria", flag: "🇳🇬" },
+  NIR: { name: "Irlanda de Nord", flag: "🇬🇧" },
+  NOR: { name: "Norvegia", flag: "🇳🇴" },
+  NZL: { name: "Noua Zeelandă", flag: "🇳🇿" },
+  PAN: { name: "Panama", flag: "🇵🇦" },
+  PRK: { name: "Coreea de Nord", flag: "🇰🇵" },
+  QAT: { name: "Qatar", flag: "🇶🇦" },
+  SCG: { name: "Serbia și Muntenegru", flag: "🇷🇸" },
+  SCO: { name: "Scoția", flag: "🏴󠁧󠁢󠁳󠁣󠁴󠁿" },
+  SEN: { name: "Senegal", flag: "🇸🇳" },
+  SLV: { name: "El Salvador", flag: "🇸🇻" },
+  SRB: { name: "Serbia", flag: "🇷🇸" },
+  SVK: { name: "Slovacia", flag: "🇸🇰" },
+  SVN: { name: "Slovenia", flag: "🇸🇮" },
+  TOG: { name: "Togo", flag: "🇹🇬" },
+  TRI: { name: "Trinidad-Tobago", flag: "🇹🇹" },
+  UKR: { name: "Ucraina", flag: "🇺🇦" },
+  URS: { name: "Uniunea Sovietică", flag: "🇷🇺" },
+  WAL: { name: "Țara Galilor", flag: "🏴󠁧󠁢󠁷󠁬󠁳󠁿" },
+  ZAI: { name: "Zair", flag: "🇨🇩" },
 };
 
 function getTeamMeta(code) {

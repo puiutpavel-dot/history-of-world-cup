@@ -26,9 +26,7 @@ function runCareer(teamCode, year, seed, tactics) {
     usedOpponents.push(opp);
     groupOpponents.push({ code: opp, isReal });
   }
-  const kl = (P.REAL_FIXTURES[P.fixtureKey(teamCode, year)] || {}).knockout || [];
-  const last3 = kl.slice(-3);
-  const knockoutPlan = Array(3 - last3.length).fill(null).concat(last3).map((m) => (m ? { opp: m.opp } : null));
+  const knockoutPlan = P.buildKnockoutPlan(teamCode, year).map((m) => (m ? { opp: m.opp } : null));
 
   const c = { stage: "group", groupMatchIndex: 0, knockoutIndex: 0, groupResults: [], knockoutResults: [], outcome: null, pendingDrawn: null };
   const log = [];

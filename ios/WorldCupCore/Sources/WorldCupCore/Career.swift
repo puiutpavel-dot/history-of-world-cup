@@ -160,13 +160,9 @@ public struct Career: Codable, Sendable {
         groupOpponents = group
         usedOpponents = used
 
-        let knockout = engine.data.campaign(teamCode, year)?.knockout ?? []
-        let last3 = Array(knockout.suffix(3))
-        let pad: [KnockoutPlanEntry?] = Array(repeating: nil, count: 3 - last3.count)
-        let entries: [KnockoutPlanEntry?] = last3.map {
-            KnockoutPlanEntry(opp: $0.opp, real: RealScore(scoreFor: $0.scoreFor, scoreAgainst: $0.scoreAgainst), note: $0.note)
+        knockoutPlan = engine.knockoutPlan(teamCode, year).map { m in
+            m.map { KnockoutPlanEntry(opp: $0.opp, real: RealScore(scoreFor: $0.scoreFor, scoreAgainst: $0.scoreAgainst), note: $0.note) }
         }
-        knockoutPlan = pad + entries
         self.rng = rng
     }
 

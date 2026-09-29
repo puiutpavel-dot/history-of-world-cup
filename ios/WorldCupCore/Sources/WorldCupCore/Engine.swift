@@ -301,6 +301,38 @@ public struct Engine: Sendable {
         return k[roundIndex]
     }
 
+    /// `buildKnockoutPlan(teamCode, year)` — drumul real aliniat pe sferturi → semifinală → finală.
+    /// QF/SF/F merg pe slotul lor; GR2 (1974-82) și FR (1950) completează de la coadă sloturile
+    /// libere dinaintea primului slot ocupat; R16 ocupă sferturile doar dacă echipa s-a oprit în optimi.
+    public func knockoutPlan(_ teamCode: String, _ year: Int) -> [FixtureMatch?] {
+        var plan: [FixtureMatch?] = [nil, nil, nil]
+        guard let camp = data.campaign(teamCode, year) else { return plan }
+        let slot = ["QF": 0, "SF": 1, "F": 2]
+        var leftovers: [FixtureMatch] = []
+        var r16: [FixtureMatch] = []
+        for m in camp.knockout {
+            if let round = m.round, let s = slot[round] {
+                plan[s] = m
+            } else if m.round == "R16" {
+                r16.append(m)
+            } else {
+                leftovers.append(m)
+            }
+        }
+        let first = plan.firstIndex { $0 != nil } ?? 3
+        var i = leftovers.count - 1
+        var s = first - 1
+        while s >= 0 && i >= 0 {
+            if plan[s] == nil {
+                plan[s] = leftovers[i]
+                i -= 1
+            }
+            s -= 1
+        }
+        if plan.allSatisfy({ $0 == nil }), let last = r16.last { plan[0] = last }
+        return plan
+    }
+
     /// `drawOpponent(rng, year, excludeCodes, preferCurated)` — „fără retur”.
     public func drawOpponent(_ rng: inout Mulberry32, excluding exclude: [String], preferCurated: Bool = false) -> String {
         let all = data.teams.map(\.code)

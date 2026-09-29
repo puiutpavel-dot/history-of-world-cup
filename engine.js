@@ -240,6 +240,32 @@ function getRealKnockoutMatch(teamCode, year, roundIndex) {
   return camp && camp.knockout[roundIndex] ? camp.knockout[roundIndex] : null;
 }
 
+/* Planul eliminatoriu al jocului (sferturi → semifinală → finală) din drumul
+   real, aliniat după runda reală: QF/SF/F merg pe slotul lor; meciurile din
+   formatele istorice (a doua fază a grupelor 1974-82 = "GR2", turneul final
+   1950 = "FR") completează, de la coadă spre început, sloturile libere dinaintea
+   primului slot ocupat; optimile ("R16") ocupă sferturile doar dacă echipa s-a
+   oprit în optimi. Sloturile rămase null = adversar tras la sorți. */
+function buildKnockoutPlan(teamCode, year) {
+  const camp = REAL_FIXTURES[fixtureKey(teamCode, year)];
+  const plan = [null, null, null];
+  if (!camp) return plan;
+  const slot = { QF: 0, SF: 1, F: 2 };
+  const leftovers = [], r16 = [];
+  for (const m of camp.knockout) {
+    if (m.round in slot) plan[slot[m.round]] = m;
+    else if (m.round === "R16") r16.push(m);
+    else leftovers.push(m);
+  }
+  let first = plan.findIndex((m) => m);
+  if (first === -1) first = 3;
+  for (let s = first - 1, i = leftovers.length - 1; s >= 0 && i >= 0; s--) {
+    if (!plan[s]) plan[s] = leftovers[i--];
+  }
+  if (plan.every((m) => !m) && r16.length) plan[0] = r16[r16.length - 1];
+  return plan;
+}
+
 /* alege un adversar simulat, evitând echipele deja folosite ("fără retur") */
 function drawOpponent(rng, year, excludeCodes, preferCurated) {
   const pool = Object.keys(TEAMS).filter((c) => !excludeCodes.includes(c));
@@ -254,7 +280,7 @@ if (typeof module !== "undefined" && module.exports) {
     getTeamRating, getShadowRating, getRatingAt,
     generateSquad, squadStrength, tacticalRatings,
     simulateMatch, assignScorers, simulatePenalties, poissonSample,
-    getRealGroupOpponents, getRealGroupMatch, getRealKnockoutMatch, drawOpponent, fixtureKey,
+    getRealGroupOpponents, getRealGroupMatch, getRealKnockoutMatch, drawOpponent, fixtureKey, buildKnockoutPlan,
     getRealRoster,
   };
 }

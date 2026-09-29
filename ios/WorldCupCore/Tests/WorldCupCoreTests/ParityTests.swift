@@ -35,8 +35,10 @@ struct Golden: Decodable {
     let eligible: [Eligible]
     let squadCases: [SquadCase]
     let matches: [Match]
+    struct KnockoutPlanCase: Decodable { let key: String; let plan: [String?] }
     let tacticSets: [[[String]]]
     let careers: [CareerCase]
+    let knockoutPlans: [KnockoutPlanCase]
 
     static let shared: Golden = {
         let url = Bundle.module.url(forResource: "Golden", withExtension: "json")!
@@ -54,7 +56,7 @@ final class ParityTests: XCTestCase {
         XCTAssertEqual(engine.data.editions.count, 22)
         XCTAssertEqual(engine.data.teams.count, 23)
         XCTAssertEqual(engine.data.legends.count, 18)
-        XCTAssertEqual(engine.data.campaigns.count, 12)
+        XCTAssertGreaterThanOrEqual(engine.data.campaigns.count, 250)
         XCTAssertGreaterThanOrEqual(engine.data.rosters.count, 300)
     }
 
@@ -108,6 +110,14 @@ final class ParityTests: XCTestCase {
             XCTAssertEqual(sim.scoreB, m.scoreB, "match \(i)")
             XCTAssertEqual(sim.events.map { "\($0.minute)\($0.team.rawValue)" }, m.events, "match \(i)")
             XCTAssertEqual("\(pens.scoreA)-\(pens.scoreB)\(pens.winner.rawValue)", m.pens, "match \(i)")
+        }
+    }
+
+    func testKnockoutPlansMatchJS() {
+        for c in golden.knockoutPlans {
+            let parts = c.key.split(separator: "_")
+            let plan = engine.knockoutPlan(String(parts[0]), Int(parts[1])!)
+            XCTAssertEqual(plan.map { $0.map { "\($0.opp)\($0.scoreFor)-\($0.scoreAgainst)" } }, c.plan, c.key)
         }
     }
 

@@ -41,6 +41,11 @@ struct MuseumView: View {
                     .background(Color.hwcPanel, in: RoundedRectangle(cornerRadius: 12))
                     .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.hwcBorder))
                 }
+                Text("Rezultatele meciurilor reale: [Fjelstul World Cup Database](https://www.github.com/jfjelstul/worldcup) © 2023 Joshua C. Fjelstul, Ph.D., licență [CC-BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/legalcode) (date adaptate). Loturi: Wikipedia, „FIFA World Cup squads”.")
+                    .font(.system(size: 11))
+                    .foregroundStyle(Color.hwcTextDim)
+                    .tint(.hwcGold)
+                    .padding(.top, 8)
             }
         }
     }

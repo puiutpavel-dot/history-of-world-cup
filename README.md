@@ -20,8 +20,8 @@ Ecrane suplimentare: **Muzeul Edițiilor** (toate cele 22 de ediții, cu gazdă/
 
 Acest prototip a fost **reconstruit de la zero** pornind de la conceptul și planul de arhitectură din documentul de proiect (o versiune anterioară, mai completă, a fost construită într-o sesiune Claude separată care nu mai există). Pentru a rămâne un v1 solid și verificabil:
 
-- **12 campanii istorice curate** cu adversari reali, meci cu meci (Uruguay 1930, Brazilia 1950/1970/2002, Germania 1954/1990/2014, Anglia 1966, Argentina 1986/2022, Franța 1998, Japonia 2002) — nu baza de date completă de 1316 meciuri din prototipul original.
-- **Loturi reale extinse la scară completă** (`real_rosters.js`, peste 300 de chei `ECHIPA_AN`, sursă: paginile Wikipedia "[an] FIFA World Cup squads", verificate jucător cu jucător): fiecare din cele 23 de națiuni curate primește lot real pentru *fiecare* ediție la care a participat cu adevărat istoric (1930-2022), nu doar cele 12 campanii curate — plus loturi reale pentru ~24 de echipe "shadow" adversare relevante în acele 12 campanii. Restul combinațiilor echipă+an (selectabile teoretic în joc, dar care nu au avut loc real) folosesc lot generat aleator.
+- **Trasee reale complete**: fiecare dintre cele 23 de națiuni curate are adversarii reali la **fiecare ediție la care a participat** (278 de campanii, 1.173 de meciuri reale, 1930-2022), generate din Fjelstul World Cup Database cu `tools/build_real_fixtures.py` (vezi „Surse și licențe”).
+- **Loturi reale extinse la scară completă** (`real_rosters.js`, peste 300 de chei `ECHIPA_AN`, sursă: paginile Wikipedia "[an] FIFA World Cup squads", verificate jucător cu jucător): fiecare din cele 23 de națiuni curate primește lot real pentru *fiecare* ediție la care a participat cu adevărat istoric (1930-2022), plus loturi reale pentru ~24 de echipe "shadow" (adversarii din cele 12 campanii curate inițiale). Restul combinațiilor echipă+an (selectabile teoretic în joc, dar care nu au avut loc real) folosesc lot generat aleator.
 - **23 de națiuni curate** cu curbă de putere pe eră + ~19 echipe "shadow" (rating dedus automat din diferența de gol reală, fără curbă proprie).
 - Structura de date (`REAL_FIXTURES`, `TEAMS.curve`, `REAL_ROSTERS`) e identică cu planul original, deci **oricine poate extinde** subsetul de meciuri/loturi reale fără nicio schimbare de motor.
 
@@ -55,6 +55,11 @@ Portul nativ e în lucru în folderul [`ios/`](ios/):
 
 **Cu Mac:** `node tools/export_ios_data.js && node tools/make_golden.js && python3 tools/make_icon.py && brew install xcodegen && cd ios && xcodegen && open HistoryOfWorldCup.xcodeproj`.
 
+## Surse și licențe
+
+- **Rezultatele meciurilor reale** (`real_fixtures.js`): [Fjelstul World Cup Database](https://www.github.com/jfjelstul/worldcup), © 2023 Joshua C. Fjelstul, Ph.D., licență [CC-BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/legalcode). Modificări: selecție pe echipele jocului, coduri FIFA, maparea formatelor istorice pe bracketul jocului, note în română. Fișierul de date derivat este distribuit tot sub CC-BY-SA 4.0. Regenerare: `git clone --depth 1 https://github.com/jfjelstul/worldcup /tmp/worldcup && python3 tools/build_real_fixtures.py /tmp/worldcup/data-csv/team_appearances.csv`.
+- **Loturile** (`real_rosters.js`): paginile Wikipedia „[an] FIFA World Cup squads”.
+
 ## Rulare locală
 
 Fără build, fără dependențe. Orice server static funcționează:
@@ -66,7 +71,7 @@ python3 -m http.server 8080
 
 ## Următorii pași
 
-1. Extinde `real_fixtures.js` / `real_rosters.js` cu mai multe campanii/ediții și loturi reale (structura suportă orice număr de chei `ECHIPA_AN`).
+1. ~~Extinde `real_fixtures.js` la toate campaniile reale~~ — făcut (278 de campanii). Următorul pas posibil: loturi reale și pentru adversarii „shadow” noi.
 2. Stabilește scope-ul exact pentru v1 iOS (câte ediții/echipe la lansare, dacă păstrăm turneul simplificat grupă→sferturi→semifinală→finală sau extindem la 32 de echipe/optimi).
 3. ~~Port Swift al motorului de simulare + teste unitare XCTest~~ — în `ios/WorldCupCore/`, verificat automat în CI.
 4. ~~Construire UI SwiftUI ecran cu ecran~~ — prima versiune în `ios/App/`; urmează rafinarea pe baza capturilor din CI / TestFlight.

@@ -18,6 +18,6 @@ module.exports = function loadPrototype() {
   vm.runInContext(`this.__exports = { EDITIONS, TEAMS, LEGENDS, SHADOW_TEAMS, getTeamMeta, REAL_FIXTURES, REAL_ROSTERS,
     mulberry32, randInt, choice, getTeamRating, getShadowRating, getRatingAt, generateSquad, squadStrength,
     tacticalRatings, simulateMatch, assignScorers, simulatePenalties, poissonSample, getRealGroupOpponents,
-    getRealGroupMatch, getRealKnockoutMatch, drawOpponent, fixtureKey, getRealRoster };`, ctx);
+    getRealGroupMatch, getRealKnockoutMatch, drawOpponent, fixtureKey, getRealRoster, buildKnockoutPlan };`, ctx);
   return ctx.__exports;
 };

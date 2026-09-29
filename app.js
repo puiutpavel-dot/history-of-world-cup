@@ -155,10 +155,7 @@ function startCareer(teamCode) {
     groupOpponents.push({ code: opp, isReal });
   }
 
-  const kl = (REAL_FIXTURES[fixtureKey(teamCode, year)] || {}).knockout || [];
-  const last3 = kl.slice(-3);
-  const pad = 3 - last3.length;
-  const knockoutPlan = Array(pad).fill(null).concat(last3).map((m) => m ? { opp: m.opp, isReal: true, realScoreFor: m.scoreFor, realScoreAgainst: m.scoreAgainst, note: m.note } : null);
+  const knockoutPlan = buildKnockoutPlan(teamCode, year).map((m) => m ? { opp: m.opp, isReal: true, realScoreFor: m.scoreFor, realScoreAgainst: m.scoreAgainst, note: m.note } : null);
 
   STATE.career = {
     teamCode, year, rng,
@@ -523,6 +520,7 @@ function renderMuseum() {
   <div class="screen">
     <div class="topbar"><button class="btn-back" data-action="menu">← Meniu</button><h2>📖 Muzeul Edițiilor</h2></div>
     <div class="museum-list">${items}</div>
+    <p class="hint credits">Rezultatele meciurilor reale: <a href="https://www.github.com/jfjelstul/worldcup" target="_blank" rel="noopener">Fjelstul World Cup Database</a> © 2023 Joshua C. Fjelstul, Ph.D., licență <a href="https://creativecommons.org/licenses/by-sa/4.0/legalcode" target="_blank" rel="noopener">CC-BY-SA 4.0</a> (date adaptate). Loturi: Wikipedia, „FIFA World Cup squads”.</p>
   </div>`;
 }
 
