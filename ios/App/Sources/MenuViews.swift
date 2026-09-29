@@ -8,7 +8,12 @@ struct MenuView: View {
         ScrollView {
             VStack(spacing: 28) {
                 VStack(spacing: 10) {
-                    Text("⚽").font(.system(size: 64))
+                    Image("Logo")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 120, height: 120)
+                        .clipShape(RoundedRectangle(cornerRadius: 27, style: .continuous))
+                        .shadow(color: Color.hwcGold.opacity(0.35), radius: 18)
                     Text("HISTORY OF\nWORLD CUP")
                         .font(.scoreboard(44))
                         .multilineTextAlignment(.center)

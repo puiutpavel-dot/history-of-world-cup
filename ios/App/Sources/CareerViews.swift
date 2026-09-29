@@ -357,7 +357,7 @@ struct CareerSummaryView: View {
         switch c.outcome {
         case .champion: return "🏆 Campioană Mondială!"
         case .eliminatedGroup: return "Eliminată în faza grupelor"
-        case .eliminatedKnockout: return "Eliminată în faza eliminatorie"
+        case .eliminatedKnockout: return "Eliminată în \(c.stage.eliminationPlace)"
         case nil: return "În desfășurare"
         }
     }

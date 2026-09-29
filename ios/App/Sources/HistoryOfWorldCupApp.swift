@@ -11,6 +11,7 @@ struct HistoryOfWorldCupApp: App {
             let theme = AppTheme(rawValue: themeRaw) ?? .dark
             RootView()
                 .environmentObject(game)
+                .environment(\.locale, Locale(identifier: "ro_RO"))
                 .preferredColorScheme(theme.colorScheme)
                 .overlay(alignment: .topTrailing) {
                     Button {

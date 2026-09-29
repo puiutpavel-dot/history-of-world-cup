@@ -82,7 +82,7 @@ struct TrophyRoomView: View {
                         .padding(.top, 30)
                 } else {
                     let titles = game.trophies.filter { $0.outcome == .champion }.count
-                    Text("🏆 \(titles) titluri mondiale din \(game.trophies.count) cariere")
+                    Text("🏆 Titluri mondiale: \(titles) · Cariere: \(game.trophies.count)")
                         .font(.scoreboard(18, weight: .semibold))
                         .foregroundStyle(Color.hwcGold2)
                     ForEach(game.trophies) { t in

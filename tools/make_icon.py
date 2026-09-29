@@ -1,7 +1,8 @@
 """Generează iconița aplicației iOS (1024×1024, fără transparență).
 
 Rulare: python3 -m pip install pillow && python3 tools/make_icon.py
-Scrie ios/App/Resources/Assets.xcassets/AppIcon.appiconset/AppIcon.png.
+Scrie ios/App/Resources/Assets.xcassets/AppIcon.appiconset/AppIcon.png
+și Logo.imageset/Logo.png (logo-ul din meniu).
 
 Design original „stadion nocturn”: cer întunecat, două reflectoare aurii,
 gazon verde în perspectivă și o minge clasică cu panouri, cu un inel auriu.
@@ -114,6 +115,11 @@ def main(out=OUT):
     os.makedirs(os.path.dirname(out), exist_ok=True)
     img.save(out, "PNG", optimize=True)
     print(out, os.path.getsize(out), "bytes")
+    # aceeași imagine, mai mică, ca logo în meniul aplicației
+    logo = os.path.join(os.path.dirname(os.path.dirname(out)), "Logo.imageset", "Logo.png")
+    os.makedirs(os.path.dirname(logo), exist_ok=True)
+    img.resize((360, 360), Image.LANCZOS).save(logo, "PNG", optimize=True)
+    print(logo, os.path.getsize(logo), "bytes")
 
 
 if __name__ == "__main__":

@@ -16,6 +16,16 @@ public enum Stage: String, Codable, Sendable {
         }
     }
 
+    /// „Eliminată în …”
+    public var eliminationPlace: String {
+        switch self {
+        case .group: return "grupe"
+        case .QF: return "sferturi"
+        case .SF: return "semifinală"
+        case .F: return "finală"
+        }
+    }
+
     public var shortLabel: String {
         switch self {
         case .group: return "Grupă"
@@ -318,7 +328,7 @@ public struct Career: Codable, Sendable {
         switch outcome {
         case .champion: return "🏆 Campioană Mondială!"
         case .eliminatedGroup: return "Eliminată în grupe"
-        case .eliminatedKnockout: return "Eliminată — \(stage.rawValue)"
+        case .eliminatedKnockout: return "Eliminată în \(stage.eliminationPlace)"
         case nil: return "În desfășurare"
         }
     }

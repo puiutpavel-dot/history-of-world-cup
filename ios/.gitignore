@@ -13,3 +13,4 @@ WorldCupCore/Tests/WorldCupCoreTests/Resources/*.json
 
 # iconița se generează cu: python3 tools/make_icon.py
 App/Resources/Assets.xcassets/AppIcon.appiconset/AppIcon.png
+App/Resources/Assets.xcassets/Logo.imageset/Logo.png

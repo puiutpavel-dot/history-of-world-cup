@@ -43,7 +43,7 @@ jobs:
         run: brew install xcodegen && cd ios && xcodegen
       - name: Alege un simulator iPhone
         run: |
-          UDID=$(xcrun simctl list devices available -j | jq -r '[.devices[] | .[] | select(.name | startswith("iPhone"))] | last | .udid')
+          UDID=$(xcrun simctl list devices available -j | jq -r '([.devices[] | .[] | select(.name | test("^iPhone.* Pro$"))] | last) // ([.devices[] | .[] | select(.name | startswith("iPhone"))] | last) | .udid')
           echo "UDID=$UDID" >> "$GITHUB_ENV"
           xcrun simctl list devices available | grep "$UDID"
           xcrun simctl boot "$UDID"
