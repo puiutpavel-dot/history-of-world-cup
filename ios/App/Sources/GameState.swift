@@ -76,6 +76,21 @@ final class GameState: ObservableObject {
 
     func closePaywall() { go(paywallReturn) }
 
+    /// eticheta butonului de quiz al unei ediții (Muzeu)
+    func quizButtonTitle(_ year: Int) -> String {
+        let y = String(year)
+        if !isOpen(year) { return "🔒 Quiz \(y) · Full History" }
+        if let best = quizProgress.best(.edition, year: year) { return "Quiz \(y) · record \(best)/5" }
+        return "Quiz \(y) · 5 întrebări"
+    }
+
+    /// stelele unei ediții în meniul de quiz
+    func quizStars(_ year: Int) -> String {
+        if !isOpen(year) { return "🔒 Full History" }
+        let best = quizProgress.best(.edition, year: year) ?? 0
+        return String(repeating: "⭐", count: best) + String(repeating: "☆", count: 5 - best)
+    }
+
     /// ecranul de echipe al unei ediții (edițiile blocate duc la deblocare)
     func openEdition(_ year: Int) {
         if isOpen(year) { go(.teams(year: year)) } else { showPaywall() }

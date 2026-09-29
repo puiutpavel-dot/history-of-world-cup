@@ -22,14 +22,11 @@ struct QuizMenuView: View {
                     .padding(.top, 6)
                 LazyVGrid(columns: columns, spacing: 12) {
                     ForEach(game.data.editions) { ed in
-                        let best = game.quizProgress.best(.edition, year: ed.year)
                         Button { game.startQuiz(.edition, year: ed.year) } label: {
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(String(ed.year)).font(.scoreboard(26)).foregroundStyle(Color.hwcGold2)
                                 Text(ed.host).font(.system(size: 13)).foregroundStyle(Color.hwcTextDim).lineLimit(1)
-                                Text(game.isOpen(ed.year)
-                                     ? String(repeating: "⭐", count: best ?? 0) + String(repeating: "☆", count: 5 - (best ?? 0))
-                                     : "🔒 Full History")
+                                Text(game.quizStars(ed.year))
                                     .font(.system(size: 11))
                             }
                             .frame(maxWidth: .infinity, alignment: .leading)
@@ -53,12 +50,18 @@ struct QuizModeCard: View {
     var locked = false
     let action: () -> Void
 
+    private var label: String {
+        if locked { return "🔒 Full History" }
+        if let best { return "Record: \(best) / \(total)" }
+        return "Nejucat încă"
+    }
+
     var body: some View {
         Button(action: action) {
             VStack(alignment: .leading, spacing: 4) {
                 Text(title).font(.system(size: 16, weight: .bold)).foregroundStyle(Color.hwcText)
                 Text(subtitle).font(.system(size: 14)).foregroundStyle(Color.hwcTextDim)
-                Text(locked ? "🔒 Full History" : best.map { "Record: \($0) / \(total)" } ?? "Nejucat încă")
+                Text(label)
                     .font(.stat(12)).foregroundStyle(Color.hwcGold)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -251,8 +254,8 @@ struct TrackEntryCard: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
             if playable {
-                SecondaryButton(title: game.isOpen(entry.year) ? "Joacă această campanie" : "🔒 Joacă această campanie",
-                                systemImage: "play.fill") {
+                let playTitle = game.isOpen(entry.year) ? "Joacă această campanie" : "🔒 Joacă această campanie"
+                SecondaryButton(title: playTitle, systemImage: "play.fill") {
                     game.startCareer(team: entry.code, year: entry.year)
                 }
             }

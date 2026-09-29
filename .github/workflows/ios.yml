@@ -52,7 +52,9 @@ jobs:
           cd ios
           set -o pipefail
           xcodebuild -project HistoryOfWorldCup.xcodeproj -scheme HistoryOfWorldCup \
-            -destination "id=$UDID" -derivedDataPath build CODE_SIGNING_ALLOWED=NO build | tail -40
+            -destination "id=$UDID" -derivedDataPath build CODE_SIGNING_ALLOWED=NO build > build.log 2>&1 \
+            || { grep -E "error:|error -|note: .*(expected|candidate)" build.log | head -60; tail -30 build.log; exit 1; }
+          tail -20 build.log
       - name: Capturi de ecran
         run: |
           APP=ios/build/Build/Products/Debug-iphonesimulator/HistoryOfWorldCup.app

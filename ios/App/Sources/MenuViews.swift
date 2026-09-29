@@ -84,8 +84,10 @@ struct EditionSelectView: View {
                         VStack(alignment: .leading, spacing: 4) {
                             Text(String(ed.year)).font(.scoreboard(30)).foregroundStyle(Color.hwcGold2)
                             Text(ed.host).font(.system(size: 14)).foregroundStyle(Color.hwcText).lineLimit(1)
-                            Text(game.isOpen(ed.year) ? "🏆 \(game.label(ed.champion))" : "🔒 Full History")
-                                .font(.system(size: 13)).foregroundStyle(game.isOpen(ed.year) ? Color.hwcTextDim : Color.hwcGold)
+                            let unlocked = game.isOpen(ed.year)
+                            let caption = unlocked ? "🏆 " + game.label(ed.champion) : "🔒 Full History"
+                            Text(caption)
+                                .font(.system(size: 13)).foregroundStyle(unlocked ? Color.hwcTextDim : Color.hwcGold)
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(12)
