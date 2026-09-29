@@ -1,4 +1,6 @@
-# History of World Cup 🏆
+# Arhiva Mondialelor 🏆
+
+*(repo: history-of-world-cup)*
 
 Prototip web jucabil pentru o aplicație iOS nativă despre istoria Campionatului Mondial de Fotbal (1930-2026) — trivia, management de echipă și simulare de meciuri, cu mecanica "confirmă sau rescrie istoria".
 

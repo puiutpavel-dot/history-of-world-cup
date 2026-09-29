@@ -27,7 +27,7 @@ targets:
     info:
       path: App/Info.plist
       properties:
-        CFBundleDisplayName: "History of World Cup"
+        CFBundleDisplayName: "Arhiva Mondialelor"
         # versiunea vine din setările de build (TestFlight suprascrie CURRENT_PROJECT_VERSION cu numărul rulării CI)
         CFBundleShortVersionString: "$(MARKETING_VERSION)"
         CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"

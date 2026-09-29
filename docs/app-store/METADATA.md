@@ -1,14 +1,8 @@
 # Metadate App Store (ro + en)
 
-## Nume (max. 30 de caractere) — DE DECIS
-FIFA deține mărci pentru „FIFA World Cup” și, în unele țări, pentru „World Cup”. Fără FIFA, fără emblemă, fără trofeu — dar numele e decizia ta:
-
-| Variantă | Caractere | Risc |
-|---|---|---|
-| History of World Cup (numele actual) | 20 | mediu („World Cup”) |
-| History of the World Cup | 24 | mediu („World Cup”) |
-| Arhiva Mondialelor | 18 | mic (termen generic în română) |
-| World Cup History Quiz | 22 | mediu |
+## Nume (max. 30 de caractere) — DECIS
+**Arhiva Mondialelor** (18 caractere) — termen generic în română, fără „FIFA” / „World Cup” în nume. Același nume pe ecranul iPhone (CFBundleDisplayName), în meniu, pe web și în paginile privacy/support. Bundle ID-ul rămâne `com.puiutpavel.historyofworldcup` (nu se vede public).
+- en (localizare opțională a numelui): *Arhiva Mondialelor* rămâne și în engleză; alternativ „World Cup Archive” are risc mediu („World Cup”).
 
 Niciodată: „FIFA”, „FIFA World Cup™”, „Official”, „We Are 26”, numele mingilor sau mascotelor ca brand.
 

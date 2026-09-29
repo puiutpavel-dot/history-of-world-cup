@@ -1,5 +1,5 @@
 /* ============================================================
-   HISTORY OF WORLD CUP — app.js
+   ARHIVA MONDIALELOR — app.js
    Stare de joc + randare UI (vanilla JS, fără dependențe).
    Echivalent direct al unui ObservableObject `GameState` din
    planul SwiftUI (vezi README).
@@ -73,7 +73,7 @@ function renderMenu() {
   <div class="screen menu">
     <div class="hero">
       <div class="hero-ball">⚽</div>
-      <h1>HISTORY OF<br/>WORLD CUP</h1>
+      <h1>ARHIVA<br/>MONDIALELOR</h1>
       <p class="tagline">Confirmă sau rescrie istoria — 23 de ediții, 1930-2026</p>
     </div>
     <div class="menu-buttons">

@@ -8,7 +8,7 @@ enum AppLinks {
 }
 
 /// Textul de neafiliere — același pe web, în aplicație și în descrierea din App Store.
-let unofficialDisclaimer = "History of World Cup este un joc educațional neoficial, creat independent. Nu este afiliat, sponsorizat sau aprobat de FIFA, de organizatorii turneelor sau de vreo federație națională. Numele competițiilor, echipelor și jucătorilor sunt folosite doar descriptiv, în scop istoric. Aplicația nu folosește logouri, embleme, trofee oficiale sau fotografii."
+let unofficialDisclaimer = "Arhiva Mondialelor este un joc educațional neoficial, creat independent. Nu este afiliat, sponsorizat sau aprobat de FIFA, de organizatorii turneelor sau de vreo federație națională. Numele competițiilor, echipelor și jucătorilor sunt folosite doar descriptiv, în scop istoric. Aplicația nu folosește logouri, embleme, trofee oficiale sau fotografii."
 
 // MARK: - Despre și setări
 

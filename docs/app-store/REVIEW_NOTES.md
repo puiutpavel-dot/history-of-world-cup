@@ -4,7 +4,7 @@ Copiază blocul de mai jos în App Store Connect → versiunea aplicației → *
 Sign-in required: **No** (aplicația nu are cont).
 
 ```
-History of World Cup is an unofficial, independently made educational game about the history of the
+Arhiva Mondialelor ("World Cup Archive") is an unofficial, independently made educational game about the history of the
 football World Cup (1930–2026). It is not affiliated with, sponsored or endorsed by FIFA or any
 national federation. It uses no official logos, emblems, trophies, photos, anthems or TV footage;
 competition, team and player names are used descriptively, for historical purposes.
