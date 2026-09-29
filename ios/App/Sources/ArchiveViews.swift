@@ -38,6 +38,9 @@ struct MuseumView: View {
                                 if let st = game.data.story(ed.year) {
                                     StoryView(story: st)
                                 }
+                                let best = game.quizProgress.best(.edition, year: ed.year)
+                                SecondaryButton(title: best.map { "Quiz \(String(ed.year)) · record \($0)/5" } ?? "Quiz \(String(ed.year)) · 5 întrebări",
+                                                systemImage: "questionmark.circle") { game.startQuiz(.edition, year: ed.year) }
                             }
                             .font(.system(size: 14))
                             .foregroundStyle(Color.hwcText)

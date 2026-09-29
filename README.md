@@ -24,6 +24,10 @@ Punctaj 2/1/0 până în 1990, 3/1/0 din 1994. Cartonașe din 1970: două galben
 
 Ori de câte ori e posibil, adversarii din traseul jucătorului sunt **exact adversarii reali** pe care echipa aleasă i-a întâlnit în ediția respectivă (ordine reală, opoziție reală) — dar scorul rămâne **simulat**, în funcție de tactica aleasă. Fiecare meci arată un badge 📜 *adversar real* sau 🎲 *adversar simulat*, iar rezultatul e comparat cu scorul istoric real.
 
+**Quiz** (`quiz.js`): quiz pe ediție (gazdă, scorul finalei, format, golgheter, o surpriză), **Maraton 1930 → 2026** (câte o întrebare pe ediție), **Duoul greșit** (3 afirmații, una falsă) și **Alege faza**; recordurile se păstrează local. Banca de întrebări e generată determinist din datele jocului și exportată identic pentru iOS.
+
+**Traseul țării tale**: țara se stabilește automat din regiunea dispozitivului (web: limba browserului) și se poate schimba manual; ecranul arată toate participările reale ale țării (meci cu meci, 1930-2022, pentru toate cele 84 de naționale — `country_tracks.js`, generat cu `tools/build_country_tracks.py`), cel mai bun rezultat, absențele și, unde se poate, „Joacă această campanie”.
+
 Ecrane suplimentare: **Muzeul Edițiilor** (toate cele 23 de ediții, 1930-2026, cu gazdă/golgheter/minge oficială, formatul turneului și povestea ediției — `history.js`), **Evoluția regulilor** (cronologia 1930-2026, loturi, cele 7 familii de format) și **Galeria Legendelor** (18 fotbaliști istorici cu bio scurt).
 
 ## Scope v1 — notă importantă

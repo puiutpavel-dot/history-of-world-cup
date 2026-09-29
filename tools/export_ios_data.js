@@ -26,6 +26,20 @@ const data = {
     titlePath: P.TITLE_PATH,
     stories: P.EDITIONS.filter((e) => P.STORIES[e.year]).map((e) => ({ year: e.year, ...P.STORIES[e.year] })),
   },
+  // banca de întrebări (aceeași ca pe web) și traseul fiecărei țări (quiz.js)
+  quiz: P.buildQuizBank(),
+  countries: Object.keys(P.COUNTRY_ISO).map((iso) => {
+    const t = P.countryTrack(iso);
+    return {
+      iso, codes: t.codes, name: t.name, flag: t.flag, absent: t.absent,
+      best: t.best ? { year: t.best.year, finish: t.best.finish, label: P.FINISH_LABEL[t.best.finish] } : null,
+      entries: t.entries.map((e) => ({
+        year: e.year, code: e.code, finish: e.finish, finishLabel: P.FINISH_LABEL[e.finish],
+        matches: e.matches.map((m) => ({ round: P.TRACK_ROUND[m.round], opp: m.opp, gf: m.gf, ga: m.ga, note: m.note })),
+      })),
+    };
+  }),
+  langRegion: P.LANG_REGION,
 };
 
 const fixtures = Object.entries(P.REAL_FIXTURES).map(([key, c]) => {

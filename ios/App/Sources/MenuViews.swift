@@ -34,6 +34,12 @@ struct MenuView: View {
                     } else {
                         PrimaryButton(title: "Carieră nouă", systemImage: "trophy.fill") { game.go(.editions) }
                     }
+                    SecondaryButton(title: "Quiz", systemImage: "questionmark.circle") { game.go(.quizMenu) }
+                    if let t = game.userCountry {
+                        SecondaryButton(title: "\(t.flag) Traseul: \(t.name)", systemImage: "flag") { game.go(.country) }
+                    } else {
+                        SecondaryButton(title: "Traseul țării tale", systemImage: "globe.europe.africa") { game.go(.country) }
+                    }
                     SecondaryButton(title: "Muzeul Edițiilor", systemImage: "book") { game.go(.museum) }
                     SecondaryButton(title: "Evoluția regulilor", systemImage: "list.bullet.rectangle") { game.go(.rules) }
                     SecondaryButton(title: "Galeria Legendelor", systemImage: "star") { game.go(.legends) }

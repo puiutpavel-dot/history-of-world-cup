@@ -188,3 +188,51 @@ public struct TeamMeta: Hashable, Sendable {
 }
 
 public func fixtureKey(_ teamCode: String, _ year: Int) -> String { "\(teamCode)_\(year)" }
+
+// MARK: - Quiz și traseul țării (quiz.js)
+
+/// O întrebare din banca de quiz — aceeași ca pe web (generată de `buildQuizBank()`).
+public struct QuizQuestion: Codable, Hashable, Identifiable, Sendable {
+    public let id: String
+    public let year: Int
+    /// host | final | phase | scorer | teams | surprise | tf
+    public let kind: String
+    public let q: String
+    public let options: [String]
+    public let answer: Int
+}
+
+public struct TrackMatch: Codable, Hashable, Sendable {
+    public let round: String
+    public let opp: String
+    public let gf: Int
+    public let ga: Int
+    public let note: String?
+}
+
+public struct TrackEntry: Codable, Hashable, Sendable {
+    public let year: Int
+    /// echipa care a jucat (ex. „YUG” în traseul Serbiei)
+    public let code: String
+    public let finish: String
+    public let finishLabel: String
+    public let matches: [TrackMatch]
+}
+
+public struct TrackBest: Codable, Hashable, Sendable {
+    public let year: Int
+    public let finish: String
+    public let label: String
+}
+
+/// Traseul real al unei țări (după regiunea ISO) la toate Mondialele.
+public struct CountryTrack: Codable, Hashable, Identifiable, Sendable {
+    public let iso: String
+    public let codes: [String]
+    public let name: String
+    public let flag: String
+    public let absent: [Int]
+    public let best: TrackBest?
+    public let entries: [TrackEntry]
+    public var id: String { iso }
+}

@@ -266,6 +266,21 @@ final class ParityTests: XCTestCase {
         XCTAssertEqual(engine.data.history?.stories.count, 23)
     }
 
+    func testQuizAndCountryTracksLoad() {
+        XCTAssertEqual(engine.data.quiz.count, 23 * 6)
+        for q in engine.data.quiz {
+            XCTAssertTrue(q.options.indices.contains(q.answer), q.id)
+            XCTAssertEqual(Set(q.options).count, q.options.count, q.id)
+        }
+        let ro = engine.data.country("RO")
+        XCTAssertEqual(ro?.entries.map(\.year), [1930, 1934, 1938, 1970, 1990, 1994, 1998])
+        XCTAssertEqual(ro?.best?.year, 1994)
+        XCTAssertEqual(engine.data.regionFromLocales(["ro-RO"]), "RO")
+        XCTAssertEqual(engine.data.regionFromLocales(["ro"]), "RO")
+        XCTAssertEqual(engine.data.regionFromLocales(["nl_NL"]), "NL")
+        XCTAssertNil(engine.data.regionFromLocales(["en"]))
+    }
+
     func testSwedenHasByeIn1938() {
         let c = Career(teamCode: "SWE", year: 1938, seed: 7, engine: engine)
         XCTAssertEqual(c.byes, ["R16"])

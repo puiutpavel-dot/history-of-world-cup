@@ -49,6 +49,10 @@ struct RootView: View {
             case .legends: LegendsView()
             case .trophies: TrophyRoomView()
             case .rules: RulesView()
+            case .quizMenu: QuizMenuView()
+            case .quiz: QuizPlayView()
+            case .quizResult: QuizResultView()
+            case .country: CountryView()
             }
         }
         .transition(.opacity)

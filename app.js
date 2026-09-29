@@ -78,6 +78,8 @@ function renderMenu() {
     </div>
     <div class="menu-buttons">
       <button class="btn btn-primary" data-action="new-career">🏆 Carieră nouă</button>
+      <button class="btn" data-action="quiz-menu">🧠 Quiz</button>
+      ${countryButton()}
       <button class="btn" data-action="museum">📖 Muzeul Edițiilor</button>
       <button class="btn" data-action="rules">📜 Evoluția regulilor</button>
       <button class="btn" data-action="legends">⭐ Galeria Legendelor</button>
@@ -406,6 +408,7 @@ function renderMuseum() {
         <p class="museum-note">${ed.note}</p>
         ${FORMATS[ed.year] ? `<p>📋 <b>Format:</b> ${FORMATS[ed.year].summary}</p><p>${rulesLine(FORMATS[ed.year])}</p>` : ""}
         ${STORIES[ed.year] ? storyHtml(STORIES[ed.year]) : ""}
+        <button class="btn btn-block" data-action="quiz-start" data-mode="edition" data-year="${ed.year}">🧠 Quiz ${ed.year} (${quizBest("edition", ed.year) != null ? `record ${quizBest("edition", ed.year)}/5` : "5 întrebări"})</button>
       </div>` : ""}
     </div>`;
   }).join("");
@@ -424,6 +427,182 @@ function storyHtml(st) {
     <ul class="story-list">${st.moments.map((m) => `<li>${m}</li>`).join("")}</ul>
     <p>🏟️ <b>Finala:</b> ${st.final}</p>
     <p>🧑‍💼 <b>Antrenor campion:</b> ${st.coach}</p>
+  </div>`;
+}
+
+/* ============================================================
+   QUIZ — moduri de joc (banca de întrebări vine din quiz.js)
+   ============================================================ */
+const QUIZ_KEY = "hwc_quiz_v1";
+const QUIZ_BANK = buildQuizBank();
+const EDITION_KINDS = ["host", "final", "phase", "scorer", "teams", "surprise"];
+
+function loadQuizProgress() {
+  try { return JSON.parse(localStorage.getItem(QUIZ_KEY)) || { editions: {}, modes: {} }; }
+  catch (e) { return { editions: {}, modes: {} }; }
+}
+function saveQuizProgress(p) {
+  try { localStorage.setItem(QUIZ_KEY, JSON.stringify(p)); } catch (e) { /* stocare indisponibilă */ }
+}
+function pickRandom(arr, n) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+  return a.slice(0, n);
+}
+
+/* mode: "edition" (cu year) | "marathon" | "tf" | "phase" */
+function startQuiz(mode, year) {
+  let questions, title;
+  if (mode === "edition") {
+    questions = QUIZ_BANK.filter((q) => q.year === year && EDITION_KINDS.includes(q.kind));
+    title = `Quiz ${year}`;
+  } else if (mode === "marathon") {
+    questions = EDITIONS.map((e) => pickRandom(QUIZ_BANK.filter((q) => q.year === e.year), 1)[0]);
+    title = "Maraton 1930 → 2026";
+  } else if (mode === "tf") {
+    questions = pickRandom(QUIZ_BANK.filter((q) => q.kind === "tf"), 10);
+    title = "Duoul greșit";
+  } else {
+    questions = pickRandom(QUIZ_BANK.filter((q) => q.kind === "phase"), 10);
+    title = "Alege faza";
+  }
+  STATE.quiz = { mode, year: year || null, title, questions, idx: 0, score: 0, picked: null };
+  goto("QUIZ_PLAY");
+}
+
+function quizBest(mode, year) {
+  const p = loadQuizProgress();
+  return mode === "edition" ? p.editions[year] : p.modes[mode];
+}
+
+function renderQuizMenu() {
+  const best = (m) => (quizBest(m) != null ? `Record: ${quizBest(m)}` : "Nejucat încă");
+  const eds = EDITIONS.map((e) => {
+    const b = quizBest("edition", e.year);
+    return `<button class="card quiz-ed" data-action="quiz-start" data-mode="edition" data-year="${e.year}">
+      <div class="quiz-ed-year">${e.year}</div><div class="quiz-ed-host">${e.host}</div>
+      <div class="quiz-ed-best">${b != null ? `${"⭐".repeat(b)}${"☆".repeat(5 - b)}` : "☆☆☆☆☆"}</div>
+    </button>`;
+  }).join("");
+  return `
+  <div class="screen">
+    <div class="topbar"><button class="btn-back" data-action="menu">← Meniu</button><h2>🧠 Quiz</h2></div>
+    <div class="quiz-modes">
+      <button class="card quiz-mode" data-action="quiz-start" data-mode="marathon"><b>🏃 Maraton 1930 → 2026</b><span>23 de întrebări, câte una pe ediție</span><small>${best("marathon")} / 23</small></button>
+      <button class="card quiz-mode" data-action="quiz-start" data-mode="tf"><b>🕵️ Duoul greșit</b><span>3 afirmații, una e falsă — 10 runde</span><small>${best("tf")} / 10</small></button>
+      <button class="card quiz-mode" data-action="quiz-start" data-mode="phase"><b>🧩 Alege faza</b><span>Îți dau anul, tu spui ce urma după prima fază — 10 runde</span><small>${best("phase")} / 10</small></button>
+    </div>
+    <h3 class="section-title">Quiz pe ediție — 5 întrebări: gazdă, finală, format, golgheter, o surpriză</h3>
+    <div class="grid grid-editions">${eds}</div>
+  </div>`;
+}
+
+function renderQuizPlay() {
+  const z = STATE.quiz;
+  const q = z.questions[z.idx];
+  const answered = z.picked !== null;
+  const opts = q.options.map((o, i) => {
+    let cls = "quiz-opt";
+    if (answered && i === q.answer) cls += " quiz-ok";
+    else if (answered && i === z.picked) cls += " quiz-bad";
+    return `<button class="${cls}" data-action="quiz-pick" data-i="${i}" ${answered ? "disabled" : ""}>${o}</button>`;
+  }).join("");
+  const last = z.idx === z.questions.length - 1;
+  return `
+  <div class="screen">
+    <div class="topbar"><button class="btn-back" data-action="quiz-menu">← Quiz</button><h2>${z.title}</h2></div>
+    <div class="quiz-progress">Întrebarea ${z.idx + 1} / ${z.questions.length} · Scor ${z.score}</div>
+    <div class="card quiz-q"><div class="quiz-year">${q.year}</div><p>${q.q}</p></div>
+    <div class="quiz-opts">${opts}</div>
+    ${answered ? `<p class="quiz-feedback">${z.picked === q.answer ? "✅ Corect!" : `❌ Răspuns corect: <b>${q.options[q.answer]}</b>`}</p>
+      <button class="btn btn-primary btn-block" data-action="quiz-next">${last ? "Vezi rezultatul →" : "Următoarea →"}</button>` : ""}
+  </div>`;
+}
+
+function finishQuiz() {
+  const z = STATE.quiz;
+  const p = loadQuizProgress();
+  const prev = z.mode === "edition" ? p.editions[z.year] : p.modes[z.mode];
+  z.newRecord = prev == null || z.score > prev;
+  if (z.newRecord) { if (z.mode === "edition") p.editions[z.year] = z.score; else p.modes[z.mode] = z.score; }
+  saveQuizProgress(p);
+  goto("QUIZ_RESULT");
+}
+
+function renderQuizResult() {
+  const z = STATE.quiz;
+  const total = z.questions.length;
+  const pct = z.score / total;
+  const verdict = pct === 1 ? "Perfect! Știi istoria pe de rost." : pct >= 0.6 ? "Foarte bine!" : pct >= 0.3 ? "Nu-i rău — Muzeul te ajută." : "Mai trece o dată prin Muzeu.";
+  return `
+  <div class="screen">
+    <div class="topbar"><h2>${z.title}</h2></div>
+    <div class="summary-hero">
+      <div class="summary-outcome">${z.score} / ${total}</div>
+      <div class="summary-team">${verdict}${z.newRecord ? " · 🏅 Record nou!" : ""}</div>
+    </div>
+    <button class="btn btn-primary btn-block" data-action="quiz-start" data-mode="${z.mode}" ${z.year ? `data-year="${z.year}"` : ""}>🔁 Încă o dată</button>
+    ${z.year ? `<button class="btn btn-block" data-action="museum-year" data-year="${z.year}">📖 Citește ediția ${z.year} în Muzeu</button>` : ""}
+    <button class="btn btn-block" data-action="quiz-menu">← Înapoi la Quiz</button>
+  </div>`;
+}
+
+/* ============================================================
+   ȚARA UTILIZATORULUI — traseul real la Mondiale
+   ============================================================ */
+const COUNTRY_KEY = "hwc_country_v1";
+
+function userCountry() {
+  let saved = null;
+  try { saved = localStorage.getItem(COUNTRY_KEY); } catch (e) { /* ignorat */ }
+  if (saved && COUNTRY_ISO[saved]) return saved;
+  return regionFromLocales(navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language]);
+}
+
+function countryButton() {
+  const iso = userCountry();
+  const t = iso ? countryTrack(iso) : null;
+  return t ? `<button class="btn" data-action="country">${t.flag} Traseul: ${t.name}</button>`
+    : `<button class="btn" data-action="country">🌍 Traseul țării tale</button>`;
+}
+
+function renderCountry() {
+  const iso = STATE.countryIso || userCountry();
+  const t = iso ? countryTrack(iso) : null;
+  const options = Object.keys(COUNTRY_ISO).map((k) => ({ k, n: getTeamMeta(COUNTRY_ISO[k][0]).name }))
+    .sort((a, b) => a.n.localeCompare(b.n, "ro"))
+    .map((o) => `<option value="${o.k}" ${o.k === iso ? "selected" : ""}>${getTeamMeta(COUNTRY_ISO[o.k][0]).flag} ${o.n}</option>`).join("");
+  const picker = `<label class="hint">Țara: <select id="sel-country">${options}</select></label>`;
+  if (!t) {
+    return `
+    <div class="screen">
+      <div class="topbar"><button class="btn-back" data-action="menu">← Meniu</button><h2>🌍 Traseul țării tale</h2></div>
+      <p class="hint">Nu am putut stabili țara din setările dispozitivului. Alege-o din listă:</p>
+      ${picker}
+    </div>`;
+  }
+  const entries = t.entries.map((e) => {
+    const ed = EDITIONS.find((x) => x.year === e.year);
+    const as = e.code !== t.codes[0] ? ` <span class="hint">(ca ${getTeamMeta(e.code).name})</span>` : "";
+    const matches = e.matches.map((m) => `<li><span class="fx-label">${TRACK_ROUND[m.round]}</span> ${teamLabel(m.opp)} <b>${m.gf}–${m.ga}</b>${m.note ? ` <span class="hint">(${m.note})</span>` : ""}</li>`).join("");
+    const name = getTeamMeta(e.code).name;
+    const story = STORIES[e.year] ? STORIES[e.year].moments.filter((x) => x.includes(name)) : [];
+    const playable = TEAMS[e.code] && eligibleTeams(e.year).includes(e.code);
+    return `<div class="card track-entry">
+      <div class="track-head"><span class="quiz-ed-year">${e.year}</span> <span>${ed ? ed.host : ""}</span>${as}<span class="track-finish">${FINISH_LABEL[e.finish]}</span></div>
+      ${matches ? `<ul class="story-list">${matches}</ul>` : `<p class="hint">Meciurile din ${e.year} nu sunt încă în baza de date.</p>`}
+      ${story.map((x) => `<p class="museum-note">📖 ${x}</p>`).join("")}
+      ${playable ? `<button class="btn btn-block" data-action="play-campaign" data-code="${e.code}" data-year="${e.year}">▶️ Joacă această campanie</button>` : ""}
+    </div>`;
+  }).join("");
+  return `
+  <div class="screen">
+    <div class="topbar"><button class="btn-back" data-action="menu">← Meniu</button><h2>${t.flag} ${t.name}</h2></div>
+    <p class="hint">${t.entries.length} participări${t.best ? ` · cel mai bun rezultat: <b>${FINISH_LABEL[t.best.finish]}</b> (${t.best.year})` : ""}</p>
+    ${t.entries.length ? entries : `<p class="hint">${t.name} nu a jucat încă la un turneu final.</p>`}
+    ${t.absent.length ? `<p class="hint">Absentă la: ${t.absent.join(", ")}.</p>` : ""}
+    ${picker}
+    <p class="hint credits">Date meci cu meci 1930-2022: Fjelstul World Cup Database, CC-BY-SA 4.0.</p>
   </div>`;
 }
 
@@ -493,6 +672,7 @@ function render() {
     HUB: renderHub, MATCH_PREVIEW: renderMatchPreview, MATCH_LIVE: renderMatchLive,
     GROUP_TABLE: renderGroupTable, CAREER_SUMMARY: renderCareerSummary,
     MUSEUM: renderMuseum, LEGENDS: renderLegends, TROPHIES: renderTrophies, RULES: renderRules,
+    QUIZ_MENU: renderQuizMenu, QUIZ_PLAY: renderQuizPlay, QUIZ_RESULT: renderQuizResult, COUNTRY: renderCountry,
   };
   ROOT.innerHTML = `<button class="theme-toggle" data-action="toggle-theme">🌓</button>` + map[STATE.screen]();
   if (STATE.screen === "MATCH_LIVE") runTicker();
@@ -507,6 +687,24 @@ ROOT.addEventListener("click", (e) => {
   if (action === "museum") return goto("MUSEUM", { museumOpen: null });
   if (action === "legends") return goto("LEGENDS");
   if (action === "rules") return goto("RULES");
+  if (action === "quiz-menu") return goto("QUIZ_MENU");
+  if (action === "quiz-start") return startQuiz(el.dataset.mode, el.dataset.year ? Number(el.dataset.year) : null);
+  if (action === "quiz-pick") {
+    const z = STATE.quiz;
+    if (z.picked !== null) return;
+    z.picked = Number(el.dataset.i);
+    if (z.picked === z.questions[z.idx].answer) z.score++;
+    return render();
+  }
+  if (action === "quiz-next") {
+    const z = STATE.quiz;
+    if (z.idx === z.questions.length - 1) return finishQuiz();
+    z.idx++; z.picked = null;
+    return render();
+  }
+  if (action === "museum-year") return goto("MUSEUM", { museumOpen: Number(el.dataset.year) });
+  if (action === "country") return goto("COUNTRY", { countryIso: null });
+  if (action === "play-campaign") { STATE.pickedYear = Number(el.dataset.year); return startCareer(el.dataset.code); }
   if (action === "trophies") return goto("TROPHIES");
   if (action === "menu") return goto("MENU");
   if (action === "menu-confirm") { if (confirm("Sigur vrei să părăsești cariera curentă?")) goto("MENU"); return; }
@@ -528,6 +726,11 @@ ROOT.addEventListener("click", (e) => {
   }
 });
 // select changes nu au nevoie de re-render imediat — citite la "goto-preview"
+ROOT.addEventListener("change", (e) => {
+  if (e.target.id !== "sel-country") return;
+  try { localStorage.setItem(COUNTRY_KEY, e.target.value); } catch (err) { /* ignorat */ }
+  goto("COUNTRY", { countryIso: e.target.value });
+});
 
 initTheme();
 render();

@@ -14,6 +14,12 @@ public final class GameData: @unchecked Sendable {
     public let formats: [Int: TournamentFormat]
     /// Evoluția regulilor și povestea fiecărei ediții (history.js)
     public let history: HistoryContent?
+    /// banca de întrebări (quiz.js)
+    public let quiz: [QuizQuestion]
+    /// traseul fiecărei țări, după regiunea ISO
+    public let countries: [CountryTrack]
+    /// limbă fără regiune → țara cea mai probabilă
+    public let langRegion: [String: String]
 
     public let teamsByCode: [String: Team]
     private let shadowByCode: [String: ShadowTeam]
@@ -26,12 +32,19 @@ public final class GameData: @unchecked Sendable {
         let legends: [Legend]
         let formats: [TournamentFormat]
         let history: HistoryContent?
+        let quiz: [QuizQuestion]?
+        let countries: [CountryTrack]?
+        let langRegion: [String: String]?
     }
 
     public init(editions: [Edition], teams: [Team], shadowTeams: [ShadowTeam], legends: [Legend],
                 campaigns: [Campaign], rosters: [String: [RosterEntry]], formats: [TournamentFormat] = [],
-                history: HistoryContent? = nil) {
+                history: HistoryContent? = nil, quiz: [QuizQuestion] = [], countries: [CountryTrack] = [],
+                langRegion: [String: String] = [:]) {
         self.history = history
+        self.quiz = quiz
+        self.countries = countries
+        self.langRegion = langRegion
         var f: [Int: TournamentFormat] = [:]
         for fmt in formats { f[fmt.year] = fmt }
         self.formats = f
@@ -68,7 +81,8 @@ public final class GameData: @unchecked Sendable {
         let rosters = try decoder.decode([String: [RosterEntry]].self, from: read("RealRosters"))
         return GameData(editions: file.editions, teams: file.teams, shadowTeams: file.shadowTeams,
                         legends: file.legends, campaigns: campaigns, rosters: rosters, formats: file.formats,
-                        history: file.history)
+                        history: file.history, quiz: file.quiz ?? [], countries: file.countries ?? [],
+                        langRegion: file.langRegion ?? [:])
     }
 
     /// Instanța implicită, din resursele pachetului.
@@ -95,6 +109,25 @@ public final class GameData: @unchecked Sendable {
             y -= 4
         }
         return teams.map(\.code).sorted()
+    }
+
+    public func country(_ iso: String) -> CountryTrack? {
+        countries.first { $0.iso == iso }
+    }
+
+    /// `regionFromLocales(locales)` din quiz.js: ex. ["ro-RO", "en-US"] → "RO".
+    public func regionFromLocales(_ locales: [String]) -> String? {
+        for l in locales {
+            let parts = l.replacingOccurrences(of: "_", with: "-").split(separator: "-").map(String.init)
+            if let reg = parts.dropFirst().first(where: { $0.count == 2 && $0.allSatisfy(\.isLetter) }),
+               country(reg.uppercased()) != nil {
+                return reg.uppercased()
+            }
+        }
+        for l in locales {
+            if let r = langRegion[String(l.prefix(2)).lowercased()] { return r }
+        }
+        return nil
     }
 
     public func story(_ year: Int) -> EditionStory? {
