@@ -10,3 +10,6 @@ xcuserdata/
 # date generate din prototipul web (node tools/export_ios_data.js && node tools/make_golden.js)
 WorldCupCore/Sources/WorldCupCore/Resources/*.json
 WorldCupCore/Tests/WorldCupCoreTests/Resources/*.json
+
+# iconița se generează cu: python3 tools/make_icon.py
+App/Resources/Assets.xcassets/AppIcon.appiconset/AppIcon.png

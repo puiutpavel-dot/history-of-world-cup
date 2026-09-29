@@ -28,10 +28,17 @@ jobs:
     name: Aplicație iOS — build + capturi de ecran
     runs-on: macos-15
     needs: core-tests
+    permissions:
+      contents: write # pentru a publica capturile pe branch-ul "screenshots"
     steps:
       - uses: actions/checkout@v4
       - name: Generează JSON-urile din prototipul web
         run: node tools/export_ios_data.js
+      - name: Generează iconița aplicației
+        run: |
+          python3 -m venv /tmp/icon-venv
+          /tmp/icon-venv/bin/pip install -q pillow
+          /tmp/icon-venv/bin/python tools/make_icon.py
       - name: Generează proiectul Xcode
         run: brew install xcodegen && cd ios && xcodegen
       - name: Alege un simulator iPhone
@@ -65,6 +72,27 @@ jobs:
         with:
           name: screenshots
           path: screenshots
+      - name: Publică capturile pe branch-ul "screenshots" (vizibile direct pe GitHub)
+        if: github.event_name != 'pull_request'
+        run: |
+          cd screenshots
+          {
+            echo "# Capturi de ecran — aplicația iOS"
+            echo
+            echo "Generate automat de workflow-ul iOS pentru commit-ul \`${GITHUB_SHA::7}\` ($(date -u '+%Y-%m-%d %H:%M UTC'))."
+            echo
+            for s in menu editions teams hub preview live groupTable summary museum legends trophies; do
+              if [ -f "$s.png" ]; then
+                printf '### %s\n\n<img src="%s.png" width="320">\n\n' "$s" "$s"
+              fi
+            done
+          } > README.md
+          git init -q -b screenshots
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -qm "Capturi pentru ${GITHUB_SHA::7}"
+          git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" screenshots
       - name: Arhivează aplicația pentru Simulator
         run: cd ios/build/Build/Products/Debug-iphonesimulator && zip -qr "$GITHUB_WORKSPACE/HistoryOfWorldCup-simulator.zip" HistoryOfWorldCup.app
       - uses: actions/upload-artifact@v4

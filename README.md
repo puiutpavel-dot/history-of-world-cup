@@ -51,9 +51,9 @@ Portul nativ e în lucru în folderul [`ios/`](ios/):
 | **Teste** | `ios/WorldCupCore/Tests/` | Teste XCTest de **paritate cu JS**: PRNG, rating-uri, loturi, meciuri, penalty-uri și 60 de cariere complete, comparate cu vectorii din `Golden.json` (`node tools/make_golden.js`). |
 | **Aplicația** | `ios/App/Sources/` + `ios/project.yml` | Toate ecranele prototipului în SwiftUI (Meniu, Ediții, Echipe, Hub, Preview, Meci live, Clasament, Sumar, Muzeu, Legende, Sala Trofeelor), paleta „stadion nocturn”, temă dark/light, carieră salvată automat. |
 
-**Fără Mac:** workflow-ul [`.github/workflows/ios.yml`](.github/workflows/ios.yml) rulează pe un Mac din cloud (GitHub Actions, gratuit pentru repo-uri publice): testele motorului, build-ul aplicației pentru Simulator și capturi de ecran ale fiecărui ecran (tab-ul **Actions** → ultima rulare → **Artifacts → screenshots**).
+**Fără Mac:** workflow-ul [`.github/workflows/ios.yml`](.github/workflows/ios.yml) rulează pe un Mac din cloud (GitHub Actions, gratuit pentru repo-uri publice): testele motorului, build-ul aplicației pentru Simulator și capturi de ecran ale fiecărui ecran (tab-ul **Actions** → ultima rulare → **Artifacts**). Capturile se publică automat și pe branch-ul [`screenshots`](../../tree/screenshots), unde se văd direct în browser.
 
-**Cu Mac:** `node tools/export_ios_data.js && node tools/make_golden.js && brew install xcodegen && cd ios && xcodegen && open HistoryOfWorldCup.xcodeproj`.
+**Cu Mac:** `node tools/export_ios_data.js && node tools/make_golden.js && python3 tools/make_icon.py && brew install xcodegen && cd ios && xcodegen && open HistoryOfWorldCup.xcodeproj`.
 
 ## Rulare locală
 
