@@ -238,6 +238,12 @@ const SHADOW_TEAMS = {
   URS: { name: "Uniunea Sovietică", flag: "🇷🇺" },
   WAL: { name: "Țara Galilor", flag: "🏴󠁧󠁢󠁷󠁬󠁳󠁿" },
   ZAI: { name: "Zair", flag: "🇨🇩" },
+  // debut sau revenire în 2026
+  COD: { name: "RD Congo", flag: "🇨🇩" },
+  CPV: { name: "Capul Verde", flag: "🇨🇻" },
+  CUW: { name: "Curaçao", flag: "🇨🇼" },
+  JOR: { name: "Iordania", flag: "🇯🇴" },
+  UZB: { name: "Uzbekistan", flag: "🇺🇿" },
 };
 
 function getTeamMeta(code) {

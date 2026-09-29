@@ -9,7 +9,7 @@ module.exports = function loadPrototype() {
   const root = path.join(__dirname, "..");
   const ctx = { console, Math, Object, Array, Set, JSON, Number, String };
   vm.createContext(ctx);
-  for (const f of ["data.js", "real_fixtures.js", "real_rosters.js", "engine.js", "career.js", "history.js", "country_tracks.js", "quiz.js", "i18n_en.js"]) {
+  for (const f of ["data.js", "real_fixtures.js", "real_rosters.js", "engine.js", "career.js", "history.js", "country_tracks.js", "tracks_2026.js", "quiz.js", "i18n_en.js"]) {
     // `const` la nivel de script nu devine proprietate globală — îl expunem explicit.
     let src = fs.readFileSync(path.join(root, f), "utf8");
     src = src.replace(/if \(typeof module !== "undefined"[\s\S]*$/, "");

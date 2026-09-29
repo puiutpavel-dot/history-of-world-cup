@@ -51,7 +51,7 @@ struct AboutView: View {
                 }
 
                 Panel(title: tr("Surse", "Sources")) {
-                    Text(LocalizedStringKey(tr("Rezultatele meciurilor reale: [Fjelstul World Cup Database](https://www.github.com/jfjelstul/worldcup) © 2023 Joshua C. Fjelstul, Ph.D., licență [CC-BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/legalcode) (date adaptate). Loturi: Wikipedia. Textele istorice sunt rezumate originale.", "Real match results: [Fjelstul World Cup Database](https://www.github.com/jfjelstul/worldcup) © 2023 Joshua C. Fjelstul, Ph.D., licensed [CC-BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/legalcode) (adapted data). Squads: Wikipedia. The historical texts are original summaries.")))
+                    Text(LocalizedStringKey(tr("Rezultatele meciurilor reale: [Fjelstul World Cup Database](https://www.github.com/jfjelstul/worldcup) © 2023 Joshua C. Fjelstul, Ph.D., licență [CC-BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/legalcode) (date adaptate). Meciurile din 2026: [openfootball](https://github.com/openfootball/worldcup.json) (domeniu public). Loturi: Wikipedia. Textele istorice sunt rezumate originale.", "Real match results: [Fjelstul World Cup Database](https://www.github.com/jfjelstul/worldcup) © 2023 Joshua C. Fjelstul, Ph.D., licensed [CC-BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/legalcode) (adapted data). 2026 matches: [openfootball](https://github.com/openfootball/worldcup.json) (public domain). Squads: Wikipedia. The historical texts are original summaries.")))
                         .font(.system(size: 13)).foregroundStyle(Color.hwcTextDim).tint(.hwcGold)
                 }
 

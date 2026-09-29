@@ -26,9 +26,9 @@ Fără nume de alte aplicații, fără „FIFA”, fără nume de jucători, fă
 
 ## Descriere (ro)
 ```
-Retrăiește Campionatul Mondial de fotbal, turneu cu turneu, din 1930 până în 2022 — cu rezultatele reale.
+Retrăiește Campionatul Mondial de fotbal, turneu cu turneu, din 1930 până în 2026 — cu rezultatele reale.
 
-• Alegi o ediție și o echipă (84 de naționale) și îi retrăiești drumul real, meci cu meci.
+• Alegi o ediție și o echipă (peste 80 de naționale, inclusiv toate cele 48 din 2026) și îi retrăiești drumul real, meci cu meci.
 • După fiecare meci răspunzi la o întrebare ca să mergi mai departe — ai 3 vieți pe turneu.
 • Întrebări despre adversari (până unde au ajuns, titluri, debut) și despre ediție (gazdă, finală, format, golgheter).
 • Quiz: pe ediție, Maraton 1930 → 2026, Duoul greșit, Alege faza.
@@ -39,14 +39,14 @@ Mondialele 1930–1938 sunt gratuite. „Full History” deblochează toate cele
 
 Joc educațional neoficial, creat independent. Nu este afiliat, sponsorizat sau aprobat de FIFA, de organizatorii turneelor sau de vreo federație națională. Numele sunt folosite doar descriptiv, în scop istoric.
 
-Date istorice: Fjelstul World Cup Database (CC-BY-SA 4.0).
+Date istorice: Fjelstul World Cup Database (CC-BY-SA 4.0); meciurile din 2026: openfootball (domeniu public).
 ```
 
 ## Description (en)
 ```
-Relive the football World Cup, tournament by tournament, from 1930 to 2022 — with the real results.
+Relive the football World Cup, tournament by tournament, from 1930 to 2026 — with the real results.
 
-• Pick an edition and a team (84 national teams) and relive its real path, match by match.
+• Pick an edition and a team (over 80 national teams, including all 48 from 2026) and relive its real path, match by match.
 • After every match, answer a question to move on — you have 3 lives per tournament.
 • Questions about your opponents (how far they went, titles, debut) and about the edition (host, final, format, top scorer).
 • Quiz modes: per edition, Marathon 1930 → 2026, Spot the false one, Pick the stage.
@@ -57,7 +57,7 @@ The 1930–1938 World Cups are free. "Full History" unlocks all 23 editions and 
 
 Unofficial educational game, made independently. Not affiliated with, sponsored or endorsed by FIFA, tournament organisers or any national federation. Names are used descriptively, for historical purposes.
 
-Historical data: Fjelstul World Cup Database (CC-BY-SA 4.0).
+Historical data: Fjelstul World Cup Database (CC-BY-SA 4.0); 2026 matches: openfootball (public domain).
 ```
 (Aplicația e deocamdată doar în română — descrierea în engleză spune adevărul doar după localizare; până atunci publică doar ro sau adaugă „Available in Romanian”.)
 

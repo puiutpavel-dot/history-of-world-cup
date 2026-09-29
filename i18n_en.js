@@ -78,6 +78,7 @@ EN.teams = {
   NZL: "New Zealand", PAN: "Panama", PRK: "North Korea", QAT: "Qatar", SCG: "Serbia and Montenegro", SCO: "Scotland",
   SEN: "Senegal", SLV: "El Salvador", SRB: "Serbia", SVK: "Slovakia", SVN: "Slovenia", TOG: "Togo",
   TRI: "Trinidad and Tobago", UKR: "Ukraine", URS: "Soviet Union", WAL: "Wales", ZAI: "Zaire",
+  COD: "DR Congo", CPV: "Cape Verde", CUW: "Curaçao", JOR: "Jordan", UZB: "Uzbekistan",
 };
 
 /* ---------- Legends ---------- */
@@ -521,9 +522,9 @@ EN.quiz = {
 /* ---------- Country track ---------- */
 EN.finishLabel = {
   champion: "🏆 Champions", runnerUp: "🥈 Runners-up", third: "🥉 Third place", fourth: "Fourth place",
-  SF: "Semi-finals", GR2: "Second group stage", QF: "Quarter-finals", R16: "Round of 16", G: "Group stage",
+  SF: "Semi-finals", GR2: "Second group stage", QF: "Quarter-finals", R16: "Round of 16", R32: "Round of 32", G: "Group stage",
 };
-EN.trackRound = { G: "Group", R16: "Round of 16", QF: "Quarter-final", GR2: "Second group stage", FR: "Final group", SF: "Semi-final", "3P": "Third place", F: "Final" };
+EN.trackRound = { G: "Group", R32: "Round of 32", R16: "Round of 16", QF: "Quarter-final", GR2: "Second group stage", FR: "Final group", SF: "Semi-final", "3P": "Third place", F: "Final" };
 
 /* match notes (country tracks) */
 EN.note = function (s) {

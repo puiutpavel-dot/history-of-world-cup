@@ -160,18 +160,18 @@ function tfQuestion(ed, fmt, rng, hosts, L) {
 /* ---------- Țara utilizatorului ---------- */
 const FINISH_LABEL = {
   champion: "🏆 Campioană", runnerUp: "🥈 Finalistă", third: "🥉 Locul 3", fourth: "Locul 4",
-  SF: "Semifinală", GR2: "A doua fază a grupelor", QF: "Sferturi", R16: "Optimi", G: "Faza grupelor",
+  SF: "Semifinală", GR2: "A doua fază a grupelor", QF: "Sferturi", R16: "Optimi", R32: "Șaisprezecimi", G: "Faza grupelor",
 };
-const FINISH_RANK = { champion: 0, runnerUp: 1, third: 2, fourth: 3, SF: 4, GR2: 5, QF: 6, R16: 7, G: 8 };
-const TRACK_ROUND = { G: "Grupă", R16: "Optimi", QF: "Sferturi", GR2: "Grupa a doua", FR: "Grupa finală", SF: "Semifinală", "3P": "Finala mică", F: "Finală" };
+const FINISH_RANK = { champion: 0, runnerUp: 1, third: 2, fourth: 3, SF: 4, GR2: 5, QF: 6, R16: 7, R32: 8, G: 9 };
+const TRACK_ROUND = { G: "Grupă", R32: "Șaisprezecimi", R16: "Optimi", QF: "Sferturi", GR2: "Grupa a doua", FR: "Grupa finală", SF: "Semifinală", "3P": "Finala mică", F: "Finală" };
 
-/* 2026: rezultatele meci cu meci nu sunt încă în baza de date — doar podiumul */
-const TRACKS_2026 = { ESP: "champion", ARG: "runnerUp", ENG: "third", FRA: "fourth" };
+/* 2026: cele 104 meciuri, din tracks_2026.js (openfootball, domeniu public) */
+const TRACKS_2026 = typeof COUNTRY_TRACKS_2026 !== "undefined" ? COUNTRY_TRACKS_2026 : {};
 
 /* regiunea (ISO 3166) → echipele care o reprezintă istoric (prima dă numele) */
 const COUNTRY_ISO = {
   AE: ["UAE"], AO: ["ANG"], AR: ["ARG"], AT: ["AUT"], AU: ["AUS"], BA: ["BIH"], BE: ["BEL"], BG: ["BUL"],
-  BO: ["BOL"], BR: ["BRA"], CA: ["CAN"], CD: ["ZAI"], CH: ["SUI"], CI: ["CIV"], CL: ["CHI"], CM: ["CMR"],
+  BO: ["BOL"], BR: ["BRA"], CA: ["CAN"], CD: ["COD", "ZAI"], CH: ["SUI"], CI: ["CIV"], CL: ["CHI"], CM: ["CMR"],
   CN: ["CHN"], CO: ["COL"], CR: ["CRC"], CU: ["CUB"], CZ: ["CZE", "TCH"], DE: ["GER", "GDR"], DK: ["DEN"],
   DZ: ["ALG"], EC: ["ECU"], EG: ["EGY"], ES: ["ESP"], FR: ["FRA"], GB: ["ENG", "SCO", "WAL", "NIR"],
   GH: ["GHA"], GR: ["GRE"], HN: ["HON"], HR: ["CRO"], HT: ["HAI"], HU: ["HUN"], ID: ["DEI"], IE: ["IRL"],
@@ -181,6 +181,7 @@ const COUNTRY_ISO = {
   RO: ["ROU"], RS: ["SRB", "SCG", "YUG"], RU: ["RUS", "URS"], SA: ["KSA"], SE: ["SWE"], SI: ["SVN"],
   SK: ["SVK", "TCH"], SN: ["SEN"], SV: ["SLV"], TG: ["TOG"], TN: ["TUN"], TR: ["TUR"], TT: ["TRI"],
   UA: ["UKR"], US: ["USA"], UY: ["URU"], ZA: ["RSA"],
+  CV: ["CPV"], CW: ["CUW"], JO: ["JOR"], UZ: ["UZB"],
 };
 /* limba fără regiune → țara cea mai probabilă */
 const LANG_REGION = { ro: "RO", de: "DE", fr: "FR", it: "IT", es: "ES", nl: "NL", pl: "PL", hu: "HU", sv: "SE", ja: "JP", ko: "KR", tr: "TR", hr: "HR", cs: "CZ", sk: "SK", pt: "PT", el: "GR", bg: "BG", sr: "RS", uk: "UA", ru: "RU", da: "DK", nb: "NO", no: "NO" };
@@ -205,13 +206,12 @@ function countryTrack(iso) {
   if (!codes) return null;
   const entries = [];
   for (const code of codes) for (const e of COUNTRY_TRACKS[code] || []) entries.push({ ...e, code });
-  for (const code of codes) if (TRACKS_2026[code]) entries.push({ year: 2026, finish: TRACKS_2026[code], matches: [], code });
+  for (const code of codes) if (TRACKS_2026[code]) entries.push({ ...TRACKS_2026[code], code });
   entries.sort((a, b) => a.year - b.year);
   const best = entries.slice().sort((a, b) => FINISH_RANK[a.finish] - FINISH_RANK[b.finish] || a.year - b.year)[0] || null;
   const played = new Set(entries.map((e) => e.year));
   return { iso, codes, name: getTeamMeta(codes[0]).name, flag: getTeamMeta(codes[0]).flag, entries, best,
-    // 2026 rămâne în afara listei de absențe: meciurile nu sunt încă în baza de date
-    absent: EDITIONS.map((e) => e.year).filter((y) => y !== 2026 && !played.has(y)) };
+    absent: EDITIONS.map((e) => e.year).filter((y) => !played.has(y)) };
 }
 
 if (typeof module !== "undefined" && module.exports) {

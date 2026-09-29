@@ -61,7 +61,7 @@ func resultTag(_ m: TrackMatch) -> (text: String, color: Color) {
 // MARK: - Întrebările de după meciuri
 
 enum RunQuestions {
-    static let finishOrder = ["champion", "runnerUp", "third", "fourth", "SF", "GR2", "QF", "R16", "G"]
+    static let finishOrder = ["champion", "runnerUp", "third", "fourth", "SF", "GR2", "QF", "R16", "R32", "G"]
 
     /// O întrebare pentru fiecare meci: alternativ despre meciul tocmai jucat (adversarul lui)
     /// și din întrebările ediției (gazdă, finală, format, golgheter, surpriză, adevărat/fals).
@@ -116,7 +116,7 @@ enum RunQuestions {
                        correct: t.finishLabel, wrong: pool)
         case "oppTitles":
             // doar pentru adversarii care au câștigat vreodată Cupa (altfel răspunsul ar fi mereu 0)
-            guard data.editions.contains(where: { $0.champion == m.opp && $0.year <= 2022 }) else { return nil }
+            guard data.editions.contains(where: { $0.champion == m.opp && $0.year < year }) else { return nil }
             let n = data.editions.filter { $0.year < year && $0.champion == m.opp }.count
             let wrong = [n + 1, n + 2, n + 3, n - 1, n - 2].filter { $0 >= 0 }.map(String.init)
             return mcq(id, year, kind, tr("Câte titluri mondiale avea \(opp) înainte de \(String(year))?",
@@ -124,7 +124,7 @@ enum RunQuestions {
                        correct: String(n), wrong: wrong)
         case "oppDebut":
             guard let first = data.debutYear(m.opp) else { return nil }
-            let years = data.editions.map(\.year).filter { $0 <= 2022 && $0 != first && abs($0 - first) <= 16 }
+            let years = data.editions.map(\.year).filter { $0 != first && abs($0 - first) <= 16 }
             guard years.count >= 3 else { return nil }
             return mcq(id, year, kind, tr("În ce an a jucat \(opp) primul său Mondial?",
                                           "In which year did \(opp) play their first World Cup?"),
@@ -179,7 +179,7 @@ struct RunTeamSelectView: View {
                         .buttonStyle(.plain)
                     }
                 }
-                Text(tr("Rezultate reale: Fjelstul World Cup Database, CC-BY-SA 4.0.", "Real results: Fjelstul World Cup Database, CC-BY-SA 4.0."))
+                Text(tr("Rezultate reale: 1930–2022 Fjelstul World Cup Database (CC-BY-SA 4.0); 2026 openfootball (domeniu public).", "Real results: 1930–2022 Fjelstul World Cup Database (CC-BY-SA 4.0); 2026 openfootball (public domain)."))
                     .font(.system(size: 11)).foregroundStyle(Color.hwcTextDim)
             }
         }

@@ -603,7 +603,7 @@ function renderCountry() {
     ${t.entries.length ? entries : `<p class="hint">${t.name} nu a jucat încă la un turneu final.</p>`}
     ${t.absent.length ? `<p class="hint">Absentă la: ${t.absent.join(", ")}.</p>` : ""}
     ${picker}
-    <p class="hint credits">Date meci cu meci 1930-2022: Fjelstul World Cup Database, CC-BY-SA 4.0.</p>
+    <p class="hint credits">Date meci cu meci: 1930-2022 Fjelstul World Cup Database, CC-BY-SA 4.0; 2026 openfootball (domeniu public).</p>
   </div>`;
 }
 
