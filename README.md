@@ -40,6 +40,21 @@ Structura oglindește direct arhitectura SwiftUI propusă (vezi documentul de pr
 
 PRNG determinist (`mulberry32`) = echivalentul unui generator cu sămânță pentru teste unitare reproductibile.
 
+## Aplicația iOS nativă (SwiftUI) — `ios/`
+
+Portul nativ e în lucru în folderul [`ios/`](ios/):
+
+| Parte | Unde | Ce face |
+|---|---|---|
+| **Motor** | `ios/WorldCupCore/` (Swift Package) | Port 1:1 al `engine.js` + logica de carieră din `app.js` (`Career`), fără UI. Același PRNG `mulberry32` ⇒ aceleași rezultate ca prototipul web pentru aceeași sămânță. |
+| **Date** | `ios/WorldCupCore/Sources/WorldCupCore/Resources/*.json` | `Data.json`, `RealFixtures.json`, `RealRosters.json` — **generate** (nu sunt versionate) din `data.js` / `real_fixtures.js` / `real_rosters.js` cu `node tools/export_ios_data.js`; sursa unică de adevăr rămân fișierele JS. |
+| **Teste** | `ios/WorldCupCore/Tests/` | Teste XCTest de **paritate cu JS**: PRNG, rating-uri, loturi, meciuri, penalty-uri și 60 de cariere complete, comparate cu vectorii din `Golden.json` (`node tools/make_golden.js`). |
+| **Aplicația** | `ios/App/Sources/` + `ios/project.yml` | Toate ecranele prototipului în SwiftUI (Meniu, Ediții, Echipe, Hub, Preview, Meci live, Clasament, Sumar, Muzeu, Legende, Sala Trofeelor), paleta „stadion nocturn”, temă dark/light, carieră salvată automat. |
+
+**Fără Mac:** workflow-ul [`.github/workflows/ios.yml`](.github/workflows/ios.yml) rulează pe un Mac din cloud (GitHub Actions, gratuit pentru repo-uri publice): testele motorului, build-ul aplicației pentru Simulator și capturi de ecran ale fiecărui ecran (tab-ul **Actions** → ultima rulare → **Artifacts → screenshots**).
+
+**Cu Mac:** `node tools/export_ios_data.js && node tools/make_golden.js && brew install xcodegen && cd ios && xcodegen && open HistoryOfWorldCup.xcodeproj`.
+
 ## Rulare locală
 
 Fără build, fără dependențe. Orice server static funcționează:
@@ -53,8 +68,9 @@ python3 -m http.server 8080
 
 1. Extinde `real_fixtures.js` / `real_rosters.js` cu mai multe campanii/ediții și loturi reale (structura suportă orice număr de chei `ECHIPA_AN`).
 2. Stabilește scope-ul exact pentru v1 iOS (câte ediții/echipe la lansare, dacă păstrăm turneul simplificat grupă→sferturi→semifinală→finală sau extindem la 32 de echipe/optimi).
-3. Port Swift al motorului de simulare + teste unitare XCTest.
-4. Construire UI SwiftUI ecran cu ecran, folosind acest prototip ca referință vizuală și de interacțiune.
+3. ~~Port Swift al motorului de simulare + teste unitare XCTest~~ — în `ios/WorldCupCore/`, verificat automat în CI.
+4. ~~Construire UI SwiftUI ecran cu ecran~~ — prima versiune în `ios/App/`; urmează rafinarea pe baza capturilor din CI / TestFlight.
+5. Cont Apple Developer + semnare + TestFlight (se poate face tot din GitHub Actions, fără Mac).
 
 ---
 

@@ -1,0 +1,73 @@
+name: iOS
+
+# Compilează și testează aplicația iOS pe un Mac din cloud (GitHub Actions),
+# fără să ai nevoie de un Mac local. Rezultate: teste XCTest pentru motor,
+# build-ul aplicației pentru Simulator și capturi de ecran ale fiecărui ecran
+# (descărcabile din pagina rulării → Artifacts → "screenshots").
+
+on:
+  push:
+    branches: [main]
+    paths: ["ios/**", "tools/**", "*.js", ".github/workflows/ios.yml"]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  core-tests:
+    name: Motor Swift (WorldCupCore) — teste de paritate cu JS
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Generează JSON-urile din prototipul web
+        run: node tools/export_ios_data.js && node tools/make_golden.js
+      - run: swift --version
+      - run: swift test
+        working-directory: ios/WorldCupCore
+
+  app:
+    name: Aplicație iOS — build + capturi de ecran
+    runs-on: macos-15
+    needs: core-tests
+    steps:
+      - uses: actions/checkout@v4
+      - name: Generează JSON-urile din prototipul web
+        run: node tools/export_ios_data.js
+      - name: Generează proiectul Xcode
+        run: brew install xcodegen && cd ios && xcodegen
+      - name: Alege un simulator iPhone
+        run: |
+          UDID=$(xcrun simctl list devices available -j | jq -r '[.devices[] | .[] | select(.name | startswith("iPhone"))] | last | .udid')
+          echo "UDID=$UDID" >> "$GITHUB_ENV"
+          xcrun simctl list devices available | grep "$UDID"
+          xcrun simctl boot "$UDID"
+      - name: Build
+        run: |
+          cd ios
+          set -o pipefail
+          xcodebuild -project HistoryOfWorldCup.xcodeproj -scheme HistoryOfWorldCup \
+            -destination "id=$UDID" -derivedDataPath build CODE_SIGNING_ALLOWED=NO build | tail -40
+      - name: Capturi de ecran
+        run: |
+          APP=ios/build/Build/Products/Debug-iphonesimulator/HistoryOfWorldCup.app
+          BUNDLE=com.puiutpavel.historyofworldcup
+          xcrun simctl bootstatus "$UDID" -b
+          xcrun simctl status_bar "$UDID" override --time 9:41 --batteryLevel 100 --cellularBars 4 || true
+          xcrun simctl install "$UDID" "$APP"
+          mkdir -p screenshots
+          for s in menu editions teams hub preview live groupTable summary museum legends trophies; do
+            xcrun simctl terminate "$UDID" "$BUNDLE" 2>/dev/null || true
+            xcrun simctl launch "$UDID" "$BUNDLE" -demoScreen "$s"
+            if [ "$s" = "live" ]; then sleep 9; else sleep 4; fi
+            xcrun simctl io "$UDID" screenshot "screenshots/$s.png"
+          done
+          ls -la screenshots
+      - uses: actions/upload-artifact@v4
+        with:
+          name: screenshots
+          path: screenshots
+      - name: Arhivează aplicația pentru Simulator
+        run: cd ios/build/Build/Products/Debug-iphonesimulator && zip -qr "$GITHUB_WORKSPACE/HistoryOfWorldCup-simulator.zip" HistoryOfWorldCup.app
+      - uses: actions/upload-artifact@v4
+        with:
+          name: HistoryOfWorldCup-simulator-app
+          path: HistoryOfWorldCup-simulator.zip

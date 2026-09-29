@@ -1,0 +1,12 @@
+# generate de XcodeGen / Xcode
+*.xcodeproj
+App/Info.plist
+build/
+DerivedData/
+.build/
+.swiftpm/
+xcuserdata/
+
+# date generate din prototipul web (node tools/export_ios_data.js && node tools/make_golden.js)
+WorldCupCore/Sources/WorldCupCore/Resources/*.json
+WorldCupCore/Tests/WorldCupCoreTests/Resources/*.json
