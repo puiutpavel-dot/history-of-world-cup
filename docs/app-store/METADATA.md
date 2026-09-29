@@ -2,7 +2,7 @@
 
 ## Nume (max. 30 de caractere) — DECIS
 **Arhiva Mondialelor** (18 caractere) — termen generic în română, fără „FIFA” / „World Cup” în nume. Același nume pe ecranul iPhone (CFBundleDisplayName), în meniu, pe web și în paginile privacy/support. Bundle ID-ul rămâne `com.puiutpavel.historyofworldcup` (nu se vede public).
-- en (localizare opțională a numelui): *Arhiva Mondialelor* rămâne și în engleză; alternativ „World Cup Archive” are risc mediu („World Cup”).
+- en: **Arhiva Mondialelor** — același nume și în localizarea engleză (decis; fără „World Cup” în nume). Subtitlul en explică: *Trivia & career, 1930–2026*.
 
 Niciodată: „FIFA”, „FIFA World Cup™”, „Official”, „We Are 26”, numele mingilor sau mascotelor ca brand.
 
