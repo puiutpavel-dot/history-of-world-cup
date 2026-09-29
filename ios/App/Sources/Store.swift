@@ -25,7 +25,7 @@ final class Store: ObservableObject {
         isUnlocked = defaults.bool(forKey: cacheKey)
         guard useStoreKit else { return }
         updates = Task { [weak self] in
-            for await result in Transaction.updates {
+            for await result in StoreKit.Transaction.updates {
                 await self?.handle(result)
             }
         }
@@ -40,7 +40,7 @@ final class Store: ObservableObject {
             product = try? await Product.products(for: [Self.fullHistoryID]).first
         }
         var owned = false
-        for await result in Transaction.currentEntitlements {
+        for await result in StoreKit.Transaction.currentEntitlements {
             if case .verified(let t) = result, t.productID == Self.fullHistoryID, t.revocationDate == nil {
                 owned = true
             }
@@ -94,7 +94,7 @@ final class Store: ObservableObject {
             : "Nu am găsit nicio achiziție „Full History” pentru acest Apple ID."
     }
 
-    private func handle(_ result: VerificationResult<Transaction>) async {
+    private func handle(_ result: VerificationResult<StoreKit.Transaction>) async {
         guard case .verified(let t) = result else { return }
         if t.productID == Self.fullHistoryID { setUnlocked(t.revocationDate == nil) }
         await t.finish()
