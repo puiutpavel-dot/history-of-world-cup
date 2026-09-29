@@ -48,6 +48,7 @@ struct RootView: View {
             case .museum: MuseumView()
             case .legends: LegendsView()
             case .trophies: TrophyRoomView()
+            case .rules: RulesView()
             }
         }
         .transition(.opacity)

@@ -12,6 +12,8 @@ public final class GameData: @unchecked Sendable {
     public let campaigns: [Campaign]
     public let rosters: [String: [RosterEntry]]
     public let formats: [Int: TournamentFormat]
+    /// Evoluția regulilor și povestea fiecărei ediții (history.js)
+    public let history: HistoryContent?
 
     public let teamsByCode: [String: Team]
     private let shadowByCode: [String: ShadowTeam]
@@ -23,10 +25,13 @@ public final class GameData: @unchecked Sendable {
         let shadowTeams: [ShadowTeam]
         let legends: [Legend]
         let formats: [TournamentFormat]
+        let history: HistoryContent?
     }
 
     public init(editions: [Edition], teams: [Team], shadowTeams: [ShadowTeam], legends: [Legend],
-                campaigns: [Campaign], rosters: [String: [RosterEntry]], formats: [TournamentFormat] = []) {
+                campaigns: [Campaign], rosters: [String: [RosterEntry]], formats: [TournamentFormat] = [],
+                history: HistoryContent? = nil) {
+        self.history = history
         var f: [Int: TournamentFormat] = [:]
         for fmt in formats { f[fmt.year] = fmt }
         self.formats = f
@@ -62,7 +67,8 @@ public final class GameData: @unchecked Sendable {
         let campaigns = try decoder.decode([Campaign].self, from: read("RealFixtures"))
         let rosters = try decoder.decode([String: [RosterEntry]].self, from: read("RealRosters"))
         return GameData(editions: file.editions, teams: file.teams, shadowTeams: file.shadowTeams,
-                        legends: file.legends, campaigns: campaigns, rosters: rosters, formats: file.formats)
+                        legends: file.legends, campaigns: campaigns, rosters: rosters, formats: file.formats,
+                        history: file.history)
     }
 
     /// Instanța implicită, din resursele pachetului.
@@ -89,6 +95,10 @@ public final class GameData: @unchecked Sendable {
             y -= 4
         }
         return teams.map(\.code).sorted()
+    }
+
+    public func story(_ year: Int) -> EditionStory? {
+        history?.stories.first { $0.year == year }
     }
 
     public func edition(_ year: Int) -> Edition? {

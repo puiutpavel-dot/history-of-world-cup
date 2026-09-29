@@ -35,6 +35,7 @@ struct MenuView: View {
                         PrimaryButton(title: "Carieră nouă", systemImage: "trophy.fill") { game.go(.editions) }
                     }
                     SecondaryButton(title: "Muzeul Edițiilor", systemImage: "book") { game.go(.museum) }
+                    SecondaryButton(title: "Evoluția regulilor", systemImage: "list.bullet.rectangle") { game.go(.rules) }
                     SecondaryButton(title: "Galeria Legendelor", systemImage: "star") { game.go(.legends) }
                     SecondaryButton(title: "Sala Trofeelor", systemImage: "archivebox") { game.go(.trophies) }
                 }

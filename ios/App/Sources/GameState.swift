@@ -7,10 +7,12 @@ import WorldCupCore
 @MainActor
 final class GameState: ObservableObject {
     enum Screen: Equatable {
-        case menu, editions, teams(year: Int), hub, preview, live, groupTable, summary, museum, legends, trophies
+        case menu, editions, teams(year: Int), hub, preview, live, groupTable, summary, museum, legends, trophies, rules
     }
 
     @Published var screen: Screen = .menu
+    /// ediția deschisă inițial în Muzeu (folosit la capturile din CI)
+    var museumOpenYear: Int?
     @Published private(set) var career: Career?
     @Published private(set) var lastMatch: MatchRecord?
     /// indexul clasamentului afișat pe ecranul de clasament
@@ -135,13 +137,14 @@ final class GameState: ObservableObject {
     }
 
     /// Stări demonstrative pentru capturile de ecran automate din CI:
-    /// `-demoScreen menu|editions|teams|hub|preview|live|groupTable|summary|museum|legends|trophies`.
+    /// `-demoScreen menu|editions|teams|hub|preview|live|groupTable|summary|museum|legends|trophies|rules`.
     private func runDemo(_ name: String) {
         var c = Career(teamCode: "BRA", year: 1970, seed: 42, engine: engine)
         switch name {
         case "editions": screen = .editions
         case "teams": screen = .teams(year: 1970)
-        case "museum": screen = .museum
+        case "museum": museumOpenYear = 1970; screen = .museum
+        case "rules": screen = .rules
         case "legends": screen = .legends
         case "hub":
             career = c; screen = .hub

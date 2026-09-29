@@ -91,6 +91,8 @@ public struct StageSpec: Codable, Hashable, Sendable {
     public let winnerTo: String?
     public let secondTo: String?
     public let round: String?
+    /// 1954: și meciurile din grupă merg în prelungiri la egal
+    public let groupExtraTime: Bool?
 }
 
 /// Regulamentul unei ediții: etape, punctaj, departajare, cartonașe, egalități în eliminatorii.
@@ -108,6 +110,75 @@ public struct TournamentFormat: Codable, Hashable, Sendable {
     public let byes: [String: [String]]?
     public let stages: [StageSpec]
     public let summary: String
+    /// schimbări permise în timpul regulamentar (0 / 2 / 3 / 5)
+    public let subs: Int
+    /// 1994: schimbare în plus pentru portarul accidentat
+    public let gkSub: Bool?
+    /// schimbări în plus în prelungiri (din 2018)
+    public let etSub: Int?
+    /// 1998, 2002: primul gol din prelungiri închide meciul
+    public let goldenGoal: Bool?
+    /// din 2018: la egalitate totală în grupă contează cartonașele
+    public let fairPlay: Bool?
+}
+
+/// Lotul pe epoci: 22 de jucători până în 1998, 23 în 2002-2018, 26 din 2022 — `squadSizeFor(year)`.
+public func squadSizeFor(_ year: Int) -> Int { year <= 1998 ? 22 : year <= 2018 ? 23 : 26 }
+
+/// `squadPositionsFor(year)` din engine.js.
+public func squadPositionsFor(_ year: Int) -> [Position] {
+    let size = squadSizeFor(year)
+    let counts = size == 22 ? [2, 7, 7, 6] : size == 23 ? [3, 7, 7, 6] : [3, 8, 9, 6]
+    var out: [Position] = []
+    for (i, pos) in [Position.GK, .DF, .MF, .FW].enumerated() {
+        for _ in 0..<counts[i] { out.append(pos) }
+    }
+    return out
+}
+
+// MARK: - Conținut de muzeu (history.js)
+
+public struct RulesEra: Codable, Hashable, Sendable {
+    public let years: String
+    public let title: String
+    public let items: [String]
+}
+
+public struct SquadRule: Codable, Hashable, Sendable {
+    public let years: String
+    public let size: String
+    public let text: String
+}
+
+public struct YearsText: Codable, Hashable, Sendable {
+    public let years: String
+    public let text: String
+}
+
+public struct TitlePath: Codable, Hashable, Sendable {
+    public let years: String
+    public let games: String
+}
+
+public struct EditionStory: Codable, Hashable, Sendable {
+    public let year: Int
+    public let context: String
+    public let moments: [String]
+    public let finalMatch: String
+    public let coach: String
+
+    enum CodingKeys: String, CodingKey {
+        case year, context, moments, coach
+        case finalMatch = "final"
+    }
+}
+
+public struct HistoryContent: Codable, Hashable, Sendable {
+    public let rulesTimeline: [RulesEra]
+    public let squadRules: [SquadRule]
+    public let families: [YearsText]
+    public let titlePath: [TitlePath]
+    public let stories: [EditionStory]
 }
 
 public struct TeamMeta: Hashable, Sendable {

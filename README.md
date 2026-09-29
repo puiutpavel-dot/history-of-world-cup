@@ -18,19 +18,19 @@ Bucla de joc: alege mentalitate + formație înaintea fiecărui meci și parcurg
 - **1974 / 1978**: grupe → a doua fază a grupelor (câștigătoarea joacă finala, locul 2 finala mică); **1982**: 24 de echipe, a doua fază cu grupe de 3 → semifinale;
 - **1986 – 1994**: 24 de echipe, trec primele 2 + cele mai bune 4 locuri 3 → optimi …; **1998 – 2022**: 32 de echipe, 8 grupe → optimi …; **2026**: 48 de echipe, 12 grupe, + cele mai bune 8 locuri 3 → șaisprezecimi → optimi → sferturi → semifinale → locul 3 → finală.
 
-Punctaj 2/1/0 până în 1990, 3/1/0 din 1994. Cartonașe din 1970: două galbene = suspendare la meciul următor (până în 1990 cumulate pe tot turneul, din 1994 șterse după grupe), roșu = suspendare. Egalitățile din eliminatorii: prelungiri, apoi meci rejucat (1930-1938, 1974), tragere la sorți (1954-1970) sau penalty-uri (din 1978). Cariera se încheie cu locul real ocupat (campioană, vicecampioană, locul 3/4 sau faza în care a fost eliminată) și intră în Sala Trofeelor.
+Punctaj 2/1/0 până în 1990, 3/1/0 din 1994. Cartonașe din 1970: două galbene = suspendare la meciul următor (până în 1990 cumulate pe tot turneul, din 1994 șterse după grupe), roșu = suspendare. Egalitățile din eliminatorii: prelungiri, apoi meci rejucat (1930-1938), tragere la sorți (1954-1970) sau penalty-uri (din 1974). **Regulile de pe teren urmează epoca**: fără schimbări până în 1966 (un accidentat lasă echipa în 10), 2 schimbări 1970-1994 (+1 pentru portar în 1994), 3 schimbări 1998-2018 (+1 în prelungiri din 2018), 5 schimbări + 1 în prelungiri din 2022; gol de aur în 1998 și 2002; prelungiri și în grupă în 1954; departajare prin fair-play din 2018; loturi de 22 (până în 1998), 23 (2002-2018) și 26 (din 2022). Cariera se încheie cu locul real ocupat (campioană, vicecampioană, locul 3/4 sau faza în care a fost eliminată) și intră în Sala Trofeelor.
 
 ### "Confirmă sau rescrie istoria"
 
 Ori de câte ori e posibil, adversarii din traseul jucătorului sunt **exact adversarii reali** pe care echipa aleasă i-a întâlnit în ediția respectivă (ordine reală, opoziție reală) — dar scorul rămâne **simulat**, în funcție de tactica aleasă. Fiecare meci arată un badge 📜 *adversar real* sau 🎲 *adversar simulat*, iar rezultatul e comparat cu scorul istoric real.
 
-Ecrane suplimentare: **Muzeul Edițiilor** (toate cele 23 de ediții, 1930-2026, cu gazdă/golgheter/minge oficială/rezumat istoric și formatul turneului) și **Galeria Legendelor** (18 fotbaliști istorici cu bio scurt).
+Ecrane suplimentare: **Muzeul Edițiilor** (toate cele 23 de ediții, 1930-2026, cu gazdă/golgheter/minge oficială, formatul turneului și povestea ediției — `history.js`), **Evoluția regulilor** (cronologia 1930-2026, loturi, cele 7 familii de format) și **Galeria Legendelor** (18 fotbaliști istorici cu bio scurt).
 
 ## Scope v1 — notă importantă
 
 Acest prototip a fost **reconstruit de la zero** pornind de la conceptul și planul de arhitectură din documentul de proiect (o versiune anterioară, mai completă, a fost construită într-o sesiune Claude separată care nu mai există). Pentru a rămâne un v1 solid și verificabil:
 
-- **Trasee reale complete**: fiecare dintre cele 23 de națiuni curate are adversarii reali la **fiecare ediție la care a participat** (278 de campanii, 1.173 de meciuri reale, 1930-2022), generate din Fjelstul World Cup Database cu `tools/build_real_fixtures.py` (vezi „Surse și licențe”).
+- **Trasee reale complete**: fiecare dintre cele 23 de națiuni curate are adversarii reali la **fiecare ediție la care a participat** (278 de campanii, 1.209 meciuri reale, 1930-2022), generate din Fjelstul World Cup Database cu `tools/build_real_fixtures.py` (vezi „Surse și licențe”).
 - **Loturi reale extinse la scară completă** (`real_rosters.js`, peste 300 de chei `ECHIPA_AN`, sursă: paginile Wikipedia "[an] FIFA World Cup squads", verificate jucător cu jucător): fiecare din cele 23 de națiuni curate primește lot real pentru *fiecare* ediție la care a participat cu adevărat istoric (1930-2022), plus loturi reale pentru ~24 de echipe "shadow" (adversarii din cele 12 campanii curate inițiale). Restul combinațiilor echipă+an (selectabile teoretic în joc, dar care nu au avut loc real) folosesc lot generat aleator.
 - **23 de națiuni curate** cu curbă de putere pe eră + ~19 echipe "shadow" (rating dedus automat din diferența de gol reală, fără curbă proprie).
 - Structura de date (`REAL_FIXTURES`, `TEAMS.curve`, `REAL_ROSTERS`) e identică cu planul original, deci **oricine poate extinde** subsetul de meciuri/loturi reale fără nicio schimbare de motor.

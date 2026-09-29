@@ -52,11 +52,13 @@ function drawFrom(rng, pool, exclude) {
 }
 
 /* ---------- Clasament ---------- */
-function emptyRow(code) { return { code, pl: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, pts: 0 }; }
+function emptyRow(code) { return { code, pl: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, pts: 0, fp: 0 }; }
 
-function applyResult(table, a, b, ga, gb, win) {
+/* fpa / fpb = puncte de fair-play (negative: galben -1, al doilea galben -3, roșu direct -4) */
+function applyResult(table, a, b, ga, gb, win, fpa, fpb) {
   const A = table.find((r) => r.code === a), B = table.find((r) => r.code === b);
   A.pl++; B.pl++; A.gf += ga; A.ga += gb; B.gf += gb; B.ga += ga;
+  A.fp += fpa || 0; B.fp += fpb || 0;
   if (ga > gb) { A.w++; B.l++; A.pts += win; }
   else if (ga < gb) { B.w++; A.l++; B.pts += win; }
   else { A.d++; B.d++; A.pts += 1; B.pts += 1; }
@@ -64,7 +66,7 @@ function applyResult(table, a, b, ga, gb, win) {
 
 function goalAverage(r) { return r.ga === 0 ? (r.gf > 0 ? 1e9 + r.gf : 0) : r.gf / r.ga; }
 
-function sortTable(table, tiebreak) {
+function sortTable(table, tiebreak, fairPlay) {
   return table.map((r, i) => ({ r, i })).sort((x, y) => {
     const a = x.r, b = y.r;
     if (a.pts !== b.pts) return b.pts - a.pts;
@@ -76,6 +78,7 @@ function sortTable(table, tiebreak) {
       if (d !== 0) return d;
       if (a.gf !== b.gf) return b.gf - a.gf;
     }
+    if (fairPlay && a.fp !== b.fp) return b.fp - a.fp;
     return x.i - y.i;
   }).map((x) => x.r);
 }
@@ -185,44 +188,177 @@ function nextMatch(state) {
   return state.outcome ? null : state.queue[0] || null;
 }
 
+/* ---------- Regulile de pe teren: accidentări, schimbări, echipa în 10 ----------
+   Fiecare echipă are 11 „posturi” (sloturi); un slot își schimbă ocupantul la o
+   schimbare sau rămâne gol (accidentare fără schimbări permise, eliminare).
+   Golurile și cartonașele se atribuie celui aflat pe teren în minutul respectiv. */
+const INJURY_CHANCE = 0.12;
+const SHORT_PENALTY = 0.12; // cât pierde o echipă rămasă în 10 pe tot meciul
+const FAIR_PLAY = { Y: -1, Y2R: -3, R: -4 };
+
+function drawInjury(eleven, rng) {
+  if (rng() >= INJURY_CHANCE) return null;
+  return { k: Math.floor(rng() * eleven.length), minute: randInt(rng, 1, 89) };
+}
+
+function occupant(slot, minute) {
+  let p = slot[0].p;
+  for (const e of slot) if (e.from <= minute) p = e.p;
+  return p;
+}
+
+function freeBench(bench, used, pos) {
+  let i = pos ? bench.findIndex((b, j) => !used.includes(j) && b.pos === pos) : -1;
+  if (i < 0) i = bench.findIndex((b, j) => !used.includes(j));
+  return i;
+}
+
+/* accidentarea unei echipe: înlocuire (dacă regulamentul permite) sau joc în 10 */
+function applyInjury(fmt, inj, side, subs) {
+  if (!inj) return;
+  const p = side.slots[inj.k][0].p;
+  const gkExtra = !!fmt.gkSub && p.pos === "GK";
+  const bi = (fmt.subs > 0 || gkExtra) && side.used.length < side.bench.length ? freeBench(side.bench, side.used, p.pos === "GK" ? "GK" : null) : -1;
+  if (bi >= 0) {
+    const inn = side.bench[bi];
+    side.used.push(bi);
+    if (!gkExtra) side.subsUsed++;
+    side.slots[inj.k].push({ from: inj.minute, p: inn });
+    subs.push({ minute: inj.minute, team: side.team, out: p.name, inn: inn.name, injury: true });
+  } else {
+    side.slots[inj.k].push({ from: inj.minute, p: null });
+    side.factor = 1 - SHORT_PENALTY * (90 - inj.minute) / 90;
+    side.short = true;
+    subs.push({ minute: inj.minute, team: side.team, out: p.name, inn: null, injury: true });
+  }
+}
+
+/* schimbare tactică: un jucător de câmp neschimbat încă iese, intră primul de pe bancă */
+function tacticalSub(side, minute, subs, rng) {
+  const bi = freeBench(side.bench, side.used, null);
+  if (bi < 0) return false;
+  const cand = [];
+  side.slots.forEach((slot, k) => { if (slot.length === 1 && slot[0].p.pos !== "GK") cand.push(k); });
+  if (!cand.length) return false;
+  const k = cand[Math.floor(rng() * cand.length)];
+  const inn = side.bench[bi];
+  side.used.push(bi);
+  side.slots[k].push({ from: minute, p: inn });
+  subs.push({ minute, team: side.team, out: side.slots[k][0].p.name, inn: inn.name, injury: false });
+  return true;
+}
+
+/* cartonașele brute (pe sloturi) → jucători reali; eliminarea golește slotul */
+function resolveCards(raw, side, subs, endMinute) {
+  const out = [];
+  const booked = {};
+  for (const c of raw) {
+    if (c.minute > endMinute) continue;
+    const p = occupant(side.slots[c.k], c.minute);
+    if (!p) continue;
+    let type = c.type;
+    if (type === "Y2R" && booked[c.k] !== p.name) type = "Y";
+    if (type === "Y") booked[c.k] = p.name;
+    out.push({ minute: c.minute, team: side.team, type, player: p.name, idx: side.team === "A" ? p.idx : -1 });
+    if (type !== "Y") {
+      const slot = side.slots[c.k];
+      // o schimbare programată după eliminare nu mai are loc
+      for (let i = slot.length - 1; i >= 1; i--) {
+        if (slot[i].from > c.minute && slot[i].p) {
+          const name = slot[i].p.name;
+          slot.splice(i, 1);
+          const si = subs.findIndex((s) => s.team === side.team && s.inn === name);
+          if (si >= 0) subs.splice(si, 1);
+        }
+      }
+      slot.push({ from: c.minute, p: null });
+    }
+  }
+  return out;
+}
+
+function pickScorers(events, sideA, sideB, rng) {
+  return events.map((e) => {
+    const side = e.team === "A" ? sideA : sideB;
+    const pool = [];
+    for (const slot of side.slots) { const p = occupant(slot, e.minute); if (p && p.pos !== "GK") pool.push(p); }
+    const weighted = [];
+    for (const p of pool) { const w = p.pos === "FW" ? 4 : p.pos === "MF" ? 2 : 1; for (let i = 0; i < w; i++) weighted.push(p); }
+    const scorer = choice(rng, weighted.length ? weighted : pool);
+    return { minute: e.minute, team: e.team, scorer: scorer ? scorer.name : "?" };
+  });
+}
+
+function makeSide(team, eleven, bench) {
+  return { team, slots: eleven.map((p) => [{ from: 0, p }]), bench, used: [], subsUsed: 0, factor: 1, short: false };
+}
+
 /* ---------- Un meci al jucătorului ---------- */
 function simulateFixture(state, info, mentality, formation) {
   const fmt = FORMATS[state.year];
+  const stage = fmt.stages[state.stageIdx];
   const rng = rngOf(state);
   const avail = availablePlayers(state);
-  const eleven = avail.slice(0, 11);
-  const oppSquad = oppSquadOf(info.opp, state.year);
+  const oppSquad = oppSquadOf(info.opp, state.year).map((p, idx) => ({ ...p, idx: -1 }));
   const you = tacticalRatings(avail, mentality, formation);
   const them = tacticalRatings(oppSquad, "Echilibrat", "4-4-2");
   const nameA = getTeamMeta(state.team).name, nameB = getTeamMeta(info.opp).name;
+  const A = makeSide("A", avail.slice(0, 11), avail.slice(11));
+  const B = makeSide("B", oppSquad.slice(0, 11), oppSquad.slice(11));
+  const subs = [];
 
-  const r = simulateMatch(nameA, you.attack, you.defense, nameB, them.attack, them.defense, rng, null);
-  let events = assignScorers(r.events, avail, oppSquad, rng);
-  let gf = r.scoreA, ga = r.scoreB, extraTime = false, pens = null, lots = null, tied = false;
-  if (info.knockout && gf === ga) {
-    const et = simulateExtraTime(nameA, you.attack, you.defense, nameB, them.attack, them.defense, rng);
-    events = events.concat(assignScorers(et.events, avail, oppSquad, rng));
-    gf += et.scoreA; ga += et.scoreB; extraTime = true;
-    if (gf === ga) {
+  applyInjury(fmt, drawInjury(A.slots, rng), A, subs);
+  applyInjury(fmt, drawInjury(B.slots, rng), B, subs);
+
+  const r = simulateMatch(nameA, you.attack * A.factor, you.defense * A.factor, nameB, them.attack * B.factor, them.defense * B.factor, rng, null);
+  let rawEvents = r.events.map((e) => ({ minute: e.minute, team: e.team }));
+  let gf = r.scoreA, ga = r.scoreB, extraTime = false, goldenGoal = false, pens = null, lots = null, tied = false, endMinute = 90;
+  const groupET = !info.knockout && info.kind === "group" && stage && stage.groupExtraTime;
+  if ((info.knockout || groupET) && gf === ga) {
+    const fa = A.short ? 1 - SHORT_PENALTY : 1, fb = B.short ? 1 - SHORT_PENALTY : 1;
+    const et = simulateExtraTime(nameA, you.attack * fa, you.defense * fa, nameB, them.attack * fb, them.defense * fb, rng);
+    let etEvents = et.events.map((e) => ({ minute: e.minute, team: e.team }));
+    if (fmt.goldenGoal && etEvents.length) { etEvents = [etEvents[0]]; goldenGoal = true; }
+    rawEvents = rawEvents.concat(etEvents);
+    for (const e of etEvents) { if (e.team === "A") gf++; else ga++; }
+    extraTime = true;
+    endMinute = goldenGoal ? etEvents[0].minute : 120;
+    if (info.knockout && gf === ga) {
       const mode = info.replay ? "lots" : fmt.koTie;
       if (mode === "penalties") { const p = simulatePenalties(you.attack, them.attack, rng); pens = `${p.scoreA}-${p.scoreB}`; }
       else if (mode === "lots") { lots = rng() < 0.5 ? "A" : "B"; }
       else tied = true; // meci rejucat
     }
   }
-  const cards = [];
-  if (fmt.cards !== "none") {
-    for (const c of simulateCards(eleven, rng)) cards.push({ minute: c.minute, team: "A", type: c.type, player: eleven[c.k].name, idx: eleven[c.k].idx });
-    const oppEleven = oppSquad.slice(0, 11);
-    for (const c of simulateCards(oppEleven, rng)) cards.push({ minute: c.minute, team: "B", type: c.type, player: oppEleven[c.k].name, idx: -1 });
-    cards.sort((a, b) => a.minute - b.minute);
+
+  // schimbările tactice ale echipei tale (în limita regulamentului epocii)
+  for (let i = A.subsUsed; i < fmt.subs; i++) {
+    const minute = randInt(rng, 55, 88);
+    if (!tacticalSub(A, minute, subs, rng)) break;
   }
+  if (extraTime && fmt.etSub) {
+    for (let i = 0; i < fmt.etSub; i++) {
+      const minute = randInt(rng, 91, 105);
+      if (minute > endMinute || !tacticalSub(A, minute, subs, rng)) break;
+    }
+  }
+
+  let cards = [];
+  if (fmt.cards !== "none") {
+    cards = resolveCards(simulateCards(A.slots, rng), A, subs, endMinute)
+      .concat(resolveCards(simulateCards(B.slots, rng), B, subs, endMinute));
+    cards = cards.map((c, i) => ({ c, i })).sort((x, y) => x.c.minute - y.c.minute || x.i - y.i).map((x) => x.c);
+  }
+  const events = pickScorers(rawEvents, A, B, rng);
+  const subsSorted = subs.map((x, i) => ({ x, i })).sort((p, q) => p.x.minute - q.x.minute || p.i - q.i).map((p) => p.x);
+
   let won = null;
   if (info.knockout && !tied) won = gf > ga ? true : gf < ga ? false : pens ? Number(pens.split("-")[0]) > Number(pens.split("-")[1]) : lots === "A";
+  const fpOf = (team) => cards.filter((c) => c.team === team).reduce((s, c) => s + FAIR_PLAY[c.type], 0);
   return {
     kind: info.kind, round: info.round || null, label: info.label, opp: info.opp, isReal: info.isReal, real: info.real, note: info.note,
-    gf, ga, extraTime, pens, lots, replay: !!info.replay, tied, won,
-    events: events.map((e) => ({ minute: e.minute, team: e.team, scorer: e.scorer })), cards,
+    gf, ga, extraTime, goldenGoal, pens, lots, replay: !!info.replay, tied, won,
+    events, cards, subs: subsSorted, fpA: fpOf("A"), fpB: fpOf("B"),
     suspended: state.squad.map((p, i) => i).filter((i) => state.suspended[i] > 0).map((i) => state.squad[i].name),
   };
 }
@@ -246,16 +382,25 @@ function applyDiscipline(state, rec) {
 }
 
 /* ---------- Finalul unei faze de grupă ---------- */
-function simOther(state, a, b, rngFn, knockout) {
+function simOther(state, a, b, rngFn, knockout, groupET) {
+  const fmt = FORMATS[state.year];
   const sa = auxSquadOf(a, state.year), sb = auxSquadOf(b, state.year);
   const ra = tacticalRatings(sa, "Echilibrat", "4-4-2"), rb = tacticalRatings(sb, "Echilibrat", "4-4-2");
   const m = simulateMatch(a, ra.attack, ra.defense, b, rb.attack, rb.defense, rngFn, null);
-  let ga = m.scoreA, gb = m.scoreB, winner = null;
+  let ga = m.scoreA, gb = m.scoreB, winner = null, fph = 0, fpa = 0;
+  if (groupET && ga === gb) {
+    const et = simulateExtraTime(a, ra.attack, ra.defense, b, rb.attack, rb.defense, rngFn);
+    ga += et.scoreA; gb += et.scoreB;
+  }
+  if (!knockout && fmt.fairPlay) {
+    for (const c of simulateCards(sa.slice(0, 11), rngFn)) fph += FAIR_PLAY[c.type];
+    for (const c of simulateCards(sb.slice(0, 11), rngFn)) fpa += FAIR_PLAY[c.type];
+  }
   if (knockout) {
     if (ga === gb) { const et = simulateExtraTime(a, ra.attack, ra.defense, b, rb.attack, rb.defense, rngFn); ga += et.scoreA; gb += et.scoreB; }
     winner = ga > gb ? a : ga < gb ? b : (rngFn() < 0.5 ? a : b);
   }
-  return { home: a, away: b, gh: ga, ga: gb, winner };
+  return { home: a, away: b, gh: ga, ga: gb, winner, fph, fpa };
 }
 
 function finishGroup(state) {
@@ -267,12 +412,12 @@ function finishGroup(state) {
   const pairs = [];
   if (st.seededOnly) { pairs.push([m[1], m[3]], [m[2], m[3]]); }
   else for (let i = 1; i < m.length; i++) for (let j = i + 1; j < m.length; j++) pairs.push([m[i], m[j]]);
-  for (const [a, b] of pairs) g.others.push(simOther(state, a, b, rng, false));
+  for (const [a, b] of pairs) g.others.push(simOther(state, a, b, rng, false, !!st.groupExtraTime));
 
   const table = m.map(emptyRow);
-  for (const r of g.results) applyResult(table, state.team, r.opp, r.gf, r.ga, fmt.win);
-  for (const o of g.others) applyResult(table, o.home, o.away, o.gh, o.ga, fmt.win);
-  let sorted = sortTable(table, st.type === "group" ? fmt.tiebreak : "gd");
+  for (const r of g.results) applyResult(table, state.team, r.opp, r.gf, r.ga, fmt.win, r.fpA, r.fpB);
+  for (const o of g.others) applyResult(table, o.home, o.away, o.gh, o.ga, fmt.win, o.fph, o.fpa);
+  let sorted = sortTable(table, st.type === "group" ? fmt.tiebreak : "gd", !!fmt.fairPlay);
   g.table = sorted;
 
   const advance = st.type === "group" ? st.advance : 1;
@@ -341,10 +486,10 @@ function rankThirds(state, st, myRow) {
       const m = simulateMatch(members[i], ra, ra, members[j], rb, rb, rng, null);
       applyResult(table, members[i], members[j], m.scoreA, m.scoreB, fmt.win);
     }
-    const third = sortTable(table, fmt.tiebreak)[st.advance];
+    const third = sortTable(table, fmt.tiebreak, !!fmt.fairPlay)[st.advance];
     rows.push({ ...third, mine: false });
   }
-  const ranked = sortTable(rows, "gd");
+  const ranked = sortTable(rows, "gd", !!fmt.fairPlay);
   return { rank: ranked.findIndex((r) => r.mine), rows: ranked.map((r) => ({ code: r.code, pts: r.pts, gf: r.gf, ga: r.ga, mine: r.mine })) };
 }
 
@@ -358,7 +503,7 @@ function playNext(state, mentality, formation) {
   const fmt = FORMATS[state.year];
 
   if (info.kind === "group" || info.kind === "group2" || info.kind === "finalGroup") {
-    state.group.results.push({ opp: info.opp, gf: rec.gf, ga: rec.ga });
+    state.group.results.push({ opp: info.opp, gf: rec.gf, ga: rec.ga, fpA: rec.fpA, fpB: rec.fpB });
     if (!state.queue.length) finishGroup(state);
     return rec;
   }

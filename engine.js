@@ -97,6 +97,16 @@ function getRealRoster(teamCode, year) {
   return REAL_ROSTERS[fixtureKey(teamCode, year)] || null;
 }
 
+/* lotul pe epoci: 22 de jucători până în 1998, 23 în 2002-2018 (al treilea portar), 26 din 2022 */
+function squadSizeFor(year) { return year <= 1998 ? 22 : year <= 2018 ? 23 : 26; }
+function squadPositionsFor(year) {
+  const size = squadSizeFor(year);
+  const counts = size === 22 ? [2, 7, 7, 6] : size === 23 ? [3, 7, 7, 6] : [3, 8, 9, 6];
+  const out = [];
+  ["GK", "DF", "MF", "FW"].forEach((pos, i) => { for (let k = 0; k < counts[i]; k++) out.push(pos); });
+  return out;
+}
+
 function generateSquad(teamCode, year, rng) {
   const baseRating = getRatingAt(teamCode, year);
   const legendsHere = LEGENDS.filter((l) => l.team === teamCode && Math.abs(l.yearTag - year) <= 8);
@@ -122,7 +132,7 @@ function generateSquad(teamCode, year, rng) {
   }
 
   // fallback: nume generate aleator (fără lot real curat pentru acest echipă+an)
-  const positions = ["GK", "GK", "DF", "DF", "DF", "DF", "DF", "DF", "MF", "MF", "MF", "MF", "MF", "MF", "FW", "FW", "FW", "FW"];
+  const positions = squadPositionsFor(year);
   const squad = positions.map((pos, i) => {
     const variance = randInt(rng, -9, 9);
     const overall = Math.max(35, Math.min(96, baseRating + variance));

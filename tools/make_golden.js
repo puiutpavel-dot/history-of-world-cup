@@ -53,8 +53,9 @@ for (let i = 0; i < 30; i++) {
 // cariere complete pe formatul real: toate edițiile, echipe curate eligibile
 const describeCareer = (st) => ({
   records: st.records.map((r) => [r.kind, r.round || "", r.label, r.opp, r.isReal ? 1 : 0, r.gf, r.ga, r.extraTime ? 1 : 0, r.pens || "", r.lots || "", r.replay ? 1 : 0, r.tied ? 1 : 0, r.won === null ? "" : r.won ? 1 : 0,
-    r.events.map((e) => `${e.minute}${e.team}${e.scorer}`).join(","), r.cards.map((c) => `${c.minute}${c.team}${c.type}${c.player}`).join(","), r.suspended.join(",")].join("|")),
-  tables: st.tables.map((t) => [t.type, t.rank, t.qualified ? 1 : 0, t.rows.map((r) => `${r.code}:${r.pl}:${r.gf}-${r.ga}:${r.pts}`).join(","),
+    r.events.map((e) => `${e.minute}${e.team}${e.scorer}`).join(","), r.cards.map((c) => `${c.minute}${c.team}${c.type}${c.player}`).join(","), r.suspended.join(","),
+    r.goldenGoal ? 1 : 0, r.subs.map((x) => `${x.minute}${x.team}${x.out}>${x.inn || "-"}${x.injury ? "!" : ""}`).join(","), `${r.fpA}/${r.fpB}`].join("|")),
+  tables: st.tables.map((t) => [t.type, t.rank, t.qualified ? 1 : 0, t.rows.map((r) => `${r.code}:${r.pl}:${r.gf}-${r.ga}:${r.pts}:${r.fp}`).join(","),
     t.others.map((o) => `${o.home}-${o.away}:${o.gh}-${o.ga}${o.winner ? ":" + o.winner : ""}`).join(","),
     t.playoff ? (t.playoff.result ? `O:${t.playoff.result.home}-${t.playoff.result.away}:${t.playoff.result.gh}-${t.playoff.result.ga}:${t.playoff.result.winner}` : `P:${t.playoff.opp}:${t.playoff.won ? 1 : 0}`) : "", t.thirds ? `${t.thirds.rank}:` + t.thirds.rows.map((r) => `${r.code}${r.pts}/${r.gf}-${r.ga}`).join(",") : ""].join("|")),
   log: st.log.map((l) => l.bye).join(","),

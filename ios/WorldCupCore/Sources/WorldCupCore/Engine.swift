@@ -168,7 +168,7 @@ public struct Engine: Sendable {
         }
 
         // fallback: nume generate (fără lot real pentru această combinație echipă+an)
-        let positions: [Position] = [.GK, .GK, .DF, .DF, .DF, .DF, .DF, .DF, .MF, .MF, .MF, .MF, .MF, .MF, .FW, .FW, .FW, .FW]
+        let positions = squadPositionsFor(year)
         var squad: [Player] = positions.map { pos in
             let variance = rng.int(-9, 9)
             let overall = max(35, min(96, baseRating + variance))

@@ -79,6 +79,7 @@ function renderMenu() {
     <div class="menu-buttons">
       <button class="btn btn-primary" data-action="new-career">🏆 Carieră nouă</button>
       <button class="btn" data-action="museum">📖 Muzeul Edițiilor</button>
+      <button class="btn" data-action="rules">📜 Evoluția regulilor</button>
       <button class="btn" data-action="legends">⭐ Galeria Legendelor</button>
       <button class="btn" data-action="trophies">🗄️ Sala Trofeelor</button>
     </div>
@@ -144,7 +145,7 @@ function startCareer(teamCode) {
 
 function scoreText(r) {
   let s = `${r.gf}-${r.ga}`;
-  if (r.extraTime) s += " d.p.";
+  if (r.extraTime) s += r.goldenGoal ? " (gol de aur)" : " d.p.";
   if (r.pens) s += ` (pen. ${r.pens})`;
   if (r.lots) s += ` (sorți: ${r.lots === "A" ? "câștigat" : "pierdut"})`;
   if (r.tied) s += " → rejucat";
@@ -228,6 +229,7 @@ function renderMatchPreview() {
     </div>
     <div class="preview-badge">${badge(next.isReal)}${next.note ? `<div class="note">${next.note}</div>` : ""}</div>
     <p class="hint">Mentalitate: <b>${t.mentality}</b> · Formație: <b>${t.formation}</b>${next.knockout ? " · Eliminatoriu: la egal se joacă prelungiri" : ""}</p>
+    <p class="hint">${rulesLine(FORMATS[c.year])}</p>
     <button class="btn btn-primary btn-block" data-action="play-match">▶️ Joacă meciul</button>
   </div>`;
 }
@@ -260,12 +262,31 @@ function playCurrentMatch() {
   goto("MATCH_LIVE");
 }
 
+/* regulile de pe teren ale ediției, pe scurt */
+function rulesLine(fmt) {
+  const parts = [];
+  if (fmt.subs === 0) parts.push("Fără schimbări: un accidentat lasă echipa în 10");
+  else parts.push(`${fmt.subs} schimbări${fmt.gkSub ? " (+1 pentru portar)" : ""}${fmt.etSub ? ` (+${fmt.etSub} în prelungiri)` : ""}`);
+  parts.push(fmt.cards === "none" ? "fără cartonașe" : fmt.cards === "accumulate" ? "2 galbene = suspendare, tot turneul" : "galbenele se șterg după grupe");
+  if (fmt.goldenGoal) parts.push("gol de aur în prelungiri");
+  if (fmt.stages.some((st) => st.groupExtraTime)) parts.push("prelungiri și în grupă");
+  if (fmt.fairPlay) parts.push("fair-play la departajare");
+  return "📏 " + parts.join(" · ");
+}
+
 function tickerItems(r) {
   const c = STATE.career;
   const goals = r.events.map((e) => ({ minute: e.minute, team: e.team, text: `⚽ ${e.minute}' ${e.scorer} (${getTeamMeta(e.team === "A" ? c.team : r.opp).name})`, goal: true }));
   const cardIcon = { Y: "🟨", R: "🟥", Y2R: "🟨🟥" };
   const cards = r.cards.map((k) => ({ minute: k.minute, team: k.team, text: `${cardIcon[k.type]} ${k.minute}' ${k.player} (${getTeamMeta(k.team === "A" ? c.team : r.opp).name})`, goal: false }));
-  return goals.concat(cards).sort((a, b) => a.minute - b.minute);
+  const subs = (r.subs || []).map((x) => {
+    const team = getTeamMeta(x.team === "A" ? c.team : r.opp).name;
+    const text = !x.inn ? `🚑 ${x.minute}' ${x.out} (${team}) accidentat — fără schimbări, echipa rămâne în 10`
+      : x.injury ? `🚑🔁 ${x.minute}' ${x.out} accidentat, intră ${x.inn} (${team})`
+      : `🔁 ${x.minute}' Intră ${x.inn}, iese ${x.out} (${team})`;
+    return { minute: x.minute, team: x.team, text, goal: false };
+  });
+  return goals.concat(cards, subs).map((it, i) => ({ it, i })).sort((a, b) => a.it.minute - b.it.minute || a.i - b.i).map((x) => x.it);
 }
 
 function runTicker() {
@@ -286,7 +307,8 @@ function runTicker() {
   function finish() {
     document.getElementById("btn-skip").hidden = true;
     const extra = [];
-    if (r.extraTime) extra.push("⏱️ S-au jucat prelungiri.");
+    if (r.goldenGoal) extra.push("⚡ Gol de aur — primul gol din prelungiri a încheiat meciul.");
+    else if (r.extraTime) extra.push("⏱️ S-au jucat prelungiri.");
     if (r.pens) extra.push(`🎯 Penalty-uri: ${r.pens}`);
     if (r.lots) extra.push(r.lots === "A" ? "🪙 Tragere la sorți: câștigată!" : "🪙 Tragere la sorți: pierdută.");
     if (r.tied) extra.push("🔁 Egalitate după prelungiri — meciul se rejoacă.");
@@ -382,7 +404,8 @@ function renderMuseum() {
         <p>⚽ Golgheter: ${ed.topScorer}</p>
         <p>🔴 Minge oficială: ${ed.ball}</p>
         <p class="museum-note">${ed.note}</p>
-        ${FORMATS[ed.year] ? `<p>📋 <b>Format:</b> ${FORMATS[ed.year].summary}</p>` : ""}
+        ${FORMATS[ed.year] ? `<p>📋 <b>Format:</b> ${FORMATS[ed.year].summary}</p><p>${rulesLine(FORMATS[ed.year])}</p>` : ""}
+        ${STORIES[ed.year] ? storyHtml(STORIES[ed.year]) : ""}
       </div>` : ""}
     </div>`;
   }).join("");
@@ -391,6 +414,40 @@ function renderMuseum() {
     <div class="topbar"><button class="btn-back" data-action="menu">← Meniu</button><h2>📖 Muzeul Edițiilor</h2></div>
     <div class="museum-list">${items}</div>
     <p class="hint credits">Rezultatele meciurilor reale: <a href="https://www.github.com/jfjelstul/worldcup" target="_blank" rel="noopener">Fjelstul World Cup Database</a> © 2023 Joshua C. Fjelstul, Ph.D., licență <a href="https://creativecommons.org/licenses/by-sa/4.0/legalcode" target="_blank" rel="noopener">CC-BY-SA 4.0</a> (date adaptate). Loturi: Wikipedia, „FIFA World Cup squads”.</p>
+  </div>`;
+}
+
+function storyHtml(st) {
+  return `<div class="story">
+    <p>${st.context}</p>
+    <p><b>Momente-cheie</b></p>
+    <ul class="story-list">${st.moments.map((m) => `<li>${m}</li>`).join("")}</ul>
+    <p>🏟️ <b>Finala:</b> ${st.final}</p>
+    <p>🧑‍💼 <b>Antrenor campion:</b> ${st.coach}</p>
+  </div>`;
+}
+
+/* ============================================================
+   ECRAN: EVOLUȚIA REGULILOR
+   ============================================================ */
+function renderRules() {
+  const eras = RULES_TIMELINE.map((e) => `
+    <div class="card rules-era">
+      <div class="rules-years">${e.years}</div>
+      <div class="rules-title">${e.title}</div>
+      <ul class="story-list">${e.items.map((x) => `<li>${x}</li>`).join("")}</ul>
+    </div>`).join("");
+  const squads = SQUAD_RULES.map((q) => `<li><b>${q.years} — ${q.size} de jucători.</b> ${q.text}</li>`).join("");
+  const families = FORMAT_FAMILIES.map((f) => `<li><b>${f.years}:</b> ${f.text}</li>`).join("");
+  const path = TITLE_PATH.map((t) => `<li><b>${t.years}:</b> ${t.games} meciuri</li>`).join("");
+  return `
+  <div class="screen">
+    <div class="topbar"><button class="btn-back" data-action="menu">← Meniu</button><h2>📜 Evoluția regulilor</h2></div>
+    <p class="hint">Regulile de pe teren s-au schimbat mai lent decât formatul turneului. Toate sunt aplicate în joc, pentru ediția aleasă.</p>
+    ${eras}
+    <div class="card rules-era"><div class="rules-title">Lotul</div><ul class="story-list">${squads}</ul></div>
+    <div class="card rules-era"><div class="rules-title">Cele 7 familii de format</div><ul class="story-list">${families}</ul></div>
+    <div class="card rules-era"><div class="rules-title">Câte meciuri joacă campioana</div><ul class="story-list">${path}</ul></div>
   </div>`;
 }
 
@@ -435,7 +492,7 @@ function render() {
     MENU: renderMenu, EDITION: renderEditionSelect, TEAM: renderTeamSelect,
     HUB: renderHub, MATCH_PREVIEW: renderMatchPreview, MATCH_LIVE: renderMatchLive,
     GROUP_TABLE: renderGroupTable, CAREER_SUMMARY: renderCareerSummary,
-    MUSEUM: renderMuseum, LEGENDS: renderLegends, TROPHIES: renderTrophies,
+    MUSEUM: renderMuseum, LEGENDS: renderLegends, TROPHIES: renderTrophies, RULES: renderRules,
   };
   ROOT.innerHTML = `<button class="theme-toggle" data-action="toggle-theme">🌓</button>` + map[STATE.screen]();
   if (STATE.screen === "MATCH_LIVE") runTicker();
@@ -449,6 +506,7 @@ ROOT.addEventListener("click", (e) => {
   if (action === "new-career") return goto("EDITION");
   if (action === "museum") return goto("MUSEUM", { museumOpen: null });
   if (action === "legends") return goto("LEGENDS");
+  if (action === "rules") return goto("RULES");
   if (action === "trophies") return goto("TROPHIES");
   if (action === "menu") return goto("MENU");
   if (action === "menu-confirm") { if (confirm("Sigur vrei să părăsești cariera curentă?")) goto("MENU"); return; }

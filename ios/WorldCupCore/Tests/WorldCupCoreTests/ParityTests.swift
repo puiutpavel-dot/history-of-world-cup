@@ -159,6 +159,14 @@ final class ParityTests: XCTestCase {
         parts.append(events.joined(separator: ","))
         parts.append(cards.joined(separator: ","))
         parts.append(r.suspended.joined(separator: ","))
+        parts.append(flag(r.goldenGoal))
+        let subs: [String] = r.subs.map { (x) -> String in
+            let inn: String = x.inn ?? "-"
+            let mark: String = x.injury ? "!" : ""
+            return "\(x.minute)\(x.team.rawValue)" + x.out + ">" + inn + mark
+        }
+        parts.append(subs.joined(separator: ","))
+        parts.append("\(r.fpA)/\(r.fpB)")
         return parts.joined(separator: "|")
     }
 
@@ -179,7 +187,7 @@ final class ParityTests: XCTestCase {
             let rows: [String] = th.rows.map { (x) -> String in "\(x.code)\(x.pts)/\(x.gf)-\(x.ga)" }
             thirds = "\(th.rank):" + rows.joined(separator: ",")
         }
-        let rows: [String] = t.rows.map { (x) -> String in "\(x.code):\(x.pl):\(x.gf)-\(x.ga):\(x.pts)" }
+        let rows: [String] = t.rows.map { (x) -> String in "\(x.code):\(x.pl):\(x.gf)-\(x.ga):\(x.pts):\(x.fp)" }
         let others: [String] = t.others.map { (m) -> String in
             let w: String = m.winner.map { ":" + $0 } ?? ""
             return "\(m.home)-\(m.away):\(m.gh)-\(m.ga)" + w
@@ -245,6 +253,17 @@ final class ParityTests: XCTestCase {
         XCTAssertEqual(c.groupMembers, ["ARG", "KOR", "ITA", "BUL"])
         XCTAssertEqual(c.nextMatch?.real, RealScore(scoreFor: 3, scoreAgainst: 1))
         XCTAssertEqual(engine.data.formats[1986]?.stages.map { $0.round ?? $0.type }, ["group", "R16", "QF", "SF", "F"])
+    }
+
+    func testSquadSizesByEra() {
+        XCTAssertEqual(squadPositionsFor(1998).count, 22)
+        XCTAssertEqual(squadPositionsFor(2002).count, 23)
+        XCTAssertEqual(squadPositionsFor(2026).count, 26)
+        XCTAssertEqual(engine.data.formats[1930]?.subs, 0)
+        XCTAssertEqual(engine.data.formats[2002]?.goldenGoal, true)
+        XCTAssertEqual(engine.data.formats[2006]?.goldenGoal, false)
+        XCTAssertEqual(engine.data.formats[2022]?.subs, 5)
+        XCTAssertEqual(engine.data.history?.stories.count, 23)
     }
 
     func testSwedenHasByeIn1938() {

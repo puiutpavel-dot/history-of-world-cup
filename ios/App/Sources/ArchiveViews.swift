@@ -33,6 +33,10 @@ struct MuseumView: View {
                                 Text(ed.note).italic().foregroundStyle(Color.hwcTextDim)
                                 if let f = game.data.formats[ed.year] {
                                     Text("📋 **Format:** \(f.summary)")
+                                    Text(rulesLine(f)).foregroundStyle(Color.hwcTextDim)
+                                }
+                                if let st = game.data.story(ed.year) {
+                                    StoryView(story: st)
                                 }
                             }
                             .font(.system(size: 14))
@@ -51,6 +55,99 @@ struct MuseumView: View {
                     .padding(.top, 8)
             }
         }
+        .onAppear { if open == nil { open = game.museumOpenYear } }
+    }
+}
+
+/// Regulile de pe teren ale ediției, pe scurt — `rulesLine(fmt)` din app.js.
+func rulesLine(_ f: TournamentFormat) -> String {
+    var parts: [String] = []
+    if f.subs == 0 {
+        parts.append("Fără schimbări: un accidentat lasă echipa în 10")
+    } else {
+        var s = "\(f.subs) schimbări"
+        if f.gkSub ?? false { s += " (+1 pentru portar)" }
+        if let et = f.etSub, et > 0 { s += " (+\(et) în prelungiri)" }
+        parts.append(s)
+    }
+    switch f.cards {
+    case "none": parts.append("fără cartonașe")
+    case "accumulate": parts.append("2 galbene = suspendare, tot turneul")
+    default: parts.append("galbenele se șterg după grupe")
+    }
+    if f.goldenGoal ?? false { parts.append("gol de aur în prelungiri") }
+    if f.stages.contains(where: { $0.groupExtraTime ?? false }) { parts.append("prelungiri și în grupă") }
+    if f.fairPlay ?? false { parts.append("fair-play la departajare") }
+    return "📏 " + parts.joined(separator: " · ")
+}
+
+struct StoryView: View {
+    let story: EditionStory
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Divider().overlay(Color.hwcBorder)
+            Text(story.context)
+            Text("Momente-cheie").font(.system(size: 14, weight: .bold)).foregroundStyle(Color.hwcGold2)
+            ForEach(Array(story.moments.enumerated()), id: \.offset) { _, m in
+                HStack(alignment: .top, spacing: 6) {
+                    Text("•")
+                    Text(m).fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            Text("🏟️ **Finala:** \(story.finalMatch)")
+            Text("🧑‍💼 **Antrenor campion:** \(story.coach)")
+        }
+        .fixedSize(horizontal: false, vertical: true)
+    }
+}
+
+struct RulesView: View {
+    @EnvironmentObject var game: GameState
+
+    var body: some View {
+        ScreenContainer(title: "📜 Evoluția regulilor", backLabel: "Meniu", onBack: { game.go(.menu) }) {
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Regulile de pe teren s-au schimbat mai lent decât formatul turneului. Toate sunt aplicate în joc, pentru ediția aleasă.")
+                    .font(.system(size: 13)).foregroundStyle(Color.hwcTextDim)
+                if let h = game.data.history {
+                    ForEach(Array(h.rulesTimeline.enumerated()), id: \.offset) { _, era in
+                        RulesCard(years: era.years, title: era.title, items: era.items)
+                    }
+                    RulesCard(years: nil, title: "Lotul",
+                              items: h.squadRules.map { "**\($0.years) — \($0.size) de jucători.** \($0.text)" })
+                    RulesCard(years: nil, title: "Cele 7 familii de format",
+                              items: h.families.map { "**\($0.years):** \($0.text)" })
+                    RulesCard(years: nil, title: "Câte meciuri joacă campioana",
+                              items: h.titlePath.map { "**\($0.years):** \($0.games) meciuri" })
+                }
+            }
+        }
+    }
+}
+
+struct RulesCard: View {
+    let years: String?
+    let title: String
+    let items: [String]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            if let years { Text(years).font(.stat(12)).foregroundStyle(Color.hwcTextDim) }
+            Text(title).font(.scoreboard(20, weight: .semibold)).foregroundStyle(Color.hwcGold2)
+            ForEach(Array(items.enumerated()), id: \.offset) { _, item in
+                HStack(alignment: .top, spacing: 6) {
+                    Text("•")
+                    Text(LocalizedStringKey(item)).fixedSize(horizontal: false, vertical: true)
+                }
+                .font(.system(size: 14))
+                .foregroundStyle(Color.hwcText)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(14)
+        .background(Color.hwcPanel, in: RoundedRectangle(cornerRadius: 12))
+        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.hwcBorder))
     }
 }
 

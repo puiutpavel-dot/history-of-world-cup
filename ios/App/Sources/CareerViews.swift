@@ -126,6 +126,9 @@ struct MatchPreviewView: View {
                     Text("Mentalitate: \(c.mentality.rawValue) · Formație: \(c.formation.rawValue)"
                          + (next.knockout ? " · Eliminatoriu: la egal se joacă prelungiri" : ""))
                         .font(.system(size: 13)).foregroundStyle(Color.hwcTextDim).multilineTextAlignment(.center)
+                    if let f = game.data.formats[c.year] {
+                        Text(rulesLine(f)).font(.system(size: 13)).foregroundStyle(Color.hwcTextDim).multilineTextAlignment(.center)
+                    }
                     PrimaryButton(title: "Joacă meciul", systemImage: "play.fill") { game.playMatch() }
                 }
             }
@@ -175,7 +178,18 @@ struct MatchLiveView: View {
         let cards = m.cards.map { c in
             TickerItem(minute: c.minute, team: c.team, text: "\(icon[c.type] ?? "") \(c.minute)' \(c.player) (\(meta(c.team == .A ? team : m.opp)))", isGoal: false)
         }
-        return (goals + cards).enumerated()
+        let subs = m.subs.map { x -> TickerItem in
+            let who: String = meta(x.team == .A ? team : m.opp)
+            let text: String
+            if let inn = x.inn {
+                text = x.injury ? "🚑🔁 \(x.minute)' \(x.out) accidentat, intră \(inn) (\(who))"
+                                : "🔁 \(x.minute)' Intră \(inn), iese \(x.out) (\(who))"
+            } else {
+                text = "🚑 \(x.minute)' \(x.out) (\(who)) accidentat — fără schimbări, echipa rămâne în 10"
+            }
+            return TickerItem(minute: x.minute, team: x.team, text: text, isGoal: false)
+        }
+        return (goals + cards + subs).enumerated()
             .sorted { $0.element.minute != $1.element.minute ? $0.element.minute < $1.element.minute : $0.offset < $1.offset }
             .map(\.element)
     }
@@ -216,7 +230,11 @@ struct MatchLiveView: View {
 
                     if finished {
                         VStack(spacing: 6) {
-                            if m.extraTime { Text("⏱️ S-au jucat prelungiri.") }
+                            if m.goldenGoal {
+                                Text("⚡ Gol de aur — primul gol din prelungiri a încheiat meciul.")
+                            } else if m.extraTime {
+                                Text("⏱️ S-au jucat prelungiri.")
+                            }
                             if let pens = m.pens { Text("🎯 Penalty-uri: \(pens)").font(.stat(16)) }
                             if let lots = m.lots { Text(lots == .A ? "🪙 Tragere la sorți: câștigată!" : "🪙 Tragere la sorți: pierdută.") }
                             if m.tied { Text("🔁 Egalitate după prelungiri — meciul se rejoacă.") }
