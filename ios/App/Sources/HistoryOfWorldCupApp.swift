@@ -57,6 +57,7 @@ struct RootView: View {
             case .quizResult: QuizResultView()
             case .country: CountryView()
             case .paywall: PaywallView()
+            case .about: AboutView()
             }
         }
         .transition(.opacity)

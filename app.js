@@ -85,6 +85,7 @@ function renderMenu() {
       <button class="btn" data-action="legends">⭐ Galeria Legendelor</button>
       <button class="btn" data-action="trophies">🗄️ Sala Trofeelor</button>
     </div>
+    <p class="disclaimer">Joc educațional neoficial, fără legătură cu FIFA sau cu federațiile naționale. · <a href="privacy.html">Confidențialitate</a> · <a href="support.html">Suport</a></p>
   </div>`;
 }
 

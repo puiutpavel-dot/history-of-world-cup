@@ -45,6 +45,7 @@ struct MenuView: View {
                     SecondaryButton(title: "Evoluția regulilor", systemImage: "list.bullet.rectangle") { game.go(.rules) }
                     SecondaryButton(title: "Galeria Legendelor", systemImage: "star") { game.go(.legends) }
                     SecondaryButton(title: "Sala Trofeelor", systemImage: "archivebox") { game.go(.trophies) }
+                    SecondaryButton(title: "Despre și setări", systemImage: "gearshape") { game.go(.about) }
                 }
 
                 if game.fullHistory {

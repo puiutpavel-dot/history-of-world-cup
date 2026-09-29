@@ -8,7 +8,7 @@ import WorldCupCore
 final class GameState: ObservableObject {
     enum Screen: Equatable {
         case menu, editions, teams(year: Int), hub, preview, live, groupTable, summary, museum, legends, trophies, rules,
-             quizMenu, quiz, quizResult, country, paywall
+             quizMenu, quiz, quizResult, country, paywall, about
     }
 
     @Published var screen: Screen = .menu
@@ -181,6 +181,7 @@ final class GameState: ObservableObject {
             questions = Array(bank.filter { $0.kind == "phase" }.shuffled().prefix(10))
             title = "Alege faza"
         }
+        guard !questions.isEmpty else { return }
         quiz = QuizSession(mode: mode, year: year, title: title, questions: questions)
         go(.quiz)
     }
@@ -253,10 +254,10 @@ final class GameState: ObservableObject {
     }
 
     /// Stări demonstrative pentru capturile de ecran automate din CI:
-    /// `-demoScreen menu|editions|teams|hub|preview|live|groupTable|summary|museum|legends|trophies|rules|quizMenu|quiz|country|paywall`.
+    /// `-demoScreen menu|editions|teams|hub|preview|live|groupTable|summary|museum|legends|trophies|rules|quizMenu|quiz|country|paywall|about`.
     private func runDemo(_ name: String) {
         // capturile arată jocul deblocat, cu excepția ecranelor care prezintă blocarea
-        demoUnlock = !["paywall", "editions", "quizMenu"].contains(name)
+        demoUnlock = !["paywall", "editions", "quizMenu", "about"].contains(name)
         fullHistory = demoUnlock ?? false
         var c = Career(teamCode: "BRA", year: 1970, seed: 42, engine: engine)
         switch name {
@@ -270,6 +271,7 @@ final class GameState: ObservableObject {
             screen = .quiz
         case "country": countryOverride = "RO"; screen = .country
         case "paywall": screen = .paywall
+        case "about": screen = .about
         case "rules": screen = .rules
         case "legends": screen = .legends
         case "hub":

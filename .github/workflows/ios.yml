@@ -43,7 +43,7 @@ jobs:
         run: brew install xcodegen && cd ios && xcodegen
       - name: Alege un simulator iPhone
         run: |
-          UDID=$(xcrun simctl list devices available -j | jq -r '([.devices[] | .[] | select(.name | test("^iPhone.* Pro$"))] | last) // ([.devices[] | .[] | select(.name | startswith("iPhone"))] | last) | .udid')
+          UDID=$(xcrun simctl list devices available -j | jq -r '([.devices[] | .[] | select(.name | test("^iPhone.* Pro Max$"))] | last) // ([.devices[] | .[] | select(.name | test("^iPhone.* Pro$"))] | last) // ([.devices[] | .[] | select(.name | startswith("iPhone"))] | last) | .udid')
           echo "UDID=$UDID" >> "$GITHUB_ENV"
           xcrun simctl list devices available | grep "$UDID"
           xcrun simctl boot "$UDID"
@@ -63,7 +63,7 @@ jobs:
           xcrun simctl status_bar "$UDID" override --time 9:41 --batteryLevel 100 --cellularBars 4 || true
           xcrun simctl install "$UDID" "$APP"
           mkdir -p screenshots
-          for s in menu editions teams hub preview live groupTable summary museum legends trophies rules quizMenu quiz country paywall; do
+          for s in menu editions teams hub preview live groupTable summary museum legends trophies rules quizMenu quiz country paywall about; do
             xcrun simctl terminate "$UDID" "$BUNDLE" 2>/dev/null || true
             xcrun simctl launch "$UDID" "$BUNDLE" -demoScreen "$s"
             if [ "$s" = "live" ]; then sleep 9; else sleep 4; fi
@@ -83,7 +83,7 @@ jobs:
             echo
             echo "Generate automat de workflow-ul iOS pentru commit-ul \`${GITHUB_SHA::7}\` ($(date -u '+%Y-%m-%d %H:%M UTC'))."
             echo
-            for s in menu editions teams hub preview live groupTable summary museum legends trophies rules quizMenu quiz country paywall; do
+            for s in menu editions teams hub preview live groupTable summary museum legends trophies rules quizMenu quiz country paywall about; do
               if [ -f "$s.png" ]; then
                 printf '### %s\n\n<img src="%s.png" width="320">\n\n' "$s" "$s"
               fi

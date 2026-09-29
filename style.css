@@ -225,3 +225,10 @@ p { line-height: 1.5; }
 .track-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: baseline; }
 .track-finish { margin-left: auto; font-weight: 700; }
 #sel-country { margin-left: 6px; padding: 4px; }
+
+/* Pagini statice (confidențialitate, suport) */
+.doc-page { max-width: 720px; margin: 0 auto; padding: 24px 16px 48px; line-height: 1.55; }
+.doc-page h1 { margin-bottom: 4px; }
+.doc-page h2 { font-size: 18px; margin-top: 24px; }
+.doc-page a { color: var(--gold); }
+.disclaimer { font-size: 12px; color: var(--text-dim); text-align: center; margin-top: 18px; line-height: 1.5; }

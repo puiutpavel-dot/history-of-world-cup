@@ -83,8 +83,10 @@ Pași în App Store Connect (când există contul Apple Developer):
 1. Semnează *Paid Applications Agreement* și completează datele fiscale și bancare.
 2. Înscrie-te în **App Store Small Business Program** (comision 15% sub 1 mil. $ / an).
 3. *In-App Purchases* → **Non-Consumable**, Product ID `com.puiutpavel.historyofworldcup.fullhistory`, nume „Full History”, preț **4,99 $** cu SUA ca țară de bază (Apple calculează automat prețul în celelalte țări), **Family Sharing activat**, localizări ro + en, captură a ecranului de deblocare pentru review.
-4. Aplicația: preț **Gratuit**. Subtitlu (max. 30 de caractere): „1930–2026. O singură plată.” În descriere: „Fără reclame, fără abonament, fără pachete.”
+4. Aplicația: preț **Gratuit**. Subtitlu: „Quiz și carieră 1930–2026” (fără preț în subtitlu — ghidul 2.3.7). În descriere: „Fără reclame, fără abonament, fără pachete.”
 5. Testare: TestFlight cu un cont *Sandbox Tester*.
+
+Pregătirea pentru App Review: `docs/app-store/` — `CHECKLIST.md` (ghidurile 2.1, 2.3, 3.1.1, 4.2, 5.1, 5.2), `METADATA.md` (nume, subtitlu, cuvinte-cheie, descrieri ro/en, vârstă, capturi) și `REVIEW_NOTES.md` (textul pentru reviewer). Politica de confidențialitate și pagina de suport: `privacy.html`, `support.html` (publicate prin GitHub Pages). Aplicația e un joc **neoficial**, fără legătură cu FIFA — fără logouri, embleme, trofee oficiale sau fotografii.
 
 ## Surse și licențe
 
