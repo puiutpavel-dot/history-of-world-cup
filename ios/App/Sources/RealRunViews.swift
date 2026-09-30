@@ -379,7 +379,8 @@ struct RunMatchCard: View {
             }
 
             if revealed && progress >= 1 && !playing {
-                if let note = match.note {
+                // „penalty-uri 4-5” e deja în titlul loviturilor de departajare
+                if let note = match.note, events.kicks.isEmpty || !note.contains("penalt") {
                     Text(note).font(.system(size: 13)).foregroundStyle(Color.white.opacity(0.75))
                 }
                 if let verdict {
