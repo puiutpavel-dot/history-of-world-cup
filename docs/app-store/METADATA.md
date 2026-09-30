@@ -30,6 +30,7 @@ Retrăiește Campionatul Mondial de fotbal, turneu cu turneu, din 1930 până î
 
 • Alegi o ediție și o echipă (peste 80 de naționale, inclusiv toate cele 48 din 2026) și îi retrăiești drumul real, meci cu meci.
 • Fiecare meci se derulează în 19 secunde, cu marcatorii reali la minutul lor.
+• După fiecare meci: „Știai că?” — povești din meciurile celebre, recorduri, hat-trickuri și istoria întâlnirilor.
 • Quiz: pe ediție, Maraton 1930 → 2026, Duoul greșit, Alege faza.
 • Traseul țării tale: toate participările reale, meci cu meci.
 • Muzeul Edițiilor și Evoluția regulilor.
@@ -47,6 +48,7 @@ Relive the football World Cup, tournament by tournament, from 1930 to 2026 — w
 
 • Pick an edition and a team (over 80 national teams, including all 48 from 2026) and relive its real path, match by match.
 • Every match plays out in 19 seconds, with the real goalscorers at their minute.
+• After every match: "Did you know?" — stories from famous matches, records, hat-tricks and head-to-head history.
 • Quiz modes: per edition, Marathon 1930 → 2026, Spot the false one, Pick the stage.
 • Your country's path: every real appearance, match by match.
 • Edition museum and the evolution of the rules.

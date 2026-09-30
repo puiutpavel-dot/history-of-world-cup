@@ -37,6 +37,8 @@ final class GameState: ObservableObject {
 
     let engine = Engine()
     var data: GameData { engine.data }
+    /// „Știai că?” după fiecare meci real (indexul se construiește o singură dată)
+    lazy var matchFacts = MatchFacts(data: data)
 
     private let careerKey = "hwc_active_career_v1"
     private let runKey = "hwc_real_run_v1"

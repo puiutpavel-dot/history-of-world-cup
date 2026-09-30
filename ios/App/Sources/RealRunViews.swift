@@ -109,6 +109,11 @@ struct RunView: View {
                     let shown = playing ? progress : (r.revealed ? 1 : 0)
                     RunMatchCard(team: r.team, match: r.match, revealed: r.revealed, progress: shown, playing: playing)
 
+                    if r.revealed && !playing {
+                        MatchFactsPanel(facts: game.matchFacts.facts(team: r.team, year: r.year, index: r.idx))
+                            .transition(.opacity)
+                    }
+
                     if !r.revealed {
                         PrimaryButton(title: tr("Joacă meciul", "Play the match"), systemImage: "play.fill") { play() }
                     } else if playing {
