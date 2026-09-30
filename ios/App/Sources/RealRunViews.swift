@@ -123,6 +123,11 @@ struct RunView: View {
                                       systemImage: "arrow.right") { game.nextRunMatch() }
                     }
 
+                    if r.revealed && !playing, let board = StageBoard.build(data: game.data, team: r.team, year: r.year, index: r.idx) {
+                        StageBoardView(board: board, team: r.team)
+                            .transition(.opacity)
+                    }
+
                     if r.idx > 0 {
                         Panel(title: tr("Drumul până aici", "The road so far")) {
                             ForEach(Array(r.matches.prefix(r.idx).enumerated()), id: \.offset) { _, m in

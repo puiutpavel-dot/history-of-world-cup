@@ -347,6 +347,12 @@ final class GameState: ObservableObject {
             revealRunMatch()
             demoMatchProgress = 0.78
             screen = .run
+        case "runBracket":
+            // semifinala din 1970 (Brazilia–Uruguay), cu tabloul eliminatoriilor
+            startRun(team: "BRA", year: 1970)
+            for _ in 0..<4 { revealRunMatch(); nextRunMatch() }
+            revealRunMatch()
+            screen = .run
         case "run", "runQuiz", "runSummary":
             startRun(team: "BRA", year: 1970)
             if name != "run" { revealRunMatch() }
