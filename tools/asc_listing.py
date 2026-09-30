@@ -160,7 +160,7 @@ def age_rating(info):
         return
     decl = j["data"]
     skip = {"kidsAgeBand", "ageRatingOverride", "ageRatingOverrideV2", "koreaAgeRatingOverride", "developerAgeRatingInfoUrl",
-            "seventeenPlus"}
+            "seventeenPlus", "gracRatingClassificationNumber"}
     # Apple cere toate câmpurile deodată; tipul fiecăruia (text „NONE” sau boolean) îl aflăm din erorile API-ului
     attrs = {k: (v if v not in (None, "", []) else "NONE") for k, v in decl["attributes"].items() if k not in skip}
     for _ in range(12):
@@ -337,8 +337,18 @@ def review_details(vid):
     j = call("GET", f"/v1/appStoreVersions/{vid}/appStoreReviewDetail", ok=(200, 404), fatal=False)
     attrs = {"notes": notes, "demoAccountRequired": False}
     if j and j.get("data"):
-        call("PATCH", f"/v1/appStoreReviewDetails/{j['data']['id']}", {"data": {"type": "appStoreReviewDetails",
-                                                                                "id": j["data"]["id"], "attributes": attrs}}, fatal=False)
+        # PATCH-ul cere și contactul (nume, telefon, e-mail), pe care îl completează titularul contului
+        if (j["data"]["attributes"].get("notes") or "").strip() == notes.strip():
+            log("notele există deja")
+            return
+        c = j["data"]["attributes"]
+        if all(c.get(k) for k in ("contactFirstName", "contactLastName", "contactEmail", "contactPhone")):
+            attrs.update({k: c[k] for k in ("contactFirstName", "contactLastName", "contactEmail", "contactPhone")})
+            call("PATCH", f"/v1/appStoreReviewDetails/{j['data']['id']}", {"data": {"type": "appStoreReviewDetails",
+                                                                                    "id": j["data"]["id"], "attributes": attrs}}, fatal=False)
+        else:
+            WARN.append("notele pentru review diferă de REVIEW_NOTES.md; se pot actualiza după ce e completat contactul")
+            return
     else:
         call("POST", "/v1/appStoreReviewDetails", {"data": {"type": "appStoreReviewDetails", "attributes": attrs,
                                                             "relationships": {"appStoreVersion": rel("appStoreVersions", vid)}}}, fatal=False)
