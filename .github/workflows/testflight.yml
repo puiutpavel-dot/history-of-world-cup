@@ -54,14 +54,17 @@ jobs:
             printf '%s' "$ASC_KEY_P8" | base64 --decode > "$RUNNER_TEMP/keys/AuthKey_$ASC_KEY_ID.p8"
           fi
           echo "KEY_PATH=$RUNNER_TEMP/keys/AuthKey_$ASC_KEY_ID.p8" >> "$GITHUB_ENV"
-      - name: Archive (Release, semnare automată în cloud)
+      # Arhiva se face NESEMNATĂ: semnarea cu certificat de dezvoltare crea la fiecare rulare un certificat nou
+      # în contul Apple (runner-ul e mereu o mașină nouă) până la limita contului („maximum number of
+      # certificates”). Semnarea pentru App Store se face la export, cu certificatul de distribuție gestionat
+      # în cloud de Apple (prin cheia API), care nu consumă din limită.
+      - name: Archive (Release, nesemnat)
         run: |
           cd ios
           xcodebuild -project HistoryOfWorldCup.xcodeproj -scheme HistoryOfWorldCup -configuration Release \
             -destination "generic/platform=iOS" -archivePath build/HistoryOfWorldCup.xcarchive \
-            -allowProvisioningUpdates \
-            -authenticationKeyPath "$KEY_PATH" -authenticationKeyID "$ASC_KEY_ID" -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
-            DEVELOPMENT_TEAM="$APPLE_TEAM_ID" CODE_SIGN_STYLE=Automatic CURRENT_PROJECT_VERSION="$GITHUB_RUN_NUMBER" \
+            DEVELOPMENT_TEAM="$APPLE_TEAM_ID" CURRENT_PROJECT_VERSION="$GITHUB_RUN_NUMBER" \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
             archive > archive.log 2>&1 \
             || { grep -E "error:|error -" archive.log | head -60; tail -40 archive.log; exit 1; }
           tail -5 archive.log
