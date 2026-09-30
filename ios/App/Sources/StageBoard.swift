@@ -35,18 +35,41 @@ enum StageBoard {
 
     static let groupLabels: Set<String> = ["Grupă", "Grupa a doua", "Grupa finală", "Group", "Second group stage", "Final group"]
 
-    /// clasamentul grupei meciului curent sau tabloul, cu meciurile jucate până acum (inclusiv cel curent)
+    /// clasamentul grupei ultimului meci de pe ecran sau tabloul, cu meciurile jucate până acum
     static func build(data: GameData, run: RealRun) -> StageBoard? {
-        let all: [(f: Fixture, m: TrackMatch)?] = run.fixtures.map { f in data.match(f, year: run.year).map { (f: f, m: $0) } }
-        guard all.indices.contains(run.idx), let cur = all[run.idx] else { return nil }
-        if groupLabels.contains(cur.m.round) {
-            return group(all: all, current: run.idx, label: cur.m.round, year: run.year, data: data)
-        }
-        return knockout(all: all, current: run.idx)
+        let last = run.slot.upperBound - 1
+        return build(data: data, run: run, index: last, current: last)
     }
 
-    private static func group(all: [(f: Fixture, m: TrackMatch)?], current: Int, label: String, year: Int, data: GameData) -> StageBoard? {
-        guard let cur = all[current] else { return nil }
+    /// clasamentul grupei meciului `index` sau tabloul, cu meciurile jucate până la `current` inclusiv
+    static func build(data: GameData, run: RealRun, index: Int, current: Int) -> StageBoard? {
+        let all: [(f: Fixture, m: TrackMatch)?] = run.fixtures.map { f in data.match(f, year: run.year).map { (f: f, m: $0) } }
+        guard all.indices.contains(index), all.indices.contains(current), let cur = all[index] else { return nil }
+        if groupLabels.contains(cur.m.round) {
+            return group(all: all, index: index, current: current, label: cur.m.round, year: run.year, data: data)
+        }
+        return knockout(all: all, current: current)
+    }
+
+    /// după meciurile de pe ecran (unul sau mai multe simultane): câte un clasament pentru fiecare grupă
+    /// implicată și, dacă e cazul, tabloul — fiecare o singură dată
+    static func boards(data: GameData, run: RealRun) -> [BoardItem] {
+        let last = run.slot.upperBound - 1
+        var out: [BoardItem] = []
+        for i in run.slot {
+            guard let b = build(data: data, run: run, index: i, current: last) else { continue }
+            let key: String
+            switch b {
+            case let .group(title, rows, _, _): key = title + rows.map(\.code).sorted().joined()
+            case .knockout: key = "knockout"
+            }
+            if !out.contains(where: { $0.key == key }) { out.append(BoardItem(key: key, board: b)) }
+        }
+        return out
+    }
+
+    private static func group(all: [(f: Fixture, m: TrackMatch)?], index: Int, current: Int, label: String, year: Int, data: GameData) -> StageBoard? {
+        guard let cur = all[index] else { return nil }
         // echipele grupei: legate prin meciuri din aceeași fază de grupe
         var comp: Set<String> = [cur.f.home, cur.f.away]
         var grew = true
@@ -121,6 +144,12 @@ enum StageBoard {
         }
         return rounds.isEmpty ? nil : .knockout(rounds: rounds)
     }
+}
+
+struct BoardItem: Identifiable {
+    let key: String
+    let board: StageBoard
+    var id: String { key }
 }
 
 // MARK: - Afișarea

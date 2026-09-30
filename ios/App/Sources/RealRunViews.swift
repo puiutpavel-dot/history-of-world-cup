@@ -13,6 +13,8 @@ struct Fixture: Codable, Equatable {
     let homeIndex: Int
     /// „MMDD”
     let date: String
+    /// a început în același moment cu meciul anterior din calendar (se joacă pe același ecran)
+    var together: Bool? = nil
 }
 
 struct RealRun: Codable, Equatable {
@@ -25,21 +27,31 @@ struct RealRun: Codable, Equatable {
     var finished = false
 
     var fixture: Fixture { fixtures[idx] }
-    var isLastMatch: Bool { idx == fixtures.count - 1 }
+    /// meciurile ecranului curent: meciul `idx` și cele care au început în același moment cu el
+    var slot: Range<Int> {
+        var end = idx + 1
+        while end < fixtures.count, fixtures[end].together == true { end += 1 }
+        return idx..<end
+    }
+    var isLastMatch: Bool { slot.upperBound >= fixtures.count }
+    /// ecranul curent conține meciul dintre aceste echipe
+    func has(_ teams: Set<String>) -> Bool { slot.contains { Set([fixtures[$0].home, fixtures[$0].away]) == teams } }
 
     /// calendarul ediției, din `MatchOrder`: meciurile fiecărei echipe se consumă în ordinea traseului ei
     static func fixtures(year: Int) -> [Fixture] {
         guard let s = MatchOrder.byYear[year] else { return [] }
         var next: [String: Int] = [:]
         return s.split(separator: " ").compactMap { item in
-            let t = String(item)
+            var t = String(item)
+            let together = t.hasPrefix("=")
+            if together { t.removeFirst() }
             guard t.count == 11 else { return nil }
             let date = String(t.prefix(4))
             let home = String(t.dropFirst(4).prefix(3)), away = String(t.suffix(3))
             let i = next[home, default: 0]
             next[home] = i + 1
             next[away, default: 0] += 1
-            return Fixture(home: home, away: away, homeIndex: i, date: date)
+            return Fixture(home: home, away: away, homeIndex: i, date: date, together: together ? true : nil)
         }
     }
 }
@@ -113,6 +125,13 @@ struct RunTeamSelectView: View {
 
 // MARK: - Meciul curent
 
+/// un meci de pe ecranul curent: indexul din calendar și meciul (din perspectiva echipei 1)
+struct SlotMatch: Identifiable {
+    let i: Int
+    let m: TrackMatch
+    var id: Int { i }
+}
+
 struct RunView: View {
     @EnvironmentObject var game: GameState
     /// derularea meciului: 0 → 1 în `matchSeconds` secunde
@@ -124,8 +143,11 @@ struct RunView: View {
     static let matchSeconds = 19.0
 
     var body: some View {
-        if let r = game.run, let m = game.data.match(r.fixture, year: r.year) {
+        if let r = game.run, game.data.match(r.fixture, year: r.year) != nil {
             let host = game.data.edition(r.year)?.host ?? ""
+            let slot = Array(r.slot)
+            let matches = slot.compactMap { i in game.data.match(r.fixtures[i], year: r.year).map { SlotMatch(i: i, m: $0) } }
+            let maxMinutes: Double = matches.contains { $0.m.hadExtraTime } ? 120 : 90
             ScreenContainer(title: "\(String(r.year)) · \(host)", backLabel: tr("Meniu", "Menu"), onBack: { game.go(.menu) }) {
                 VStack(alignment: .leading, spacing: 14) {
                     HStack {
@@ -134,29 +156,47 @@ struct RunView: View {
                                 .font(.system(size: 13)).foregroundStyle(Color.hwcGold).lineLimit(1)
                         }
                         Spacer()
-                        Text(tr("Meciul \(r.idx + 1)/\(r.fixtures.count)", "Match \(r.idx + 1)/\(r.fixtures.count)") + " · " + fixtureDate(r.fixture.date))
-                            .font(.stat(13)).foregroundStyle(Color.hwcTextDim)
+                        Text(counterText(r) + " · " + fixtureDate(r.fixture.date))
+                            .font(.stat(13)).foregroundStyle(Color.hwcTextDim).lineLimit(1).minimumScaleFactor(0.8)
+                    }
+                    if matches.count > 1 {
+                        Text(tr("⏱ \(matches.count) meciuri care s-au jucat în același timp", "⏱ \(matches.count) matches played at the same time"))
+                            .font(.system(size: 13, weight: .semibold)).foregroundStyle(Color.hwcGold)
                     }
 
                     let shown = playing ? progress : (r.revealed ? 1 : 0)
                     let penShown = playing ? penProgress : (r.revealed ? 1 : 0)
-                    let events = MatchEvents.of(year: r.year, index: r.idx)
-                    RunMatchCard(team: r.fixture.home, match: m, revealed: r.revealed, progress: shown, playing: playing,
-                                 events: events, penProgress: penShown,
-                                 verdict: MatchVerdict.of(run: r, match: m, data: game.data))
+                    ForEach(matches) { x in
+                        let events = MatchEvents.of(year: r.year, index: x.i)
+                        let own: Double = x.m.hadExtraTime ? 120 : 90
+                        // ceasul e comun: un meci de 90' se termină înaintea unuia cu prelungiri
+                        let p = min(1, shown * maxMinutes / own)
+                        let busy = playing && (p < 1 || (!events.kicks.isEmpty && penShown < 1))
+                        RunMatchCard(team: r.fixtures[x.i].home, match: x.m, revealed: r.revealed, progress: p, playing: busy,
+                                     events: events, penProgress: penShown,
+                                     verdict: MatchVerdict.of(run: r, index: x.i, match: x.m, data: game.data),
+                                     compact: matches.count > 1)
+                    }
 
                     if !r.revealed {
-                        PrimaryButton(title: tr("Joacă meciul", "Play the match"), systemImage: "play.fill") { play(shootout: !events.kicks.isEmpty) }
+                        PrimaryButton(title: matches.count > 1 ? tr("Joacă meciurile", "Play the matches") : tr("Joacă meciul", "Play the match"),
+                                      systemImage: "play.fill") {
+                            play(shootout: matches.contains { !MatchEvents.of(year: r.year, index: $0.i).kicks.isEmpty })
+                        }
                     } else if !playing {
                         PrimaryButton(title: r.isLastMatch ? tr("Vezi rezultatul", "See the result") : tr("Meciul următor", "Next match"),
                                       systemImage: "arrow.right") { game.nextRunMatch() }
                     }
 
                     if r.revealed && !playing {
-                        MatchFactsPanel(facts: game.matchFacts.facts(team: r.fixture.home, year: r.year, index: r.fixture.homeIndex))
-                            .transition(.opacity)
-                        if let board = StageBoard.build(data: game.data, run: r) {
-                            StageBoardView(board: board, highlight: [r.fixture.home, r.fixture.away], focus: r.focus)
+                        let each = matches.count > 1 ? 1 : 2
+                        MatchFactsPanel(facts: slot.flatMap { i in
+                            game.matchFacts.facts(team: r.fixtures[i].home, year: r.year, index: r.fixtures[i].homeIndex, limit: each)
+                        })
+                        .transition(.opacity)
+                        let highlight = Set(slot.flatMap { [r.fixtures[$0].home, r.fixtures[$0].away] })
+                        ForEach(StageBoard.boards(data: game.data, run: r)) { b in
+                            StageBoardView(board: b.board, highlight: highlight, focus: r.focus)
                                 .transition(.opacity)
                         }
                     }
@@ -164,7 +204,7 @@ struct RunView: View {
             }
             .overlay {
                 // finala: confetti peste tot ecranul, după fluierul final (și după penalty-uri)
-                if r.revealed && !playing, MatchVerdict.of(run: r, match: m, data: game.data)?.isChampion == true {
+                if r.revealed && !playing, matches.contains(where: { MatchVerdict.of(run: r, index: $0.i, match: $0.m, data: game.data)?.isChampion == true }) {
                     ConfettiView().id(r.idx)
                 }
             }
@@ -179,7 +219,15 @@ struct RunView: View {
         }
     }
 
+    /// „Meciul 34/52” sau, pentru meciuri simultane, „Meciurile 33–34/52”
+    private func counterText(_ r: RealRun) -> String {
+        let s = r.slot, n = r.fixtures.count
+        if s.count == 1 { return tr("Meciul \(s.lowerBound + 1)/\(n)", "Match \(s.lowerBound + 1)/\(n)") }
+        return tr("Meciurile \(s.lowerBound + 1)–\(s.upperBound)/\(n)", "Matches \(s.lowerBound + 1)–\(s.upperBound)/\(n)")
+    }
+
     /// Meciul se derulează în 19 secunde: cronometrul merge până la 90 (sau 120) și golurile apar la minutul lor.
+    /// Meciurile simultane au același ceas (19 secunde pentru cel mai lung dintre ele).
     /// Dacă meciul s-a decis la penalty-uri, loviturile se derulează în încă 19 secunde.
     private func play(shootout: Bool) {
         ticker?.cancel()
@@ -281,6 +329,8 @@ struct RunMatchCard: View {
     var penProgress: Double = 1
     /// cine merge mai departe / locul 3 / campioana (nil în grupe)
     var verdict: MatchVerdict?
+    /// mai multe meciuri pe același ecran: card mai mic
+    var compact = false
 
     /// loviturile în ordine alternativă: echipa 1, echipa 2, echipa 1…
     private var orderedKicks: [ShootoutKick] {
@@ -347,12 +397,12 @@ struct RunMatchCard: View {
             Text(match.round.uppercased()).font(.scoreboard(15, weight: .semibold)).foregroundStyle(Color.hwcGold)
             HStack(alignment: .center) {
                 VStack(spacing: 4) {
-                    Text(a.flag).font(.system(size: 44))
+                    Text(a.flag).font(.system(size: compact ? 32 : 44))
                     Text(a.name).font(.system(size: 13, weight: .semibold)).multilineTextAlignment(.center).lineLimit(2)
                 }
                 .frame(maxWidth: .infinity)
                 Text(revealed ? "\(sc.0) - \(sc.1)" : "? - ?")
-                    .font(.stat(40, weight: .bold))
+                    .font(.stat(compact ? 32 : 40, weight: .bold))
                     .foregroundStyle(revealed ? Color.hwcRed : Color.hwcTextDim)
                     .contentTransition(.numericText())
                     .animation(.spring(duration: 0.35), value: sc.0 + sc.1)
@@ -360,7 +410,7 @@ struct RunMatchCard: View {
                     .fixedSize()
                     .layoutPriority(1)
                 VStack(spacing: 4) {
-                    Text(b.flag).font(.system(size: 44))
+                    Text(b.flag).font(.system(size: compact ? 32 : 44))
                     Text(b.name).font(.system(size: 13, weight: .semibold)).multilineTextAlignment(.center).lineLimit(2)
                 }
                 .frame(maxWidth: .infinity)
@@ -372,7 +422,11 @@ struct RunMatchCard: View {
                 .foregroundStyle(playing ? Color.hwcGold : Color.white.opacity(0.7))
                 .contentTransition(.numericText())
             if playing {
-                ProgressView(value: inShootout ? penProgress : progress).tint(Color.hwcGold)
+                if inShootout {
+                    ProgressView(value: penProgress).tint(Color.hwcGold)
+                } else {
+                    HalvesBar(minute: minuteNow, extraTime: match.hadExtraTime)
+                }
             }
 
             if revealed && !shown.isEmpty {
@@ -409,9 +463,40 @@ struct RunMatchCard: View {
             }
         }
         .frame(maxWidth: .infinity)
-        .padding(16)
+        .padding(compact ? 12 : 16)
         .background(Color.black.opacity(0.85), in: RoundedRectangle(cornerRadius: 14))
         .sensoryFeedback(.impact(weight: .medium), trigger: shown.count + kicksShown)
+    }
+}
+
+/// Bara de derulare a meciului, împărțită pe reprize: 45' + 45' și, la nevoie, prelungirile 15' + 15'.
+struct HalvesBar: View {
+    let minute: Double
+    let extraTime: Bool
+
+    var body: some View {
+        let parts: [(start: Double, len: Double)] = extraTime ? [(0, 45), (45, 45), (90, 15), (105, 15)] : [(0, 45), (45, 45)]
+        let total = parts.reduce(0) { $0 + $1.len }
+        let gap: CGFloat = 5
+        GeometryReader { geo in
+            let usable = geo.size.width - gap * CGFloat(parts.count - 1)
+            HStack(spacing: gap) {
+                ForEach(Array(parts.enumerated()), id: \.offset) { i, part in
+                    let fill = max(0, min(1, (minute - part.start) / part.len))
+                    let w = usable * CGFloat(part.len / total)
+                    ZStack(alignment: .leading) {
+                        Capsule().fill(Color.white.opacity(0.18))
+                        Capsule().fill(i < 2 ? Color.hwcGold : Color.hwcGold2)
+                            .frame(width: w * CGFloat(fill))
+                    }
+                    .frame(width: w)
+                }
+            }
+        }
+        .frame(height: 6)
+        .accessibilityElement()
+        .accessibilityLabel(extraTime ? tr("Două reprize și prelungiri", "Two halves and extra time") : tr("Două reprize", "Two halves"))
+        .accessibilityValue("\(Int(minute))'")
     }
 }
 
@@ -491,10 +576,10 @@ enum MatchVerdict: Equatable {
         return false
     }
 
-    static func of(run: RealRun, match m: TrackMatch, data: GameData) -> MatchVerdict? {
-        let home = run.fixture.home, away = run.fixture.away
+    static func of(run: RealRun, index: Int, match m: TrackMatch, data: GameData) -> MatchVerdict? {
+        let home = run.fixtures[index].home, away = run.fixtures[index].away
         // ultimul meci al turneului: campioana (inclusiv 1950, decis în grupa finală)
-        if run.isLastMatch, let champ = data.tracks(year: run.year).first(where: { $0.finish == "champion" }) {
+        if index == run.fixtures.count - 1, let champ = data.tracks(year: run.year).first(where: { $0.finish == "champion" }) {
             return .champion(champ.code)
         }
         guard !StageBoard.groupLabels.contains(m.round) else { return nil }

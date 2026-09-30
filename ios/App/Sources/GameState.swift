@@ -55,8 +55,13 @@ final class GameState: ObservableObject {
         if let saved = load(Career.self, key: careerKey), !saved.isFinished {
             career = saved
         }
-        if let saved = load(RealRun.self, key: runKey), !saved.finished {
-            run = saved
+        if var saved = load(RealRun.self, key: runKey), !saved.finished {
+            // calendarul actual (cu meciurile simultane marcate); dacă ordinea s-a schimbat între versiuni, turneul salvat nu se mai poate relua
+            let fresh = RealRun.fixtures(year: saved.year)
+            if fresh.map({ $0.home + $0.away }) == saved.fixtures.map({ $0.home + $0.away }) {
+                saved = RealRun(year: saved.year, focus: saved.focus, fixtures: fresh, idx: saved.idx, revealed: saved.revealed, finished: false)
+                run = saved
+            }
         }
         if let i = arguments.firstIndex(of: "-demoScreen"), i + 1 < arguments.count {
             runDemo(arguments[i + 1])
@@ -161,7 +166,8 @@ final class GameState: ObservableObject {
             go(.runSummary)
             return
         }
-        r.idx += 1
+        // meciurile simultane se joacă împreună: următorul ecran începe după ele
+        r.idx = r.slot.upperBound
         r.revealed = false
         run = r
         persistRun()
@@ -361,7 +367,7 @@ final class GameState: ObservableObject {
         case "runBracket":
             // semifinala din 1970 (Brazilia–Uruguay), cu tabloul eliminatoriilor
             startRun(year: 1970, focus: "BRA")
-            while let r = run, !r.isLastMatch, Set([r.fixture.home, r.fixture.away]) != ["BRA", "URU"] {
+            while let r = run, !r.isLastMatch, !r.has(["BRA", "URU"]) {
                 revealRunMatch(); nextRunMatch()
             }
             revealRunMatch()
@@ -372,10 +378,19 @@ final class GameState: ObservableObject {
             while let r = run, !r.isLastMatch { revealRunMatch(); nextRunMatch() }
             revealRunMatch()
             screen = .run
+        case "runTogether":
+            // ultima etapă a grupei României din 1994: SUA–România și Elveția–Columbia, în același timp
+            startRun(year: 1994, focus: "ROU")
+            while let r = run, !r.isLastMatch, !r.has(["USA", "ROU"]) {
+                revealRunMatch(); nextRunMatch()
+            }
+            revealRunMatch()
+            demoMatchProgress = 0.62
+            screen = .run
         case "runShootout":
             // sfertul din 1994 România–Suedia: eliminarea lui Schwarz și loviturile de departajare
             startRun(year: 1994, focus: "ROU")
-            while let r = run, !r.isLastMatch, Set([r.fixture.home, r.fixture.away]) != ["ROU", "SWE"] {
+            while let r = run, !r.isLastMatch, !r.has(["ROU", "SWE"]) {
                 revealRunMatch(); nextRunMatch()
             }
             revealRunMatch()
@@ -384,7 +399,7 @@ final class GameState: ObservableObject {
             startRun(year: 1970, focus: name == "runQuiz" ? "BRA" : nil)
             if name == "runQuiz" {
                 // a doua etapă a grupei Braziliei (Brazilia–Anglia 1-0), cu clasamentul la zi
-                while let r = run, !r.isLastMatch, Set([r.fixture.home, r.fixture.away]) != ["BRA", "ENG"] {
+                while let r = run, !r.isLastMatch, !r.has(["BRA", "ENG"]) {
                     revealRunMatch(); nextRunMatch()
                 }
             }

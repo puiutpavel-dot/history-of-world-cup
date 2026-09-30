@@ -15,6 +15,10 @@ Rulare:
 Cu bookings.csv și penalty_kicks.csv generează și ios/App/Sources/MatchEvents.swift: eliminările
 (roșu direct sau al doilea galben; în sursă doar din 1970, când au apărut cartonașele) și loviturile
 de departajare, pe echipe, marcate/ratate, pentru fiecare meci (indexul din calendarul ediției).
+
+Ordinea: după ora de start în același fus (orele din sursă sunt locale; pentru edițiile cu mai multe fusuri
+— 1994, 2014, 2018 — se corectează după oraș). Meciurile care au început în același moment sunt marcate
+cu „=” în fața lor („se joacă simultan cu meciul anterior”) și apar pe același ecran în aplicație.
 """
 import csv
 import json
@@ -29,6 +33,25 @@ from build_real_fixtures import code  # noqa: E402
 from build_tracks_2026 import CODE as CODE_2026, SRC as SRC_2026  # noqa: E402
 
 ROOT = os.path.join(os.path.dirname(__file__), "..")
+
+# Diferența de fus (ore) față de fusul principal al ediției, pentru orașele care nu sunt în el.
+# 1994: fusul de Est (EDT); 2014: ora Brasíliei; 2018: ora Moscovei.
+TZ_SHIFT = {
+    1994: {"Pasadena": -3, "Stanford": -3, "Chicago": -1, "Dallas": -1},
+    2014: {"Manaus": -1, "Cuiabá": -1},
+    2018: {"Kaliningrad": -1, "Samara": 1, "Yekaterinburg": 2},
+}
+
+
+def kickoff(y, date, time, city):
+    """momentul de start, în fusul principal al ediției (pentru ordonare și pentru meciurile simultane)"""
+    t = datetime.strptime(f"{date} {time}", "%Y-%m-%d %H:%M")
+    return t - timedelta(hours=TZ_SHIFT.get(y, {}).get(city, 0))
+
+
+def ordered(rows):
+    """meciurile unei ediții în ordinea startului (data afișată rămâne ziua locală din sursă)"""
+    return sorted(rows, key=lambda m: (m[5], m[2]))
 
 # Penalty-uri ratate în timpul meciurilor (nu la departajare): (an, echipa 1, echipa 2, minut, cine a executat,
 # echipa lui, portarul care a apărat sau None dacă a trimis pe lângă / în bară / peste).
@@ -111,12 +134,13 @@ def main(matches_csv, bookings_csv=None, kicks_csv=None, out=os.path.join(ROOT, 
         if "Men's" not in r["tournament_name"]:
             continue
         y = int(r["tournament_id"][3:])
-        by_year[y].append((r["match_date"], r["match_time"], r["match_id"], code(r["home_team_code"]), code(r["away_team_code"])))
+        by_year[y].append((r["match_date"], r["match_time"], r["match_id"], code(r["home_team_code"]), code(r["away_team_code"]),
+                           kickoff(y, r["match_date"], r["match_time"], r["city_name"])))
     for m in json.load(open(SRC_2026, encoding="utf-8"))["matches"]:
         t, _, tz = m["time"].partition(" UTC")
         local = datetime.strptime(f"{m['date']} {t}", "%Y-%m-%d %H:%M")
         utc = local - timedelta(hours=int(tz or 0))
-        by_year[2026].append((utc.strftime("%Y-%m-%d"), utc.strftime("%H:%M"), "", CODE_2026[m["team1"]], CODE_2026[m["team2"]]))
+        by_year[2026].append((utc.strftime("%Y-%m-%d"), utc.strftime("%H:%M"), "", CODE_2026[m["team1"]], CODE_2026[m["team2"]], utc))
     # evenimentele fiecărui meci (match_id), din perspectiva echipei 1 (home)
     events = defaultdict(list)
     homes = {r[2]: r[3] for v in by_year.values() for r in v if r[2]}
@@ -137,7 +161,7 @@ def main(matches_csv, bookings_csv=None, kicks_csv=None, out=os.path.join(ROOT, 
     # penalty-urile ratate, pe meciul din calendar (perechea de echipe din ediția respectivă)
     extra = defaultdict(list)
     for y, t1, t2, minute, taker, team, keeper in MISSED:
-        ms = sorted(by_year[y])
+        ms = ordered(by_year[y])
         idx = [i for i, m in enumerate(ms) if {m[3], m[4]} == {t1, t2}]
         assert len(idx) == 1, (y, t1, t2, idx)
         home = ms[idx[0]][3]
@@ -148,23 +172,28 @@ def main(matches_csv, bookings_csv=None, kicks_csv=None, out=os.path.join(ROOT, 
     ev_lines = []
 
     lines = []
+    together = 0
     for y in sorted(by_year):
-        ms = sorted(by_year[y])
+        ms = ordered(by_year[y])
         ev = [f"{i}: \"{';'.join(events.get(m[2], []) + extra.get((y, i), []))}\"" for i, m in enumerate(ms)
               if m[2] in events or (y, i) in extra]
         if ev:
             ev_lines.append(f"        {y}: [" + ", ".join(ev) + "],")
         # data afișată = ziua din sursă (MMDD); pentru 2026, ziua UTC
-        items = " ".join(f"{d[5:7]}{d[8:10]}{a}-{b}" for d, _, _, a, b in ms)
-        assert all(re.fullmatch(r"\d{4}[A-Z]{3}-[A-Z]{3}", x) for x in items.split()), y
+        # „=” = a început în același moment cu meciul anterior (se joacă pe același ecran)
+        items = " ".join(("=" if i and m[5] == ms[i - 1][5] else "") + f"{m[0][5:7]}{m[0][8:10]}{m[3]}-{m[4]}"
+                         for i, m in enumerate(ms))
+        together += items.count("=")
+        assert all(re.fullmatch(r"=?\d{4}[A-Z]{3}-[A-Z]{3}", x) for x in items.split()), y
         lines.append(f"        {y}: \"{items}\",")
     with open(out, "w", encoding="utf-8") as f:
         f.write("// GENERAT de tools/build_match_order.py — nu edita manual.\n")
         f.write("// Ordinea cronologică a tuturor meciurilor fiecărei ediții: „MMDD” + echipa 1 + „-” + echipa 2.\n")
+        f.write("// „=” în față: meciul a început în același moment cu cel anterior (se joacă simultan, pe același ecran).\n")
         f.write("// Surse: Fjelstul World Cup Database (CC-BY-SA 4.0); 2026: openfootball (domeniu public).\n\n")
         f.write("enum MatchOrder {\n    static let byYear: [Int: String] = [\n")
         f.write("\n".join(lines) + "\n    ]\n}\n")
-    print("meciuri:", {y: len(v) for y, v in sorted(by_year.items())})
+    print("meciuri:", {y: len(v) for y, v in sorted(by_year.items())}, "simultane cu anteriorul:", together)
     if bookings_csv or kicks_csv or MISSED:
         with open(os.path.join(os.path.dirname(out), "MatchEvents.swift"), "w", encoding="utf-8") as f:
             f.write("// GENERAT de tools/build_match_order.py — nu edita manual.\n")
