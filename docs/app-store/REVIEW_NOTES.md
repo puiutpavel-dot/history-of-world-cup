@@ -12,12 +12,12 @@ competition, team and player names are used descriptively, for historical purpos
 No account, no login, no ads, no analytics, no tracking. All progress is stored locally.
 
 FREE CONTENT
-- The main mode ("Relive a World Cup": real results, a quiz question after every match) and the edition quiz for the 1930, 1934 and 1938 World Cups
+- The main mode ("Relive a World Cup": real results with goalscorers) and the edition quiz for the 1930, 1934, 1938 and 1994 World Cups
 - Museum (edition stories), Rules evolution, Legends gallery, "Your country's path"
 
 IN-APP PURCHASE (one non-consumable, Family Sharing enabled)
 - Product: "Full History" — com.puiutpavel.historyofworldcup.fullhistory
-- Unlocks every tournament from 1950 onward in the main mode and every quiz mode.
+- Unlocks every other tournament (1950–1990, 1998–2026) in the main mode and every quiz mode.
 
 HOW TO REACH THE PURCHASE
 1. Main menu → "Relive a World Cup" → tap any edition from 1950 onward (marked 🔒)

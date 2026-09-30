@@ -63,7 +63,7 @@ struct MenuView: View {
                 } else {
                     VStack(spacing: 8) {
                         Button { game.showPaywall() } label: {
-                            Text(tr("🔓 Full History — deblochează 1950–2026", "🔓 Full History — unlock 1950–2026") + " (\(store.displayPrice))")
+                            Text(tr("🔓 Full History — deblochează toate edițiile", "🔓 Full History — unlock every edition") + " (\(store.displayPrice))")
                                 .font(.system(size: 14, weight: .semibold)).foregroundStyle(Color.hwcGold)
                         }
                         Button(tr("Restaurează achizițiile", "Restore purchases")) { Task { await store.restore() } }

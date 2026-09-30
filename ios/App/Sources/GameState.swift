@@ -12,9 +12,9 @@ final class GameState: ObservableObject {
     }
 
     @Published var screen: Screen = .menu
-    /// „Full History” cumpărat (sincronizat din `Store`); 1930-1938 sunt mereu gratuite
+    /// „Full History” cumpărat (sincronizat din `Store`); 1930-1938 și 1994 sunt mereu gratuite
     @Published private(set) var fullHistory = false
-    static let freeYears: Set<Int> = [1930, 1934, 1938]
+    static let freeYears: Set<Int> = [1930, 1934, 1938, 1994]
     private var paywallReturn: Screen = .menu
     /// capturile din CI fixează starea de deblocare (nu citesc App Store-ul)
     private var demoUnlock: Bool?
@@ -23,7 +23,7 @@ final class GameState: ObservableObject {
     /// capturile din CI: meciul curent afișat oprit la această fracțiune (0…1)
     var demoMatchProgress: Double?
     @Published private(set) var career: Career?
-    /// turneul real în desfășurare (modul principal: rezultate reale + quiz după fiecare meci)
+    /// turneul real în desfășurare (modul principal: rezultatele reale, meci cu meci)
     @Published private(set) var run: RealRun?
     @Published private(set) var lastMatch: MatchRecord?
     /// indexul clasamentului afișat pe ecranul de clasament
@@ -124,8 +124,7 @@ final class GameState: ObservableObject {
     func startRun(team: String, year: Int) {
         guard isOpen(year) else { return showPaywall() }
         guard let e = data.track(team, year), !e.matches.isEmpty else { return }
-        run = RealRun(team: team, year: year, matches: e.matches, finish: e.finish, finishLabel: e.finishLabel,
-                      questions: RunQuestions.build(team: team, year: year, matches: e.matches, data: data))
+        run = RealRun(team: team, year: year, matches: e.matches, finish: e.finish, finishLabel: e.finishLabel)
         persistRun()
         go(.run)
     }
@@ -139,19 +138,9 @@ final class GameState: ObservableObject {
         persistRun()
     }
 
-    func answerRun(_ i: Int) {
-        guard var r = run, r.revealed, r.picked == nil else { return }
-        r.picked = i
-        let ok = i == r.question.answer
-        r.answers.append(ok)
-        if ok { r.correct += 1 } else { r.lives -= 1 }
-        run = r
-        persistRun()
-    }
-
     func nextRunMatch() {
-        guard var r = run, r.picked != nil else { return }
-        if r.outOfLives || r.isLastMatch {
+        guard var r = run, r.revealed else { return }
+        if r.isLastMatch {
             r.finished = true
             run = r
             addTrophy(TrophyEntry(team: r.team, year: r.year, outcome: r.outcome, label: r.summaryLabel))
@@ -161,7 +150,6 @@ final class GameState: ObservableObject {
         }
         r.idx += 1
         r.revealed = false
-        r.picked = nil
         run = r
         persistRun()
     }
@@ -352,21 +340,17 @@ final class GameState: ObservableObject {
             // finala din 1970 (Brazilia–Italia 4-1), oprită în jurul minutului 70
             startRun(team: "BRA", year: 1970)
             while let r = run, !r.isLastMatch {
-                revealRunMatch(); answerRun(r.question.answer); nextRunMatch()
+                revealRunMatch(); nextRunMatch()
             }
             revealRunMatch()
             demoMatchProgress = 0.78
             screen = .run
         case "run", "runQuiz", "runSummary":
             startRun(team: "BRA", year: 1970)
-            if name != "run" {
-                revealRunMatch()
-                answerRun(run?.question.answer ?? 0)
-            }
+            if name != "run" { revealRunMatch() }
             if name == "runSummary" {
                 while let r = run, !r.finished {
                     if !r.revealed { revealRunMatch() }
-                    if run?.picked == nil { answerRun(run?.question.answer ?? 0) }
                     nextRunMatch()
                 }
             }

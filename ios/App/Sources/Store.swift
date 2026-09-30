@@ -3,7 +3,7 @@ import SwiftUI
 import WorldCupCore
 
 /// Magazinul: un singur produs, „Full History” (non-consumable, 4,99 $),
-/// care deblochează toate edițiile după 1938 și toate modurile de quiz.
+/// care deblochează toate edițiile (în afară de cele gratuite: 1930–1938, 1994) și toate modurile de quiz.
 /// Fără reclame, fără abonament, fără alte pachete. StoreKit 2.
 @MainActor
 final class Store: ObservableObject {
@@ -130,7 +130,7 @@ struct PaywallView: View {
                         .font(.scoreboard(24)).foregroundStyle(Color.hwcGold2)
                     PrimaryButton(title: tr("Continuă", "Continue"), systemImage: "arrow.right") { game.closePaywall() }
                 } else {
-                    Text(tr("Mondialele 1930–1938 sunt gratuite. Deblochează restul istoriei:", "The 1930–1938 World Cups are free. Unlock the rest of history:"))
+                    Text(tr("Mondialele 1930–1938 și 1994 sunt gratuite. Deblochează restul istoriei:", "The 1930–1938 and 1994 World Cups are free. Unlock the rest of history:"))
                         .font(.system(size: 16)).foregroundStyle(Color.hwcText)
                     VStack(alignment: .leading, spacing: 12) {
                         ForEach(Array(perks.enumerated()), id: \.offset) { _, perk in

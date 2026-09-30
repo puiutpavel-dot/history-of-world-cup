@@ -21,7 +21,7 @@ struct AboutView: View {
             VStack(alignment: .leading, spacing: 14) {
                 Panel(title: tr("Achiziții", "Purchases")) {
                     Text(store.isUnlocked ? tr("✅ Full History este deblocat pe acest Apple ID.", "✅ Full History is unlocked on this Apple ID.")
-                         : tr("Mondialele 1930–1938 sunt gratuite. Restul istoriei se deblochează cu o singură achiziție.", "The 1930–1938 World Cups are free. The rest of history unlocks with a single purchase."))
+                         : tr("Mondialele 1930–1938 și 1994 sunt gratuite. Restul istoriei se deblochează cu o singură achiziție.", "The 1930–1938 and 1994 World Cups are free. The rest of history unlocks with a single purchase."))
                         .font(.system(size: 14)).foregroundStyle(Color.hwcText)
                     if !store.isUnlocked {
                         PrimaryButton(title: "Full History", systemImage: "lock.open.fill") { game.showPaywall() }

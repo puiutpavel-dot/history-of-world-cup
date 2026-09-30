@@ -22,20 +22,19 @@ Fără nume de alte aplicații, fără „FIFA”, fără nume de jucători, fă
 
 ## Text promoțional (max. 170, se poate schimba fără review)
 - ro: Joacă fiecare Mondial din 1930 până în 2026, cu formatul, regulile și adversarii reali ai epocii. Confirmă sau rescrie istoria!
-- en: Relive every World Cup match by match, with the real results. Answer a question after each match to move on — you have 3 lives.
+- en: Relive every World Cup match by match, with the real results and goalscorers. 1930–1938 and USA 1994 are free.
 
 ## Descriere (ro)
 ```
 Retrăiește Campionatul Mondial de fotbal, turneu cu turneu, din 1930 până în 2026 — cu rezultatele reale.
 
 • Alegi o ediție și o echipă (peste 80 de naționale, inclusiv toate cele 48 din 2026) și îi retrăiești drumul real, meci cu meci.
-• După fiecare meci răspunzi la o întrebare ca să mergi mai departe — ai 3 vieți pe turneu.
-• Întrebări despre adversari (până unde au ajuns, titluri, debut) și despre ediție (gazdă, finală, format, golgheter).
+• Fiecare meci se derulează în 19 secunde, cu marcatorii reali la minutul lor.
 • Quiz: pe ediție, Maraton 1930 → 2026, Duoul greșit, Alege faza.
 • Traseul țării tale: toate participările reale, meci cu meci.
 • Muzeul Edițiilor și Evoluția regulilor.
 
-Mondialele 1930–1938 sunt gratuite. „Full History” deblochează toate cele 23 de ediții și toate quizurile, cu o singură achiziție. Fără reclame, fără abonament, fără cont.
+Mondialele 1930–1938 și 1994 sunt gratuite. „Full History” deblochează toate cele 23 de ediții și toate quizurile, cu o singură achiziție. Fără reclame, fără abonament, fără cont.
 
 Joc educațional neoficial, creat independent. Nu este afiliat, sponsorizat sau aprobat de FIFA, de organizatorii turneelor sau de vreo federație națională. Numele sunt folosite doar descriptiv, în scop istoric.
 
@@ -47,13 +46,12 @@ Date istorice: Fjelstul World Cup Database (CC-BY-SA 4.0); meciurile din 2026: o
 Relive the football World Cup, tournament by tournament, from 1930 to 2026 — with the real results.
 
 • Pick an edition and a team (over 80 national teams, including all 48 from 2026) and relive its real path, match by match.
-• After every match, answer a question to move on — you have 3 lives per tournament.
-• Questions about your opponents (how far they went, titles, debut) and about the edition (host, final, format, top scorer).
+• Every match plays out in 19 seconds, with the real goalscorers at their minute.
 • Quiz modes: per edition, Marathon 1930 → 2026, Spot the false one, Pick the stage.
 • Your country's path: every real appearance, match by match.
 • Edition museum and the evolution of the rules.
 
-The 1930–1938 World Cups are free. "Full History" unlocks all 23 editions and every quiz with a single purchase. No ads, no subscription, no account.
+The 1930–1938 and 1994 World Cups are free. "Full History" unlocks all 23 editions and every quiz with a single purchase. No ads, no subscription, no account.
 
 Unofficial educational game, made independently. Not affiliated with, sponsored or endorsed by FIFA, tournament organisers or any national federation. Names are used descriptively, for historical purposes.
 
