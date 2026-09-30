@@ -122,7 +122,6 @@ struct RunTeamSelectView: View {
 
 struct RunView: View {
     @EnvironmentObject var game: GameState
-    @State private var confirmExit = false
     /// derularea meciului: 0 → 1 în `matchSeconds` secunde
     @State private var progress: Double = 0
     @State private var playing = false
@@ -145,16 +144,15 @@ struct RunView: View {
                     }
 
                     let shown = playing ? progress : (r.revealed ? 1 : 0)
-                    RunMatchCard(team: r.fixture.home, match: m, revealed: r.revealed, progress: shown, playing: playing)
+                    RunMatchCard(team: r.fixture.home, match: m, revealed: r.revealed, progress: shown, playing: playing,
+                                 events: MatchEvents.of(year: r.year, index: r.idx))
 
                     if !r.revealed {
                         PrimaryButton(title: tr("Joacă meciul", "Play the match"), systemImage: "play.fill") { play() }
                         SecondaryButton(title: tr("Arată direct rezultatul", "Show the result"), systemImage: "forward.end.fill") {
                             game.revealRunMatch(); finish()
                         }
-                    } else if playing {
-                        SecondaryButton(title: tr("Sări la final", "Skip to full time"), systemImage: "forward.end.fill") { finish() }
-                    } else {
+                    } else if !playing {
                         PrimaryButton(title: r.isLastMatch ? tr("Vezi rezultatul", "See the result") : tr("Meciul următor", "Next match"),
                                       systemImage: "arrow.right") { game.nextRunMatch() }
                     }
@@ -167,16 +165,7 @@ struct RunView: View {
                                 .transition(.opacity)
                         }
                     }
-
-                    Button(tr("Abandonează turneul", "Abandon the tournament"), role: .destructive) { confirmExit = true }
-                        .font(.system(size: 14))
-                        .frame(maxWidth: .infinity)
-                        .padding(.top, 4)
                 }
-            }
-            .confirmationDialog(tr("Sigur vrei să abandonezi turneul?", "Abandon this tournament?"), isPresented: $confirmExit, titleVisibility: .visible) {
-                Button(tr("Abandonează", "Abandon"), role: .destructive) { game.abandonRun() }
-                Button(tr("Renunță", "Cancel"), role: .cancel) {}
             }
             .onChange(of: r.idx) { finish(); progress = 0 }
             .onDisappear { ticker?.cancel(); playing = false }
@@ -214,6 +203,48 @@ struct RunView: View {
     }
 }
 
+/// O eliminare: t = 1 dacă e jucătorul echipei 1 (stânga), 0 al echipei 2.
+struct RedCardEvent: Hashable {
+    let m: String
+    let t: Int
+    let n: String
+    /// al doilea galben (altfel roșu direct)
+    let secondYellow: Bool
+
+    var base: Int { Int(m.split(separator: "+").first ?? "") ?? 0 }
+    var clock: Double {
+        let extra = m.contains("+") ? Int(m.split(separator: "+").last ?? "") ?? 0 : 0
+        return Double(base) + Double(min(extra, 9)) / 10
+    }
+}
+
+/// O lovitură de la departajare.
+struct ShootoutKick: Hashable {
+    let t: Int
+    let n: String
+    let scored: Bool
+}
+
+/// Eliminările și loviturile de departajare ale unui meci din calendar (`MatchEventsData`).
+struct MatchEvents {
+    var reds: [RedCardEvent] = []
+    var kicks: [ShootoutKick] = []
+
+    static func of(year: Int, index: Int) -> MatchEvents {
+        var out = MatchEvents()
+        guard let s = MatchEventsData.byYear[year]?[index] else { return out }
+        for item in s.split(separator: ";") {
+            let p = item.split(separator: "|", omittingEmptySubsequences: false).map(String.init)
+            if p.first == "R", p.count >= 5 {
+                out.reds.append(RedCardEvent(m: p[1], t: Int(p[2]) ?? 0, n: p[3], secondYellow: p[4] == "2"))
+            } else if p.first == "K", p.count >= 4 {
+                out.kicks.append(ShootoutKick(t: Int(p[1]) ?? 0, n: p[2], scored: p[3] == "1"))
+            }
+        }
+        return out
+    }
+}
+
 struct RunMatchCard: View {
     @EnvironmentObject var game: GameState
     let team: String
@@ -222,12 +253,32 @@ struct RunMatchCard: View {
     /// 0 = înainte de start, 1 = final
     var progress: Double = 1
     var playing = false
+    var events = MatchEvents()
+
+    private enum Moment: Hashable {
+        case goal(TrackGoal)
+        case red(RedCardEvent)
+        var clock: Double {
+            switch self {
+            case .goal(let g): return g.clock
+            case .red(let r): return r.clock
+            }
+        }
+    }
 
     private var totalMinutes: Double { match.hadExtraTime ? 120 : 90 }
     private var minuteNow: Double { progress * totalMinutes }
     private var goals: [TrackGoal] { match.goals ?? [] }
     private var visibleGoals: [TrackGoal] {
         progress >= 1 ? goals : goals.filter { $0.clock <= minuteNow }
+    }
+    /// golurile și eliminările petrecute până acum, în ordinea minutelor
+    private var moments: [Moment] {
+        let reds = events.reds.filter { progress >= 1 || $0.clock <= minuteNow }
+        let all = visibleGoals.map(Moment.goal) + reds.map(Moment.red)
+        return all.enumerated().sorted { a, b in
+            a.element.clock != b.element.clock ? a.element.clock < b.element.clock : a.offset < b.offset
+        }.map(\.element)
     }
     private var score: (Int, Int) {
         guard revealed else { return (0, 0) }
@@ -244,6 +295,7 @@ struct RunMatchCard: View {
     var body: some View {
         let a = game.data.meta(team), b = game.data.meta(match.opp)
         let sc = score
+        let shown = moments
         VStack(spacing: 10) {
             Text(match.round.uppercased()).font(.scoreboard(15, weight: .semibold)).foregroundStyle(Color.hwcGold)
             HStack(alignment: .center) {
@@ -276,14 +328,23 @@ struct RunMatchCard: View {
                 ProgressView(value: progress).tint(Color.hwcGold)
             }
 
-            if revealed && !visibleGoals.isEmpty {
+            if revealed && !shown.isEmpty {
                 VStack(spacing: 4) {
-                    ForEach(Array(visibleGoals.enumerated()), id: \.offset) { _, g in
-                        GoalLine(goal: g)
-                            .transition(.move(edge: .top).combined(with: .opacity))
+                    ForEach(Array(shown.enumerated()), id: \.offset) { _, moment in
+                        Group {
+                            switch moment {
+                            case .goal(let g): GoalLine(goal: g)
+                            case .red(let r): RedCardLine(card: r)
+                            }
+                        }
+                        .transition(.move(edge: .top).combined(with: .opacity))
                     }
                 }
-                .animation(.easeOut(duration: 0.3), value: visibleGoals.count)
+                .animation(.easeOut(duration: 0.3), value: shown.count)
+            }
+
+            if revealed && progress >= 1 && !events.kicks.isEmpty {
+                ShootoutView(kicks: events.kicks)
             }
 
             if revealed && progress >= 1 {
@@ -300,7 +361,58 @@ struct RunMatchCard: View {
         .frame(maxWidth: .infinity)
         .padding(16)
         .background(Color.black.opacity(0.85), in: RoundedRectangle(cornerRadius: 14))
-        .sensoryFeedback(.impact(weight: .medium), trigger: visibleGoals.count)
+        .sensoryFeedback(.impact(weight: .medium), trigger: shown.count)
+    }
+}
+
+/// O eliminare în cardul meciului, de partea echipei jucătorului.
+struct RedCardLine: View {
+    let card: RedCardEvent
+
+    var body: some View {
+        let kind = card.secondYellow ? tr(" (al doilea galben)", " (second yellow)") : ""
+        HStack(spacing: 6) {
+            if card.t == 0 { Spacer(minLength: 0) }
+            Text(card.secondYellow ? "🟨🟥" : "🟥").font(.system(size: 12))
+            Text("\(card.m)'").font(.stat(13, weight: .bold))
+            Text(card.n + kind).font(.system(size: 13)).lineLimit(1).minimumScaleFactor(0.7)
+            if card.t == 1 { Spacer(minLength: 0) }
+        }
+        .foregroundStyle(Color.white.opacity(0.9))
+    }
+}
+
+/// Loviturile de departajare, pe echipe: ✅ marcat, ❌ ratat.
+struct ShootoutView: View {
+    let kicks: [ShootoutKick]
+
+    var body: some View {
+        VStack(spacing: 6) {
+            Text(tr("LOVITURI DE DEPARTAJARE", "PENALTY SHOOT-OUT"))
+                .font(.scoreboard(13, weight: .semibold)).foregroundStyle(Color.hwcGold)
+            HStack(alignment: .top, spacing: 12) {
+                column(1, alignment: .leading)
+                column(0, alignment: .trailing)
+            }
+        }
+        .padding(.top, 4)
+    }
+
+    private func column(_ side: Int, alignment: HorizontalAlignment) -> some View {
+        VStack(alignment: alignment, spacing: 3) {
+            ForEach(Array(kicks.filter { $0.t == side }.enumerated()), id: \.offset) { _, k in
+                HStack(spacing: 5) {
+                    if side == 0 { Spacer(minLength: 0) }
+                    if side == 1 { Text(k.scored ? "✅" : "❌").font(.system(size: 11)) }
+                    Text(k.n).font(.system(size: 12)).strikethrough(!k.scored, color: Color.hwcRed)
+                        .foregroundStyle(k.scored ? Color.white : Color.white.opacity(0.6))
+                        .lineLimit(1).minimumScaleFactor(0.7)
+                    if side == 0 { Text(k.scored ? "✅" : "❌").font(.system(size: 11)) }
+                    if side == 1 { Spacer(minLength: 0) }
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: alignment == .leading ? .leading : .trailing)
     }
 }
 

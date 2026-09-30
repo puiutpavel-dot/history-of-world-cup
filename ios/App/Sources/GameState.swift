@@ -366,6 +366,14 @@ final class GameState: ObservableObject {
             }
             revealRunMatch()
             screen = .run
+        case "runShootout":
+            // sfertul din 1994 România–Suedia: eliminarea lui Schwarz și loviturile de departajare
+            startRun(year: 1994, focus: "ROU")
+            while let r = run, !r.isLastMatch, Set([r.fixture.home, r.fixture.away]) != ["ROU", "SWE"] {
+                revealRunMatch(); nextRunMatch()
+            }
+            revealRunMatch()
+            screen = .run
         case "run", "runQuiz", "runSummary":
             startRun(year: 1970, focus: name == "runQuiz" ? "BRA" : nil)
             if name == "runQuiz" {
