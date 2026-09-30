@@ -37,16 +37,23 @@ struct MenuView: View {
                     } else {
                         PrimaryButton(title: tr("Retrăiește un Mondial", "Relive a World Cup"), systemImage: "trophy.fill") { game.go(.editions) }
                     }
-                    SecondaryButton(title: "Quiz", systemImage: "questionmark.circle") { game.go(.quizMenu) }
-                    if let t = game.userCountry {
-                        SecondaryButton(title: "\(t.flag) " + tr("Traseul: ", "Your country: ") + t.name, systemImage: "flag") { game.go(.country) }
-                    } else {
-                        SecondaryButton(title: tr("Traseul țării tale", "Your country's journey"), systemImage: "globe.europe.africa") { game.go(.country) }
+                    // butoanele secundare în perechi, ca două capsule alăturate
+                    HStack(spacing: 12) {
+                        SecondaryButton(title: "Quiz", systemImage: "questionmark.circle") { game.go(.quizMenu) }
+                        if let t = game.userCountry {
+                            SecondaryButton(title: "\(t.flag) \(t.name)", systemImage: "flag") { game.go(.country) }
+                        } else {
+                            SecondaryButton(title: tr("Țara ta", "Your country"), systemImage: "globe.europe.africa") { game.go(.country) }
+                        }
                     }
-                    SecondaryButton(title: tr("Muzeul Edițiilor", "Museum of Editions"), systemImage: "book") { game.go(.museum) }
-                    SecondaryButton(title: tr("Evoluția regulilor", "How the rules changed"), systemImage: "list.bullet.rectangle") { game.go(.rules) }
-                    SecondaryButton(title: tr("Galeria Legendelor", "Hall of Legends"), systemImage: "star") { game.go(.legends) }
-                    SecondaryButton(title: tr("Sala Trofeelor", "Trophy Room"), systemImage: "archivebox") { game.go(.trophies) }
+                    HStack(spacing: 12) {
+                        SecondaryButton(title: tr("Muzeul", "Museum"), systemImage: "book") { game.go(.museum) }
+                        SecondaryButton(title: tr("Regulile", "Rules"), systemImage: "list.bullet.rectangle") { game.go(.rules) }
+                    }
+                    HStack(spacing: 12) {
+                        SecondaryButton(title: tr("Legende", "Legends"), systemImage: "star") { game.go(.legends) }
+                        SecondaryButton(title: tr("Trofee", "Trophies"), systemImage: "archivebox") { game.go(.trophies) }
+                    }
                     SecondaryButton(title: tr("Despre și setări", "About & settings"), systemImage: "gearshape") { game.go(.about) }
                 }
 

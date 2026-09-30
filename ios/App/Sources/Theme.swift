@@ -31,6 +31,10 @@ extension Color {
     static let hwcText = dynamic(dark: 0xEEF4EF, light: 0x14211A)
     static let hwcTextDim = dynamic(dark: 0xA9B8AE, light: 0x4C5E53)
     static let hwcBorder = dynamic(dark: 0x26362D, light: 0xDDD6C0)
+    /// textul de pe butonul principal (plin, auriu)
+    static let hwcOnAccent = dynamic(dark: 0x1A1406, light: 0xFFFFFF)
+    /// textul și iconițele butoanelor secundare (fundal auriu transparent)
+    static let hwcAccentText = dynamic(dark: 0xF4D37A, light: 0x8A5F0A)
 }
 
 extension Font {
