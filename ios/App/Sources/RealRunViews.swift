@@ -60,13 +60,6 @@ func fixtureDate(_ mmdd: String) -> String {
     return "\(d) " + tr(ro[m - 1], en[m - 1])
 }
 
-/// Rezultatul unui meci real, din perspectiva echipei jucătorului.
-func resultTag(_ m: TrackMatch) -> (text: String, color: Color) {
-    if m.gf > m.ga { return (tr("Victorie", "Win"), .hwcPitch2) }
-    if m.gf < m.ga { return (tr("Înfrângere", "Defeat"), .hwcRed) }
-    return (tr("Egal", "Draw"), .hwcGold)
-}
-
 enum RunQuestions {
     /// ordinea rezultatelor finale, de la campioană la eliminată în grupe
     static let finishOrder = ["champion", "runnerUp", "third", "fourth", "SF", "GR2", "QF", "R16", "R32", "G"]
@@ -124,6 +117,8 @@ struct RunView: View {
     @EnvironmentObject var game: GameState
     /// derularea meciului: 0 → 1 în `matchSeconds` secunde
     @State private var progress: Double = 0
+    /// loviturile de departajare: 0 → 1 în încă `matchSeconds` secunde, după fluierul final
+    @State private var penProgress: Double = 0
     @State private var playing = false
     @State private var ticker: Task<Void, Never>?
     static let matchSeconds = 19.0
@@ -144,11 +139,14 @@ struct RunView: View {
                     }
 
                     let shown = playing ? progress : (r.revealed ? 1 : 0)
+                    let penShown = playing ? penProgress : (r.revealed ? 1 : 0)
+                    let events = MatchEvents.of(year: r.year, index: r.idx)
                     RunMatchCard(team: r.fixture.home, match: m, revealed: r.revealed, progress: shown, playing: playing,
-                                 events: MatchEvents.of(year: r.year, index: r.idx))
+                                 events: events, penProgress: penShown,
+                                 verdict: MatchVerdict.of(run: r, match: m, data: game.data))
 
                     if !r.revealed {
-                        PrimaryButton(title: tr("Joacă meciul", "Play the match"), systemImage: "play.fill") { play() }
+                        PrimaryButton(title: tr("Joacă meciul", "Play the match"), systemImage: "play.fill") { play(shootout: !events.kicks.isEmpty) }
                         SecondaryButton(title: tr("Arată direct rezultatul", "Show the result"), systemImage: "forward.end.fill") {
                             game.revealRunMatch(); finish()
                         }
@@ -167,7 +165,13 @@ struct RunView: View {
                     }
                 }
             }
-            .onChange(of: r.idx) { finish(); progress = 0 }
+            .overlay {
+                // finala: confetti peste tot ecranul, după fluierul final (și după penalty-uri)
+                if r.revealed && !playing, MatchVerdict.of(run: r, match: m, data: game.data)?.isChampion == true {
+                    ConfettiView().id(r.idx)
+                }
+            }
+            .onChange(of: r.idx) { finish(); progress = 0; penProgress = 0 }
             .onDisappear { ticker?.cancel(); playing = false }
             .onAppear {
                 // capturile din CI: meciul oprit la mijloc
@@ -179,17 +183,21 @@ struct RunView: View {
     }
 
     /// Meciul se derulează în 19 secunde: cronometrul merge până la 90 (sau 120) și golurile apar la minutul lor.
-    private func play() {
+    /// Dacă meciul s-a decis la penalty-uri, loviturile se derulează în încă 19 secunde.
+    private func play(shootout: Bool) {
         ticker?.cancel()
         progress = 0
+        penProgress = 0
         playing = true
         game.revealRunMatch()
         let start = Date()
+        let total = shootout ? 2 * Self.matchSeconds : Self.matchSeconds
         ticker = Task { @MainActor in
             while !Task.isCancelled {
-                let p = min(1, Date().timeIntervalSince(start) / Self.matchSeconds)
-                progress = p
-                if p >= 1 { break }
+                let t = Date().timeIntervalSince(start)
+                progress = min(1, t / Self.matchSeconds)
+                penProgress = shootout ? max(0, min(1, (t - Self.matchSeconds) / Self.matchSeconds)) : 1
+                if t >= total { break }
                 try? await Task.sleep(nanoseconds: 50_000_000)
             }
             if !Task.isCancelled { withAnimation(.easeInOut(duration: 0.25)) { playing = false } }
@@ -199,6 +207,7 @@ struct RunView: View {
     private func finish() {
         ticker?.cancel()
         progress = 1
+        penProgress = 1
         withAnimation(.easeInOut(duration: 0.25)) { playing = false }
     }
 }
@@ -254,6 +263,26 @@ struct RunMatchCard: View {
     var progress: Double = 1
     var playing = false
     var events = MatchEvents()
+    /// derularea loviturilor de departajare (după fluierul final)
+    var penProgress: Double = 1
+    /// cine merge mai departe / locul 3 / campioana (nil în grupe)
+    var verdict: MatchVerdict?
+
+    /// loviturile în ordine alternativă: echipa 1, echipa 2, echipa 1…
+    private var orderedKicks: [ShootoutKick] {
+        let h = events.kicks.filter { $0.t == 1 }, a = events.kicks.filter { $0.t == 0 }
+        var out: [ShootoutKick] = []
+        for i in 0..<max(h.count, a.count) {
+            if i < h.count { out.append(h[i]) }
+            if i < a.count { out.append(a[i]) }
+        }
+        return out
+    }
+    private var kicksShown: Int {
+        let n = orderedKicks.count
+        return penProgress >= 1 ? n : min(n, Int(penProgress * Double(n + 1)))
+    }
+    private var inShootout: Bool { playing && progress >= 1 && !events.kicks.isEmpty }
 
     private enum Moment: Hashable {
         case goal(TrackGoal)
@@ -288,6 +317,7 @@ struct RunMatchCard: View {
     }
     private var clockText: String {
         if !revealed { return tr("Înainte de meci", "Kick-off soon") }
+        if inShootout { return tr("Lovituri de departajare", "Penalty shoot-out") }
         if progress >= 1 { return match.hadExtraTime ? tr("Final · după prelungiri", "Full time · after extra time") : tr("Final", "Full time") }
         return "\(max(1, Int(minuteNow.rounded(.up))))'"
     }
@@ -325,7 +355,7 @@ struct RunMatchCard: View {
                 .foregroundStyle(playing ? Color.hwcGold : Color.white.opacity(0.7))
                 .contentTransition(.numericText())
             if playing {
-                ProgressView(value: progress).tint(Color.hwcGold)
+                ProgressView(value: inShootout ? penProgress : progress).tint(Color.hwcGold)
             }
 
             if revealed && !shown.isEmpty {
@@ -344,16 +374,17 @@ struct RunMatchCard: View {
             }
 
             if revealed && progress >= 1 && !events.kicks.isEmpty {
-                ShootoutView(kicks: events.kicks)
+                ShootoutView(kicks: Array(orderedKicks.prefix(kicksShown)))
+                    .animation(.easeOut(duration: 0.3), value: kicksShown)
             }
 
-            if revealed && progress >= 1 {
-                let tag = resultTag(match)
-                HStack(spacing: 8) {
-                    Text(tag.text).font(.scoreboard(16, weight: .semibold)).foregroundStyle(tag.color)
-                    if let note = match.note {
-                        Text("· \(note)").font(.system(size: 13)).foregroundStyle(Color.white.opacity(0.75))
-                    }
+            if revealed && progress >= 1 && !playing {
+                if let note = match.note {
+                    Text(note).font(.system(size: 13)).foregroundStyle(Color.white.opacity(0.75))
+                }
+                if let verdict {
+                    VerdictView(verdict: verdict)
+                        .transition(.scale.combined(with: .opacity))
                 }
                 Text(tr("📜 Rezultat real", "📜 Real result")).font(.system(size: 11)).foregroundStyle(Color.white.opacity(0.6))
             }
@@ -361,7 +392,7 @@ struct RunMatchCard: View {
         .frame(maxWidth: .infinity)
         .padding(16)
         .background(Color.black.opacity(0.85), in: RoundedRectangle(cornerRadius: 14))
-        .sensoryFeedback(.impact(weight: .medium), trigger: shown.count)
+        .sensoryFeedback(.impact(weight: .medium), trigger: shown.count + kicksShown)
     }
 }
 
@@ -382,37 +413,134 @@ struct RedCardLine: View {
     }
 }
 
-/// Loviturile de departajare, pe echipe: ✅ marcat, ❌ ratat.
+/// Loviturile de departajare, în ordinea bătăii (echipa 1 la stânga), cu scorul la zi.
 struct ShootoutView: View {
     let kicks: [ShootoutKick]
 
     var body: some View {
-        VStack(spacing: 6) {
-            Text(tr("LOVITURI DE DEPARTAJARE", "PENALTY SHOOT-OUT"))
+        let h = kicks.filter { $0.t == 1 && $0.scored }.count, a = kicks.filter { $0.t == 0 && $0.scored }.count
+        VStack(spacing: 4) {
+            Text(tr("LOVITURI DE DEPARTAJARE", "PENALTY SHOOT-OUT") + "  \(h) – \(a)")
                 .font(.scoreboard(13, weight: .semibold)).foregroundStyle(Color.hwcGold)
-            HStack(alignment: .top, spacing: 12) {
-                column(1, alignment: .leading)
-                column(0, alignment: .trailing)
+                .contentTransition(.numericText())
+            ForEach(Array(kicks.enumerated()), id: \.offset) { _, k in
+                HStack(spacing: 5) {
+                    if k.t == 0 { Spacer(minLength: 0) }
+                    Text(k.scored ? "✅" : "❌").font(.system(size: 11))
+                    Text(k.n).font(.system(size: 12)).strikethrough(!k.scored, color: Color.hwcRed)
+                        .foregroundStyle(k.scored ? Color.white : Color.white.opacity(0.6))
+                        .lineLimit(1).minimumScaleFactor(0.7)
+                    if k.t == 1 { Spacer(minLength: 0) }
+                }
+                .transition(.move(edge: .top).combined(with: .opacity))
             }
         }
         .padding(.top, 4)
     }
+}
 
-    private func column(_ side: Int, alignment: HorizontalAlignment) -> some View {
-        VStack(alignment: alignment, spacing: 3) {
-            ForEach(Array(kicks.filter { $0.t == side }.enumerated()), id: \.offset) { _, k in
-                HStack(spacing: 5) {
-                    if side == 0 { Spacer(minLength: 0) }
-                    if side == 1 { Text(k.scored ? "✅" : "❌").font(.system(size: 11)) }
-                    Text(k.n).font(.system(size: 12)).strikethrough(!k.scored, color: Color.hwcRed)
-                        .foregroundStyle(k.scored ? Color.white : Color.white.opacity(0.6))
-                        .lineLimit(1).minimumScaleFactor(0.7)
-                    if side == 0 { Text(k.scored ? "✅" : "❌").font(.system(size: 11)) }
-                    if side == 1 { Spacer(minLength: 0) }
+/// Deznodământul unui meci eliminatoriu (în grupe nu se afișează nimic).
+enum MatchVerdict: Equatable {
+    case advances(String)
+    case replay
+    case third(String)
+    case champion(String)
+
+    static let thirdLabels: Set<String> = ["Finala mică", "Third place"]
+
+    var isChampion: Bool {
+        if case .champion = self { return true }
+        return false
+    }
+
+    static func of(run: RealRun, match m: TrackMatch, data: GameData) -> MatchVerdict? {
+        let home = run.fixture.home, away = run.fixture.away
+        // ultimul meci al turneului: campioana (inclusiv 1950, decis în grupa finală)
+        if run.isLastMatch, let champ = data.tracks(year: run.year).first(where: { $0.finish == "champion" }) {
+            return .champion(champ.code)
+        }
+        guard !StageBoard.groupLabels.contains(m.round) else { return nil }
+        var winner: String?
+        if m.gf != m.ga {
+            winner = m.gf > m.ga ? home : away
+        } else if let p = StageBoard.penalties(m.note) {
+            winner = p.0 > p.1 ? home : away
+        }
+        guard let winner else { return .replay }
+        return thirdLabels.contains(m.round) ? .third(winner) : .advances(winner)
+    }
+}
+
+struct VerdictView: View {
+    @EnvironmentObject var game: GameState
+    let verdict: MatchVerdict
+
+    var body: some View {
+        switch verdict {
+        case .advances(let code):
+            let t = game.data.meta(code)
+            Text(tr("➡️ \(t.flag) \(t.name) merge mai departe", "➡️ \(t.flag) \(t.name) goes through"))
+                .font(.scoreboard(17, weight: .semibold)).foregroundStyle(Color.hwcPitch2)
+                .multilineTextAlignment(.center)
+        case .replay:
+            Text(tr("Egal — meciul se rejoacă", "A draw — the match will be replayed"))
+                .font(.scoreboard(16, weight: .semibold)).foregroundStyle(Color.hwcGold)
+        case .third(let code):
+            let t = game.data.meta(code)
+            Text(tr("🥉 \(t.flag) \(t.name) se clasează pe locul 3", "🥉 \(t.flag) \(t.name) finish third"))
+                .font(.scoreboard(17, weight: .semibold)).foregroundStyle(Color.hwcGold)
+                .multilineTextAlignment(.center)
+        case .champion(let code):
+            let t = game.data.meta(code)
+            VStack(spacing: 6) {
+                Image(systemName: "trophy.fill")
+                    .font(.system(size: 54))
+                    .foregroundStyle(LinearGradient(colors: [Color.hwcGold2, Color.hwcGold], startPoint: .top, endPoint: .bottom))
+                    .shadow(color: Color.hwcGold.opacity(0.6), radius: 12)
+                Text("\(t.flag) \(t.name)").font(.scoreboard(26)).foregroundStyle(Color.hwcGold2)
+                Text(tr("Campioană mondială!", "World champions!")).font(.scoreboard(18, weight: .semibold)).foregroundStyle(Color.white)
+            }
+            .padding(.vertical, 4)
+            .sensoryFeedback(.success, trigger: code)
+        }
+    }
+}
+
+/// Confetti pentru campioană: bucăți colorate care cad peste ecran câteva secunde.
+struct ConfettiView: View {
+    private struct Piece {
+        let x = Double.random(in: 0...1)
+        let delay = Double.random(in: 0...1.5)
+        let speed = Double.random(in: 0.22...0.42)
+        let drift = Double.random(in: 0.02...0.07)
+        let phase = Double.random(in: 0...6.28)
+        let spin = Double.random(in: 2...7)
+        let size = Double.random(in: 7...12)
+        let color: Color = [Color.hwcGold, Color.hwcGold2, .red, .green, .blue, .white, .orange].randomElement() ?? .yellow
+    }
+
+    @State private var start = Date()
+    @State private var pieces = (0..<140).map { _ in Piece() }
+
+    var body: some View {
+        TimelineView(.animation) { timeline in
+            Canvas { ctx, size in
+                let t = timeline.date.timeIntervalSince(start)
+                for p in pieces {
+                    let tt = t - p.delay
+                    guard tt > 0 else { continue }
+                    let y = tt * p.speed * size.height - 20
+                    guard y < size.height + 20 else { continue }
+                    let x = (p.x + p.drift * sin(tt * 3 + p.phase)) * size.width
+                    var c = ctx
+                    c.translateBy(x: x, y: y)
+                    c.rotate(by: .radians(tt * p.spin))
+                    c.fill(Path(CGRect(x: -p.size / 2, y: -p.size / 4, width: p.size, height: p.size / 2)), with: .color(p.color))
                 }
             }
         }
-        .frame(maxWidth: .infinity, alignment: alignment == .leading ? .leading : .trailing)
+        .allowsHitTesting(false)
+        .ignoresSafeArea()
     }
 }
 

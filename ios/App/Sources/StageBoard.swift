@@ -96,7 +96,8 @@ enum StageBoard {
         return .group(title: label, rows: sorted, played: played.count, total: games.count)
     }
 
-    private static func pens(_ note: String?) -> (Int, Int)? {
+    /// scorul de la penalty-uri din nota meciului („penalty-uri 4-5” / „penalties 4-5”)
+    static func penalties(_ note: String?) -> (Int, Int)? {
         guard let note, note.contains("penalt") else { return nil }
         let nums = note.split(whereSeparator: { !$0.isNumber }).compactMap { Int($0) }
         guard nums.count >= 2 else { return nil }
@@ -113,7 +114,7 @@ enum StageBoard {
         let rounds: [(title: String, ties: [KnockoutTie])] = labels.reversed().map { label in
             let ties = all.enumerated().compactMap { i, x -> KnockoutTie? in
                 guard let x, x.m.round == label else { return nil }
-                return KnockoutTie(a: x.f.home, b: x.f.away, ga: x.m.gf, gb: x.m.ga, pens: pens(x.m.note),
+                return KnockoutTie(a: x.f.home, b: x.f.away, ga: x.m.gf, gb: x.m.ga, pens: penalties(x.m.note),
                                    played: i <= current, id: "\(i)")
             }
             return (label, ties)

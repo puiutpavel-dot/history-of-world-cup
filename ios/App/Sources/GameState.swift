@@ -366,6 +366,12 @@ final class GameState: ObservableObject {
             }
             revealRunMatch()
             screen = .run
+        case "runFinal":
+            // finala din 1970 terminată: cupa și confetti
+            startRun(year: 1970, focus: "BRA")
+            while let r = run, !r.isLastMatch { revealRunMatch(); nextRunMatch() }
+            revealRunMatch()
+            screen = .run
         case "runShootout":
             // sfertul din 1994 România–Suedia: eliminarea lui Schwarz și loviturile de departajare
             startRun(year: 1994, focus: "ROU")
