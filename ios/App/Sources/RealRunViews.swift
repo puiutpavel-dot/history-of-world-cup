@@ -181,7 +181,7 @@ struct RunView: View {
                     if !r.revealed {
                         PrimaryButton(title: matches.count > 1 ? tr("Joacă meciurile", "Play the matches") : tr("Joacă meciul", "Play the match"),
                                       systemImage: "play.fill") {
-                            play(shootout: matches.contains { !MatchEvents.of(year: r.year, index: $0.i).kicks.isEmpty })
+                            play(minutes: maxMinutes, shootout: matches.contains { !MatchEvents.of(year: r.year, index: $0.i).kicks.isEmpty })
                         }
                     } else if !playing {
                         PrimaryButton(title: r.isLastMatch ? tr("Vezi rezultatul", "See the result") : tr("Meciul următor", "Next match"),
@@ -226,22 +226,23 @@ struct RunView: View {
         return tr("Meciurile \(s.lowerBound + 1)–\(s.upperBound)/\(n)", "Matches \(s.lowerBound + 1)–\(s.upperBound)/\(n)")
     }
 
-    /// Meciul se derulează în 19 secunde: cronometrul merge până la 90 (sau 120) și golurile apar la minutul lor.
-    /// Meciurile simultane au același ceas (19 secunde pentru cel mai lung dintre ele).
-    /// Dacă meciul s-a decis la penalty-uri, loviturile se derulează în încă 19 secunde.
-    private func play(shootout: Bool) {
+    /// Timpul regulamentar se derulează în 19 secunde: cronometrul merge până la 90 și golurile apar la minutul lor.
+    /// Prelungirile continuă în același ritm (încă ~6 secunde pentru 30 de minute), deci nu se ghicesc dinainte.
+    /// Meciurile simultane au același ceas. Dacă meciul s-a decis la penalty-uri, loviturile se derulează în încă 19 secunde.
+    private func play(minutes: Double, shootout: Bool) {
         ticker?.cancel()
         progress = 0
         penProgress = 0
         playing = true
         game.revealRunMatch()
         let start = Date()
-        let total = shootout ? 2 * Self.matchSeconds : Self.matchSeconds
+        let phase = Self.matchSeconds * minutes / 90
+        let total = shootout ? phase + Self.matchSeconds : phase
         ticker = Task { @MainActor in
             while !Task.isCancelled {
                 let t = Date().timeIntervalSince(start)
-                progress = min(1, t / Self.matchSeconds)
-                penProgress = shootout ? max(0, min(1, (t - Self.matchSeconds) / Self.matchSeconds)) : 1
+                progress = min(1, t / phase)
+                penProgress = shootout ? max(0, min(1, (t - phase) / Self.matchSeconds)) : 1
                 if t >= total { break }
                 try? await Task.sleep(nanoseconds: 50_000_000)
             }
@@ -469,13 +470,14 @@ struct RunMatchCard: View {
     }
 }
 
-/// Bara de derulare a meciului, împărțită pe reprize: 45' + 45' și, la nevoie, prelungirile 15' + 15'.
+/// Bara de derulare a meciului, împărțită pe reprize: 45' + 45'; prelungirile 15' + 15' se adaugă după minutul 90.
 struct HalvesBar: View {
     let minute: Double
     let extraTime: Bool
 
     var body: some View {
-        let parts: [(start: Double, len: Double)] = extraTime ? [(0, 45), (45, 45), (90, 15), (105, 15)] : [(0, 45), (45, 45)]
+        // prelungirile apar abia după fluierul final al timpului regulamentar (doar la meciurile care le-au avut)
+        let parts: [(start: Double, len: Double)] = extraTime && minute >= 90 ? [(0, 45), (45, 45), (90, 15), (105, 15)] : [(0, 45), (45, 45)]
         let total = parts.reduce(0) { $0 + $1.len }
         let gap: CGFloat = 5
         GeometryReader { geo in
@@ -494,6 +496,7 @@ struct HalvesBar: View {
             }
         }
         .frame(height: 6)
+        .animation(.easeInOut(duration: 0.4), value: parts.count)
         .accessibilityElement()
         .accessibilityLabel(extraTime ? tr("Două reprize și prelungiri", "Two halves and extra time") : tr("Două reprize", "Two halves"))
         .accessibilityValue("\(Int(minute))'")

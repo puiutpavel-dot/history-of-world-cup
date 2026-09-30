@@ -387,6 +387,15 @@ final class GameState: ObservableObject {
             revealRunMatch()
             demoMatchProgress = 0.62
             screen = .run
+        case "runExtra":
+            // sfertul din 1994 România–Suedia în prelungiri (minutul ~102): bara are și segmentele prelungirilor
+            startRun(year: 1994, focus: "ROU")
+            while let r = run, !r.isLastMatch, !r.has(["ROU", "SWE"]) {
+                revealRunMatch(); nextRunMatch()
+            }
+            revealRunMatch()
+            demoMatchProgress = 0.85
+            screen = .run
         case "runShootout":
             // sfertul din 1994 România–Suedia: eliminarea lui Schwarz și loviturile de departajare
             startRun(year: 1994, focus: "ROU")
