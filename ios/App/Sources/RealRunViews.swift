@@ -224,6 +224,20 @@ struct RedCardEvent: Hashable {
     }
 }
 
+/// Un penalty ratat în timpul jocului: t = 1 pentru echipa 1 (stânga); `keeper` gol = pe lângă / bară / peste.
+struct MissedPenalty: Hashable {
+    let m: String
+    let t: Int
+    let n: String
+    let keeper: String
+
+    var clock: Double {
+        let base = Double(Int(m.split(separator: "+").first ?? "") ?? 0)
+        let extra = m.contains("+") ? Int(m.split(separator: "+").last ?? "") ?? 0 : 0
+        return base + Double(min(extra, 9)) / 10
+    }
+}
+
 /// O lovitură de la departajare.
 struct ShootoutKick: Hashable {
     let t: Int
@@ -235,6 +249,7 @@ struct ShootoutKick: Hashable {
 struct MatchEvents {
     var reds: [RedCardEvent] = []
     var kicks: [ShootoutKick] = []
+    var misses: [MissedPenalty] = []
 
     static func of(year: Int, index: Int) -> MatchEvents {
         var out = MatchEvents()
@@ -243,6 +258,8 @@ struct MatchEvents {
             let p = item.split(separator: "|", omittingEmptySubsequences: false).map(String.init)
             if p.first == "R", p.count >= 5 {
                 out.reds.append(RedCardEvent(m: p[1], t: Int(p[2]) ?? 0, n: p[3], secondYellow: p[4] == "2"))
+            } else if p.first == "M", p.count >= 5 {
+                out.misses.append(MissedPenalty(m: p[1], t: Int(p[2]) ?? 0, n: p[3], keeper: p[4]))
             } else if p.first == "K", p.count >= 4 {
                 out.kicks.append(ShootoutKick(t: Int(p[1]) ?? 0, n: p[2], scored: p[3] == "1"))
             }
@@ -284,10 +301,12 @@ struct RunMatchCard: View {
     private enum Moment: Hashable {
         case goal(TrackGoal)
         case red(RedCardEvent)
+        case miss(MissedPenalty)
         var clock: Double {
             switch self {
             case .goal(let g): return g.clock
             case .red(let r): return r.clock
+            case .miss(let p): return p.clock
             }
         }
     }
@@ -301,7 +320,8 @@ struct RunMatchCard: View {
     /// golurile și eliminările petrecute până acum, în ordinea minutelor
     private var moments: [Moment] {
         let reds = events.reds.filter { progress >= 1 || $0.clock <= minuteNow }
-        let all = visibleGoals.map(Moment.goal) + reds.map(Moment.red)
+        let misses = events.misses.filter { progress >= 1 || $0.clock <= minuteNow }
+        let all = visibleGoals.map(Moment.goal) + reds.map(Moment.red) + misses.map(Moment.miss)
         return all.enumerated().sorted { a, b in
             a.element.clock != b.element.clock ? a.element.clock < b.element.clock : a.offset < b.offset
         }.map(\.element)
@@ -362,6 +382,7 @@ struct RunMatchCard: View {
                             switch moment {
                             case .goal(let g): GoalLine(goal: g)
                             case .red(let r): RedCardLine(card: r)
+                            case .miss(let p): MissedPenaltyLine(penalty: p)
                             }
                         }
                         .transition(.move(edge: .top).combined(with: .opacity))
@@ -408,6 +429,25 @@ struct RedCardLine: View {
             if card.t == 1 { Spacer(minLength: 0) }
         }
         .foregroundStyle(Color.white.opacity(0.9))
+    }
+}
+
+/// Un penalty ratat în cardul meciului: „❌ 39' Messi — penalty apărat de Szczęsny”.
+struct MissedPenaltyLine: View {
+    let penalty: MissedPenalty
+
+    var body: some View {
+        let how = penalty.keeper.isEmpty
+            ? tr(" (penalty ratat)", " (missed penalty)")
+            : tr(" (penalty apărat de \(penalty.keeper))", " (penalty saved by \(penalty.keeper))")
+        HStack(spacing: 6) {
+            if penalty.t == 0 { Spacer(minLength: 0) }
+            Text("❌").font(.system(size: 12))
+            Text("\(penalty.m)'").font(.stat(13, weight: .bold))
+            Text(penalty.n + how).font(.system(size: 13)).lineLimit(1).minimumScaleFactor(0.65)
+            if penalty.t == 1 { Spacer(minLength: 0) }
+        }
+        .foregroundStyle(Color.white.opacity(0.8))
     }
 }
 

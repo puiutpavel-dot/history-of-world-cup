@@ -30,6 +30,76 @@ from build_tracks_2026 import CODE as CODE_2026, SRC as SRC_2026  # noqa: E402
 
 ROOT = os.path.join(os.path.dirname(__file__), "..")
 
+# Penalty-uri ratate în timpul meciurilor (nu la departajare): (an, echipa 1, echipa 2, minut, cine a executat,
+# echipa lui, portarul care a apărat sau None dacă a trimis pe lângă / în bară / peste).
+# Surse: RSSSF World Cup Archive (rsssf.org/tables/<an>full.html) pentru 1930-2018; 2006 și 2022 din BeSoccer
+# (clasamentul penalty-urilor ratate) + rapoartele de meci; 2026 din khelnow.com / BeSoccer / Sky Sports / football360.
+MISSED = [
+    (1930, "CHI", "FRA", "30", "Saavedra", "CHI", "Alex Thépot"),
+    (1930, "ARG", "MEX", "23", "Paternoster", "ARG", "Óscar Bonfiglio"),
+    (1930, "ARG", "MEX", "65", "Manuel Rosas", "MEX", "Ángel Bossio"),
+    (1934, "ESP", "BRA", "62", "Waldemar de Brito", "BRA", "Ricardo Zamora"),
+    (1938, "SWE", "CUB", "42", "Fernández", "CUB", "Henock Abrahamsson"),
+    (1938, "BRA", "SWE", "78", "Patesko", "BRA", None),
+    (1954, "AUT", "SUI", "42", "Alfred Körner", "AUT", None),
+    (1958, "FRA", "SCO", "23", "John Hewie", "SCO", None),
+    (1958, "SWE", "HUN", "69", "Nils Liedholm", "SWE", None),
+    (1958, "URS", "AUT", "55", "Buzek", "AUT", "Lev Yashin"),
+    (1962, "BRA", "ENG", "66", "Garrincha", "BRA", "Ron Springett"),
+    (1974, "POL", "SWE", "64", "Staffan Tapper", "SWE", "Jan Tomaszewski"),
+    (1974, "GER", "POL", "53", "Uli Hoeneß", "GER", "Jan Tomaszewski"),
+    (1978, "PER", "SCO", "63", "Don Masson", "SCO", "Ramón Quiroga"),
+    (1978, "ARG", "POL", "39", "Kazimierz Deyna", "POL", "Ubaldo Fillol"),
+    (1982, "AUT", "CHI", "26", "Carlos Caszely", "CHI", None),
+    (1982, "ESP", "YUG", "14", "Roberto López Ufarte", "ESP", None),
+    (1982, "ITA", "GER", "25", "Antonio Cabrini", "ITA", None),
+    (1986, "ITA", "KOR", "26", "Alessandro Altobelli", "ITA", None),
+    (1986, "MEX", "PAR", "88", "Hugo Sánchez", "MEX", "Roberto Fernández"),
+    (1986, "URS", "HUN", "77", "Vadym Yevtushenko", "URS", None),
+    (1986, "FRA", "BRA", "75", "Zico", "BRA", "Joël Bats"),
+    (1990, "TCH", "USA", "88", "Michal Bílek", "TCH", "Tony Meola"),
+    (1990, "ITA", "USA", "20", "Gianluca Vialli", "ITA", None),
+    (1990, "YUG", "COL", "81", "Faruk Hadžibegić", "YUG", "René Higuita"),
+    (1990, "ESP", "URU", "73", "Rubén Sosa", "URU", None),
+    (1990, "ESP", "BEL", "59", "Enzo Scifo", "BEL", None),
+    (1998, "NED", "YUG", "50", "Predrag Mijatović", "YUG", None),
+    (2002, "KOR", "USA", "39", "Lee Eul-yong", "KOR", "Brad Friedel"),
+    (2002, "POL", "USA", "67", "Maciej Żurawski", "POL", "Brad Friedel"),
+    (2002, "SWE", "ARG", "88", "Ariel Ortega", "ARG", "Magnus Hedman"),
+    (2002, "ESP", "IRL", "62", "Ian Harte", "IRL", "Iker Casillas"),
+    (2002, "KOR", "ITA", "4", "Ahn Jung-hwan", "KOR", "Gianluigi Buffon"),
+    (2006, "CZE", "GHA", "65", "Asamoah Gyan", "GHA", None),
+    (2006, "JPN", "CRO", "22", "Darijo Srna", "CRO", "Yoshikatsu Kawaguchi"),
+    (2006, "GER", "SWE", "52", "Henrik Larsson", "SWE", None),
+    (2006, "POR", "MEX", "58", "Omar Bravo", "MEX", None),
+    (2010, "SRB", "GER", "60", "Lukas Podolski", "GER", "Vladimir Stojković"),
+    (2010, "JPN", "DEN", "81", "Jon Dahl Tomasson", "DEN", "Eiji Kawashima"),
+    (2010, "ESP", "HON", "62", "David Villa", "ESP", None),
+    (2010, "URU", "GHA", "120", "Asamoah Gyan", "GHA", None),
+    (2010, "PAR", "ESP", "59", "Óscar Cardozo", "PAR", "Iker Casillas"),
+    (2010, "PAR", "ESP", "61", "Xabi Alonso", "ESP", "Justo Villar"),
+    (2014, "SUI", "FRA", "32", "Karim Benzema", "FRA", "Diego Benaglio"),
+    (2018, "KSA", "EGY", "41", "Fahad Al-Muwallad", "KSA", "Essam El-Hadary"),
+    (2018, "IRN", "POR", "53", "Cristiano Ronaldo", "POR", "Alireza Beiranvand"),
+    (2018, "PER", "DEN", "45+1", "Christian Cueva", "PER", None),
+    (2018, "ARG", "ISL", "64", "Lionel Messi", "ARG", "Hannes Þór Halldórsson"),
+    (2018, "NGA", "ISL", "83", "Gylfi Sigurðsson", "ISL", None),
+    (2018, "SUI", "CRC", "90+3", "Bryan Ruiz", "CRC", None),
+    (2018, "CRO", "DEN", "116", "Luka Modrić", "CRO", "Kasper Schmeichel"),
+    (2022, "BEL", "CAN", "10", "Alphonso Davies", "CAN", "Thibaut Courtois"),
+    (2022, "MEX", "POL", "58", "Robert Lewandowski", "POL", "Guillermo Ochoa"),
+    (2022, "GHA", "URU", "21", "André Ayew", "GHA", "Sergio Rochet"),
+    (2022, "POL", "KSA", "44", "Salem Al-Dawsari", "KSA", "Wojciech Szczęsny"),
+    (2022, "POL", "ARG", "39", "Lionel Messi", "ARG", "Wojciech Szczęsny"),
+    (2022, "ENG", "FRA", "84", "Harry Kane", "ENG", None),
+    (2026, "ARG", "AUT", "5", "Lionel Messi", "ARG", None),
+    (2026, "EGY", "IRN", "9", "Mehdi Taremi", "IRN", "Mostafa Shobeir"),
+    (2026, "NOR", "FRA", "50", "Jørgen Strand Larsen", "NOR", "Mike Maignan"),
+    (2026, "BRA", "NOR", "14", "Bruno Guimarães", "BRA", "Ørjan Nyland"),
+    (2026, "ARG", "EGY", "21", "Lionel Messi", "ARG", "Mostafa Shobeir"),
+    (2026, "FRA", "MAR", "28", "Kylian Mbappé", "FRA", "Yassine Bounou"),
+]
+
 
 def person(r):
     return r["family_name"] if r["given_name"] == "not applicable" else f"{r['given_name']} {r['family_name']}"
@@ -64,6 +134,15 @@ def main(matches_csv, bookings_csv=None, kicks_csv=None, out=os.path.join(ROOT, 
                         key=lambda r: int(r["key_id"])):
             side = 1 if code(r["team_code"]) == homes[r["match_id"]] else 0
             events[r["match_id"]].append(f"K|{side}|{person(r)}|{r['converted']}")
+    # penalty-urile ratate, pe meciul din calendar (perechea de echipe din ediția respectivă)
+    extra = defaultdict(list)
+    for y, t1, t2, minute, taker, team, keeper in MISSED:
+        ms = sorted(by_year[y])
+        idx = [i for i, m in enumerate(ms) if {m[3], m[4]} == {t1, t2}]
+        assert len(idx) == 1, (y, t1, t2, idx)
+        home = ms[idx[0]][3]
+        assert team in (t1, t2), (y, t1, t2, team)
+        extra[(y, idx[0])].append(f"M|{minute}|{1 if team == home else 0}|{taker}|{keeper or ''}")
     for e in events.values():
         assert all("\"" not in x and ";" not in x[2:] for x in e), e
     ev_lines = []
@@ -71,7 +150,8 @@ def main(matches_csv, bookings_csv=None, kicks_csv=None, out=os.path.join(ROOT, 
     lines = []
     for y in sorted(by_year):
         ms = sorted(by_year[y])
-        ev = [f"{i}: \"{';'.join(events[m[2]])}\"" for i, m in enumerate(ms) if m[2] in events]
+        ev = [f"{i}: \"{';'.join(events.get(m[2], []) + extra.get((y, i), []))}\"" for i, m in enumerate(ms)
+              if m[2] in events or (y, i) in extra]
         if ev:
             ev_lines.append(f"        {y}: [" + ", ".join(ev) + "],")
         # data afișată = ziua din sursă (MMDD); pentru 2026, ziua UTC
@@ -85,12 +165,14 @@ def main(matches_csv, bookings_csv=None, kicks_csv=None, out=os.path.join(ROOT, 
         f.write("enum MatchOrder {\n    static let byYear: [Int: String] = [\n")
         f.write("\n".join(lines) + "\n    ]\n}\n")
     print("meciuri:", {y: len(v) for y, v in sorted(by_year.items())})
-    if bookings_csv or kicks_csv:
+    if bookings_csv or kicks_csv or MISSED:
         with open(os.path.join(os.path.dirname(out), "MatchEvents.swift"), "w", encoding="utf-8") as f:
             f.write("// GENERAT de tools/build_match_order.py — nu edita manual.\n")
             f.write("// Eliminările și loviturile de departajare, pe meci (indexul din calendarul `MatchOrder`).\n")
-            f.write("// „R|minut|1=echipa 1, 0=echipa 2|jucător|1=roșu direct, 2=al doilea galben”; „K|echipa|jucător|1=marcat, 0=ratat”.\n")
-            f.write("// Sursa: Fjelstul World Cup Database (CC-BY-SA 4.0), 1930-2022 (cartonașe din 1970).\n\n")
+            f.write("// „R|minut|1=echipa 1, 0=echipa 2|jucător|1=roșu direct, 2=al doilea galben”; „K|echipa|jucător|1=marcat, 0=ratat”;\n")
+            f.write("// „M|minut|echipa|jucător|portarul care a apărat (gol = pe lângă / bară / peste)” = penalty ratat în timpul jocului.\n")
+            f.write("// Surse: Fjelstul World Cup Database (CC-BY-SA 4.0), 1930-2022 (cartonașe din 1970);\n")
+            f.write("// penalty-urile ratate: RSSSF, BeSoccer și rapoarte de meci (vezi MISSED în generator).\n\n")
             f.write("enum MatchEventsData {\n    static let byYear: [Int: [Int: String]] = [\n")
             f.write("\n".join(ev_lines) + "\n    ]\n}\n")
         print("evenimente:", sum(len(v) for v in events.values()))
