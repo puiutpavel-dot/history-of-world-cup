@@ -1,0 +1,25 @@
+name: Achiziție Full History
+
+# Creează în App Store Connect achiziția non-consumable „Full History” (4,99 USD, Family Sharing),
+# cu nume/descriere en + ro, disponibilitate în toate țările și captura pentru App Review.
+# Pornire manuală: GitHub → Actions → Achiziție Full History → Run workflow. Poate fi rulat de mai multe ori.
+
+on:
+  workflow_dispatch:
+
+jobs:
+  iap:
+    runs-on: ubuntu-latest
+    env:
+      ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+      ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+      ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Captura ecranului de cumpărare (din capturile CI)
+        run: git show origin/screenshots:paywall.png > /tmp/paywall.png && ls -la /tmp/paywall.png || true
+      - run: pip install -q pyjwt cryptography requests
+      - name: Creează achiziția
+        run: python3 tools/asc_iap.py /tmp/paywall.png
