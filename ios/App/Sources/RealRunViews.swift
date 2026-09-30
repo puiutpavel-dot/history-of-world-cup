@@ -147,9 +147,6 @@ struct RunView: View {
 
                     if !r.revealed {
                         PrimaryButton(title: tr("Joacă meciul", "Play the match"), systemImage: "play.fill") { play(shootout: !events.kicks.isEmpty) }
-                        SecondaryButton(title: tr("Arată direct rezultatul", "Show the result"), systemImage: "forward.end.fill") {
-                            game.revealRunMatch(); finish()
-                        }
                     } else if !playing {
                         PrimaryButton(title: r.isLastMatch ? tr("Vezi rezultatul", "See the result") : tr("Meciul următor", "Next match"),
                                       systemImage: "arrow.right") { game.nextRunMatch() }
