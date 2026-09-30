@@ -67,8 +67,18 @@ def get_all(path):
     return out
 
 
+LOG = []
+
+
 def step(msg):
     print(f"\n== {msg}", flush=True)
+    LOG.append(f"**{msg}**")
+
+
+def log(*parts):
+    msg = " ".join(str(p) for p in parts)
+    print(msg, flush=True)
+    LOG.append(msg)
 
 
 def rel(type_, id_):
@@ -131,42 +141,66 @@ def app_info_and_categories():
             call("POST", "/v1/appInfoLocalizations", {"data": {"type": "appInfoLocalizations",
                                                                "attributes": {"locale": loc, **attrs},
                                                                "relationships": {"appInfo": rel("appInfos", info["id"])}}}, fatal=False)
-        print(loc, attrs["name"], "|", attrs["subtitle"])
+        log(loc, attrs["name"], "|", attrs["subtitle"])
     return info
 
 
 def age_rating(info):
-    step("Chestionarul de vârstă (totul None → 4+)")
+    step("Chestionarul de vârstă (totul None / Nu → 4+)")
     j = call("GET", f"/v1/appInfos/{info['id']}/ageRatingDeclaration", fatal=False)
     if not j:
         return
     decl = j["data"]
     skip = {"kidsAgeBand", "ageRatingOverride", "ageRatingOverrideV2", "koreaAgeRatingOverride", "developerAgeRatingInfoUrl",
             "seventeenPlus"}
-    for k, v in decl["attributes"].items():
-        if k in skip or (v is not None and v not in ("", [])):
-            continue
-        for value in ("NONE", False):
-            r = call("PATCH", f"/v1/ageRatingDeclarations/{decl['id']}", {"data": {
-                "type": "ageRatingDeclarations", "id": decl["id"], "attributes": {k: value}}}, ok=(200,), fatal=False)
-            if r is not None:
-                WARN[:] = [w for w in WARN if "ageRatingDeclarations" not in w]
-                print(f"{k} = {value}")
-                break
+    # Apple cere toate câmpurile deodată; tipul fiecăruia (text „NONE” sau boolean) îl aflăm din erorile API-ului
+    attrs = {k: (v if v not in (None, "", []) else "NONE") for k, v in decl["attributes"].items() if k not in skip}
+    for _ in range(12):
+        S.headers["Authorization"] = f"Bearer {token()}"
+        r = S.patch(f"{API}/v1/ageRatingDeclarations/{decl['id']}", json={"data": {
+            "type": "ageRatingDeclarations", "id": decl["id"], "attributes": attrs}}, timeout=90)
+        if r.status_code == 200:
+            break
+        changed = False
+        for e in r.json().get("errors", []):
+            key = e.get("source", {}).get("pointer", "").rsplit("/", 1)[-1]
+            detail = e.get("detail", "")
+            if not key:
+                continue
+            if "Expected a BOOLEAN" in detail and attrs.get(key) is not False:
+                attrs[key] = False
+                changed = True
+            elif ("Expected a STRING" in detail or "Expected a" in detail) and attrs.get(key) is False:
+                attrs[key] = "NONE"
+                changed = True
+            elif "REQUIRED" in e.get("code", "") and key not in attrs:
+                attrs[key] = "NONE"
+                changed = True
+            elif "ENUM" in e.get("code", "") or "not a valid" in detail or "invalid" in detail.lower():
+                if attrs.get(key) == "NONE":
+                    attrs[key] = False
+                    changed = True
+        if not changed:
+            print(f"::warning::vârsta: {r.status_code} {r.text[:1500]}")
+            WARN.append("chestionarul de vârstă nu s-a putut completa automat")
+            return
+    else:
+        WARN.append("chestionarul de vârstă: prea multe încercări")
+        return
     final = call("GET", f"/v1/appInfos/{info['id']}/ageRatingDeclaration")["data"]["attributes"]
-    print({k: v for k, v in final.items() if v not in (None, "NONE", False)} or "toate None / false")
+    log("vârstă: " + (", ".join(f"{k}={v}" for k, v in final.items() if v not in (None, "NONE", False)) or "toate None / Nu → 4+"))
 
 
 def rights_price_availability():
     step("Drepturi de conținut")
     call("PATCH", f"/v1/apps/{APP_ID}", {"data": {"type": "apps", "id": APP_ID,
                                                    "attributes": {"contentRightsDeclaration": "USES_THIRD_PARTY_CONTENT"}}}, fatal=False)
-    print("USES_THIRD_PARTY_CONTENT (date istorice cu licență deschisă, CC-BY-SA / domeniu public)")
+    log("USES_THIRD_PARTY_CONTENT (date istorice cu licență deschisă, CC-BY-SA / domeniu public)")
 
     step("Preț: gratuită")
     sched = call("GET", f"/v1/apps/{APP_ID}/appPriceSchedule", ok=(200, 404), fatal=False)
     if sched and sched.get("data"):
-        print("există deja un program de preț")
+        log("există deja un program de preț")
     else:
         points = get_all(f"/v1/apps/{APP_ID}/appPricePoints?filter[territory]=USA&limit=200")
         free = next((p for p in points if p["attributes"]["customerPrice"] in ("0", "0.0", "0.00")), None)
@@ -177,14 +211,14 @@ def rights_price_availability():
                     "manualPrices": {"data": [{"type": "appPrices", "id": "${p0}"}]}}},
                 "included": [{"type": "appPrices", "id": "${p0}", "attributes": {"startDate": None},
                               "relationships": {"appPricePoint": rel("appPricePoints", free["id"])}}]}, fatal=False)
-            print("gratuită")
+            log("gratuită")
         else:
             WARN.append("nu am găsit prețul 0")
 
     step("Disponibilitate: toate țările")
     avail = call("GET", f"/v1/apps/{APP_ID}/appAvailabilityV2", ok=(200, 404), fatal=False)
     if avail and avail.get("data"):
-        print("există deja")
+        log("există deja")
     else:
         terr = get_all("/v1/territories?limit=200")
         call("POST", "/v2/appAvailabilities", {
@@ -193,7 +227,7 @@ def rights_price_availability():
                          "data": [{"type": "territoryAvailabilities", "id": f"${{t{i}}}"} for i in range(len(terr))]}}},
             "included": [{"type": "territoryAvailabilities", "id": f"${{t{i}}}", "attributes": {"available": True},
                           "relationships": {"territory": rel("territories", t["id"])}} for i, t in enumerate(terr)]}, fatal=False)
-        print("disponibilă în", len(terr), "țări")
+        log("disponibilă în", len(terr), "țări")
 
 
 def version_and_build():
@@ -206,7 +240,7 @@ def version_and_build():
         ver = call("POST", "/v1/appStoreVersions", {"data": {"type": "appStoreVersions",
                                                               "attributes": {"platform": "IOS", "versionString": VERSION},
                                                               "relationships": {"app": rel("apps", APP_ID)}}})["data"]
-        print("creată")
+        log("creată")
     vid = ver["id"]
     attrs = {"releaseType": "AFTER_APPROVAL"}
     if COPYRIGHT:
@@ -214,7 +248,7 @@ def version_and_build():
     if ver["attributes"].get("versionString") != VERSION:
         attrs["versionString"] = VERSION
     call("PATCH", f"/v1/appStoreVersions/{vid}", {"data": {"type": "appStoreVersions", "id": vid, "attributes": attrs}}, fatal=False)
-    print("versiune", vid, ver["attributes"].get("appStoreState") or ver["attributes"].get("appVersionState"), attrs)
+    log("versiune", vid, ver["attributes"].get("appStoreState") or ver["attributes"].get("appVersionState"), attrs)
 
     step("Build-ul")
     q = f"/v1/builds?filter[app]={APP_ID}&filter[preReleaseVersion.version]={VERSION}&sort=-uploadedDate&limit=20"
@@ -224,11 +258,11 @@ def version_and_build():
         valid = [b for b in valid if b["attributes"]["version"] == BUILD_NUMBER]
     if not valid:
         WARN.append("niciun build VALID pentru 1.0" + (f" cu numărul {BUILD_NUMBER}" if BUILD_NUMBER else ""))
-        print("::warning::niciun build valid", [(b["attributes"]["version"], b["attributes"].get("processingState")) for b in builds])
+        log("::warning::niciun build valid", [(b["attributes"]["version"], b["attributes"].get("processingState")) for b in builds])
     else:
         b = valid[0]
         call("PATCH", f"/v1/appStoreVersions/{vid}/relationships/build", rel("builds", b["id"]), fatal=False)
-        print("build atașat:", b["attributes"]["version"])
+        log("build atașat:", b["attributes"]["version"])
     return vid
 
 
@@ -249,7 +283,7 @@ def version_texts(vid):
                 "relationships": {"appStoreVersion": rel("appStoreVersions", vid)}}}, fatal=False)
             if r:
                 out[loc] = r["data"]["id"]
-        print(loc, "ok")
+        log(loc, "ok")
     return out
 
 
@@ -285,7 +319,7 @@ def screenshots(locs):
             call("DELETE", f"/v1/appScreenshots/{old['id']}", fatal=False)
         for f in files:
             upload("appScreenshots", "appScreenshotSet", "appScreenshotSets", sset["id"], f)
-        print(loc, len(files), "capturi:", ", ".join(os.path.basename(f) for f in files))
+        log(loc, len(files), "capturi:", ", ".join(os.path.basename(f) for f in files))
 
 
 def review_details(vid):
@@ -299,7 +333,7 @@ def review_details(vid):
     else:
         call("POST", "/v1/appStoreReviewDetails", {"data": {"type": "appStoreReviewDetails", "attributes": attrs,
                                                             "relationships": {"appStoreVersion": rel("appStoreVersions", vid)}}}, fatal=False)
-    print("note setate; contactul (nume, telefon, e-mail) se completează în App Store Connect")
+    log("note setate; contactul (nume, telefon, e-mail) se completează în App Store Connect")
 
 
 def main():
@@ -316,7 +350,7 @@ def main():
     review_details(vid)
     summary = os.environ.get("GITHUB_STEP_SUMMARY", os.devnull)
     with open(summary, "a") as f:
-        f.write("### Pagina App Store — versiunea 1.0\n")
+        f.write("### Pagina App Store — versiunea 1.0\n\n" + "\n".join(f"- {l}" if not l.startswith("**") else f"\n{l}\n" for l in LOG) + "\n\n")
         f.write("✅ Gata, cu avertismente:\n" + "".join(f"- {w}\n" for w in WARN) if WARN else "✅ Totul completat.\n")
         f.write("\nRămâne în App Store Connect: App Privacy (Data Not Collected), contactul pentru App Review, "
                 "achiziția „Full History” bifată la versiune, Submit for Review.\n")
