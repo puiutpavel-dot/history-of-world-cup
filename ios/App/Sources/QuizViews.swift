@@ -120,6 +120,8 @@ struct QuizPlayView: View {
     }
 }
 
+/// Varianta de răspuns: capsulă (colțuri complet rotunjite) ca butoanele aplicației —
+/// aurie transparentă înainte de răspuns, verde pentru răspunsul corect, roșie pentru cel greșit ales.
 struct QuizOptionButton: View {
     enum Mark { case idle, correct, wrong }
     let text: String
@@ -127,18 +129,27 @@ struct QuizOptionButton: View {
     let action: () -> Void
 
     var body: some View {
-        let stroke: Color = state == .correct ? .hwcPitch2 : state == .wrong ? .hwcRed : .hwcBorder
+        let fill: Color = state == .correct ? .hwcPitch2 : state == .wrong ? .hwcRed : .hwcGold
+        let icon: String? = state == .correct ? "checkmark.circle.fill" : state == .wrong ? "xmark.circle.fill" : nil
         Button(action: action) {
-            Text(text)
-                .font(.system(size: 15))
-                .foregroundStyle(Color.hwcText)
-                .multilineTextAlignment(.leading)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(14)
-                .background(stroke.opacity(state == .idle ? 0 : 0.18), in: RoundedRectangle(cornerRadius: 10))
-                .overlay(RoundedRectangle(cornerRadius: 10).stroke(stroke))
+            HStack(spacing: 10) {
+                Text(text)
+                    .font(.system(size: 17, weight: .medium))
+                    .multilineTextAlignment(.leading)
+                    .fixedSize(horizontal: false, vertical: true)
+                Spacer(minLength: 0)
+                if let icon {
+                    Image(systemName: icon).font(.system(size: 20, weight: .semibold)).foregroundStyle(fill)
+                }
+            }
+            .foregroundStyle(state == .idle ? Color.hwcAccentText : Color.hwcText)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.vertical, 15)
+            .padding(.horizontal, 22)
+            .background(fill.opacity(state == .idle ? 0.16 : 0.28), in: RoundedRectangle(cornerRadius: 26, style: .continuous))
+            .contentShape(RoundedRectangle(cornerRadius: 26, style: .continuous))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(CapsulePressStyle())
     }
 }
 
