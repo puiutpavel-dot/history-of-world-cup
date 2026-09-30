@@ -53,9 +53,17 @@ def call(method, path, body=None, ok=(200, 201, 204), fatal=True):
             print(f"::error::{msg}")
             sys.exit(1)
         print(f"::warning::{msg}")
-        WARN.append(f"{method} {path.split('?')[0]} → {r.status_code}")
+        WARN.append(f"{method} {path.split('?')[0]} → {r.status_code}: {errors_text(r)}")
         return None
     return r.json() if r.content else {}
+
+
+def errors_text(r):
+    try:
+        return "; ".join(f"{e.get('code')} {e.get('detail')} [{e.get('source', {}).get('pointer', '')}]"
+                         for e in r.json().get("errors", []))[:1200]
+    except Exception:
+        return r.text[:600]
 
 
 def get_all(path):
@@ -182,7 +190,8 @@ def age_rating(info):
                     changed = True
         if not changed:
             print(f"::warning::vârsta: {r.status_code} {r.text[:1500]}")
-            WARN.append("chestionarul de vârstă nu s-a putut completa automat")
+            WARN.append("chestionarul de vârstă nu s-a putut completa automat: " + errors_text(r)
+                        + " | trimis: " + ", ".join(f"{k}={v}" for k, v in attrs.items()))
             return
     else:
         WARN.append("chestionarul de vârstă: prea multe încercări")
