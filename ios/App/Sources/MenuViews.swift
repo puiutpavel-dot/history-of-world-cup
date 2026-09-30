@@ -30,7 +30,7 @@ struct MenuView: View {
 
                 VStack(spacing: 12) {
                     if game.hasResumableRun, let r = game.run {
-                        PrimaryButton(title: tr("Continuă: ", "Continue: ") + "\(game.label(r.team)) · \(String(r.year))", systemImage: "play.fill") {
+                        PrimaryButton(title: tr("Continuă: ", "Continue: ") + "\(String(r.year)) · \(r.idx + 1)/\(r.fixtures.count)", systemImage: "play.fill") {
                             game.go(.run)
                         }
                         SecondaryButton(title: tr("Retrăiește un Mondial", "Relive a World Cup"), systemImage: "trophy") { game.go(.editions) }

@@ -41,7 +41,7 @@ final class GameState: ObservableObject {
     lazy var matchFacts = MatchFacts(data: data)
 
     private let careerKey = "hwc_active_career_v1"
-    private let runKey = "hwc_real_run_v1"
+    private let runKey = "hwc_edition_run_v2"
     private let trophyKey = "hwc_trophy_room_v1"
     private let quizKey = "hwc_quiz_v1"
     private let countryKey = "hwc_country_v1"
@@ -123,10 +123,15 @@ final class GameState: ObservableObject {
         }
     }
 
-    func startRun(team: String, year: Int) {
+    /// „Joacă această campanie” din Traseul țării: tot Mondialul, urmărind echipa
+    func startRun(team: String, year: Int) { startRun(year: year, focus: team) }
+
+    /// tot Mondialul, meci cu meci, în ordine cronologică
+    func startRun(year: Int, focus: String?) {
         guard isOpen(year) else { return showPaywall() }
-        guard let e = data.track(team, year), !e.matches.isEmpty else { return }
-        run = RealRun(team: team, year: year, matches: e.matches, finish: e.finish, finishLabel: e.finishLabel)
+        let fixtures = RealRun.fixtures(year: year)
+        guard !fixtures.isEmpty, fixtures.allSatisfy({ data.match($0, year: year) != nil }) else { return }
+        run = RealRun(year: year, focus: focus, fixtures: fixtures)
         persistRun()
         go(.run)
     }
@@ -145,7 +150,13 @@ final class GameState: ObservableObject {
         if r.isLastMatch {
             r.finished = true
             run = r
-            addTrophy(TrophyEntry(team: r.team, year: r.year, outcome: r.outcome, label: r.summaryLabel))
+            // Sala Trofeelor: rezultatul echipei urmărite sau, altfel, campioana ediției
+            let tracks = data.tracks(year: r.year)
+            if let e = tracks.first(where: { $0.code == r.focus }) ?? tracks.first(where: { $0.finish == "champion" }) {
+                let places: [String: Outcome] = ["champion": .champion, "runnerUp": .runnerUp, "third": .third, "fourth": .fourth]
+                let outcome = places[e.finish] ?? .out
+                addTrophy(TrophyEntry(team: e.code, year: r.year, outcome: outcome, label: e.finishLabel))
+            }
             defaults.removeObject(forKey: runKey)
             go(.runSummary)
             return
@@ -340,7 +351,7 @@ final class GameState: ObservableObject {
         case "teams": screen = .teams(year: 1970)
         case "runLive":
             // finala din 1970 (Brazilia–Italia 4-1), oprită în jurul minutului 70
-            startRun(team: "BRA", year: 1970)
+            startRun(year: 1970, focus: "BRA")
             while let r = run, !r.isLastMatch {
                 revealRunMatch(); nextRunMatch()
             }
@@ -349,12 +360,20 @@ final class GameState: ObservableObject {
             screen = .run
         case "runBracket":
             // semifinala din 1970 (Brazilia–Uruguay), cu tabloul eliminatoriilor
-            startRun(team: "BRA", year: 1970)
-            for _ in 0..<4 { revealRunMatch(); nextRunMatch() }
+            startRun(year: 1970, focus: "BRA")
+            while let r = run, !r.isLastMatch, Set([r.fixture.home, r.fixture.away]) != ["BRA", "URU"] {
+                revealRunMatch(); nextRunMatch()
+            }
             revealRunMatch()
             screen = .run
         case "run", "runQuiz", "runSummary":
-            startRun(team: "BRA", year: 1970)
+            startRun(year: 1970, focus: name == "runQuiz" ? "BRA" : nil)
+            if name == "runQuiz" {
+                // a doua etapă a grupei Braziliei (Brazilia–Anglia 1-0), cu clasamentul la zi
+                while let r = run, !r.isLastMatch, Set([r.fixture.home, r.fixture.away]) != ["BRA", "ENG"] {
+                    revealRunMatch(); nextRunMatch()
+                }
+            }
             if name != "run" { revealRunMatch() }
             if name == "runSummary" {
                 while let r = run, !r.finished {

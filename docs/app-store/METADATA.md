@@ -22,13 +22,14 @@ Fără nume de alte aplicații, fără „FIFA”, fără nume de jucători, fă
 
 ## Text promoțional (max. 170, se poate schimba fără review)
 - ro: Joacă fiecare Mondial din 1930 până în 2026, cu formatul, regulile și adversarii reali ai epocii. Confirmă sau rescrie istoria!
-- en: Relive every World Cup match by match, with the real results and goalscorers. 1930–1938 and USA 1994 are free.
+- en: Play every match of every World Cup in order, with the real results, scorers, live tables and the knockout bracket. 1930–1938 and 1994 are free.
 
 ## Descriere (ro)
 ```
 Retrăiește Campionatul Mondial de fotbal, turneu cu turneu, din 1930 până în 2026 — cu rezultatele reale.
 
-• Alegi o ediție și o echipă (peste 80 de naționale, inclusiv toate cele 48 din 2026) și îi retrăiești drumul real, meci cu meci.
+• Alegi o ediție și joci toate meciurile ei, în ordinea în care s-au jucat, cu rezultatele reale. Opțional, urmărești o echipă (peste 80 de naționale, inclusiv toate cele 48 din 2026).
+• După fiecare meci: clasamentul la zi al grupei sau tabloul eliminatoriilor.
 • Fiecare meci se derulează în 19 secunde, cu marcatorii reali la minutul lor.
 • După fiecare meci: „Știai că?” — povești din meciurile celebre, recorduri, hat-trickuri și istoria întâlnirilor.
 • Quiz: pe ediție, Maraton 1930 → 2026, Duoul greșit, Alege faza.
@@ -46,7 +47,8 @@ Date istorice: Fjelstul World Cup Database (CC-BY-SA 4.0); meciurile din 2026: o
 ```
 Relive the football World Cup, tournament by tournament, from 1930 to 2026 — with the real results.
 
-• Pick an edition and a team (over 80 national teams, including all 48 from 2026) and relive its real path, match by match.
+• Pick an edition and play all of its matches in the order they were played, with the real results. Optionally follow a team (over 80 national teams, including all 48 from 2026).
+• After every match: the live group table or the knockout bracket.
 • Every match plays out in 19 seconds, with the real goalscorers at their minute.
 • After every match: "Did you know?" — stories from famous matches, records, hat-tricks and head-to-head history.
 • Quiz modes: per edition, Marathon 1930 → 2026, Spot the false one, Pick the stage.

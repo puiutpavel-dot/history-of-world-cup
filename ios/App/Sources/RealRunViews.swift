@@ -1,35 +1,63 @@
 import SwiftUI
 import WorldCupCore
 
-// MARK: - Modul principal: retrăiești turneul real al unei echipe.
-// Meciurile au rezultatele reale și se derulează pe rând, cu marcatorii la minutul lor.
+// MARK: - Modul principal: retrăiești un Mondial întreg.
+// Se joacă fiecare meci al ediției, în ordine cronologică, cu rezultatele reale și marcatorii.
+// După fiecare meci: „Știai că?”, apoi clasamentul grupei sau tabloul eliminatoriilor.
+// Opțional, urmărești o echipă (evidențiată peste tot; rezultatul ei intră în Sala Trofeelor).
+
+/// Un meci din calendarul ediției: echipa 1, echipa 2 și indexul meciului în traseul echipei 1.
+struct Fixture: Codable, Equatable {
+    let home: String
+    let away: String
+    let homeIndex: Int
+    /// „MMDD”
+    let date: String
+}
 
 struct RealRun: Codable, Equatable {
-    let team: String
     let year: Int
-    let matches: [TrackMatch]
-    /// rezultatul real al echipei (champion / runnerUp / third / fourth / SF / GR2 / QF / R16 / G)
-    let finish: String
-    let finishLabel: String
+    /// echipa urmărită (opțional)
+    let focus: String?
+    let fixtures: [Fixture]
     var idx = 0
     var revealed = false
     var finished = false
 
-    var match: TrackMatch { matches[idx] }
-    var isLastMatch: Bool { idx == matches.count - 1 }
+    var fixture: Fixture { fixtures[idx] }
+    var isLastMatch: Bool { idx == fixtures.count - 1 }
 
-    var outcome: Outcome {
-        guard finished else { return .out }
-        switch finish {
-        case "champion": return .champion
-        case "runnerUp": return .runnerUp
-        case "third": return .third
-        case "fourth": return .fourth
-        default: return .out
+    /// calendarul ediției, din `MatchOrder`: meciurile fiecărei echipe se consumă în ordinea traseului ei
+    static func fixtures(year: Int) -> [Fixture] {
+        guard let s = MatchOrder.byYear[year] else { return [] }
+        var next: [String: Int] = [:]
+        return s.split(separator: " ").compactMap { item in
+            let t = String(item)
+            guard t.count == 11 else { return nil }
+            let date = String(t.prefix(4))
+            let home = String(t.dropFirst(4).prefix(3)), away = String(t.suffix(3))
+            let i = next[home, default: 0]
+            next[home] = i + 1
+            next[away, default: 0] += 1
+            return Fixture(home: home, away: away, homeIndex: i, date: date)
         }
     }
+}
 
-    var summaryLabel: String { finishLabel }
+extension GameData {
+    /// meciul din calendar, din perspectiva echipei 1
+    func match(_ f: Fixture, year: Int) -> TrackMatch? {
+        guard let e = track(f.home, year), e.matches.indices.contains(f.homeIndex) else { return nil }
+        return e.matches[f.homeIndex]
+    }
+}
+
+/// „14 iunie” / „14 June”
+func fixtureDate(_ mmdd: String) -> String {
+    let ro = ["ianuarie", "februarie", "martie", "aprilie", "mai", "iunie", "iulie", "august", "septembrie", "octombrie", "noiembrie", "decembrie"]
+    let en = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
+    guard mmdd.count == 4, let m = Int(mmdd.prefix(2)), let d = Int(mmdd.suffix(2)), (1...12).contains(m) else { return "" }
+    return "\(d) " + tr(ro[m - 1], en[m - 1])
 }
 
 /// Rezultatul unui meci real, din perspectiva echipei jucătorului.
@@ -44,7 +72,7 @@ enum RunQuestions {
     static let finishOrder = ["champion", "runnerUp", "third", "fourth", "SF", "GR2", "QF", "R16", "R32", "G"]
 }
 
-// MARK: - Alegerea echipei (ediția aleasă)
+// MARK: - Începutul turneului (ediția aleasă)
 
 struct RunTeamSelectView: View {
     @EnvironmentObject var game: GameState
@@ -53,26 +81,32 @@ struct RunTeamSelectView: View {
 
     var body: some View {
         let host = game.data.edition(year)?.host ?? ""
+        let count = RealRun.fixtures(year: year).count
         ScreenContainer(title: "\(String(year)) · \(host)", backLabel: tr("Ediții", "Editions"), onBack: { game.go(.editions) }) {
             VStack(alignment: .leading, spacing: 12) {
-                Text(tr("Alege o echipă și retrăiește-i turneul, meci cu meci, cu rezultatele reale și marcatorii.",
-                        "Pick a team and relive its tournament match by match, with the real results and goalscorers."))
+                Text(tr("Joci toate cele \(count) de meciuri ale Mondialului, în ordinea în care s-au jucat, cu rezultatele reale și marcatorii. După fiecare meci vezi clasamentul grupei sau tabloul eliminatoriilor.",
+                        "Play all \(count) matches of the World Cup in the order they were played, with the real results and goalscorers. After every match you see the group table or the knockout bracket."))
                     .font(.system(size: 14)).foregroundStyle(Color.hwcTextDim)
+                PrimaryButton(title: tr("Începe turneul", "Start the tournament"), systemImage: "play.fill") {
+                    game.startRun(year: year, focus: nil)
+                }
+                Text(tr("Sau alege o echipă pe care s-o urmărești (evidențiată în clasamente și în tablou):",
+                        "Or pick a team to follow (highlighted in the tables and the bracket):"))
+                    .font(.system(size: 13)).foregroundStyle(Color.hwcTextDim)
+                    .padding(.top, 4)
                 LazyVGrid(columns: columns, spacing: 12) {
                     ForEach(game.playableTeams(year), id: \.code) { e in
                         let meta = game.data.meta(e.code)
-                        Button { game.startRun(team: e.code, year: year) } label: {
+                        Button { game.startRun(year: year, focus: e.code) } label: {
                             VStack(spacing: 6) {
                                 Text(meta.flag).font(.system(size: 40))
                                 Text(meta.name).font(.scoreboard(18, weight: .semibold)).foregroundStyle(Color.hwcText)
                                     .multilineTextAlignment(.center).lineLimit(2).minimumScaleFactor(0.8)
-                                Text(tr("\(e.matches.count) meciuri", "\(e.matches.count) matches"))
-                                    .font(.stat(12)).foregroundStyle(Color.hwcTextDim)
                             }
                             .frame(maxWidth: .infinity)
                             .padding(12)
                             .background(Color.hwcPanel, in: RoundedRectangle(cornerRadius: 12))
-                            .overlay(RoundedRectangle(cornerRadius: 12).stroke(e.finish == "champion" ? Color.hwcGold : Color.hwcBorder))
+                            .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.hwcBorder))
                         }
                         .buttonStyle(.plain)
                     }
@@ -96,26 +130,28 @@ struct RunView: View {
     static let matchSeconds = 19.0
 
     var body: some View {
-        if let r = game.run {
-            let team = game.data.meta(r.team)
-            ScreenContainer(title: "\(team.flag) \(team.name) · \(String(r.year))", backLabel: tr("Meniu", "Menu"), onBack: { game.go(.menu) }) {
+        if let r = game.run, let m = game.data.match(r.fixture, year: r.year) {
+            let host = game.data.edition(r.year)?.host ?? ""
+            ScreenContainer(title: "\(String(r.year)) · \(host)", backLabel: tr("Meniu", "Menu"), onBack: { game.go(.menu) }) {
                 VStack(alignment: .leading, spacing: 14) {
                     HStack {
+                        if let f = r.focus {
+                            Text(tr("Urmărești: ", "Following: ") + game.label(f))
+                                .font(.system(size: 13)).foregroundStyle(Color.hwcGold).lineLimit(1)
+                        }
                         Spacer()
-                        Text(tr("Meciul \(r.idx + 1)/\(r.matches.count)", "Match \(r.idx + 1)/\(r.matches.count)"))
+                        Text(tr("Meciul \(r.idx + 1)/\(r.fixtures.count)", "Match \(r.idx + 1)/\(r.fixtures.count)") + " · " + fixtureDate(r.fixture.date))
                             .font(.stat(13)).foregroundStyle(Color.hwcTextDim)
                     }
 
                     let shown = playing ? progress : (r.revealed ? 1 : 0)
-                    RunMatchCard(team: r.team, match: r.match, revealed: r.revealed, progress: shown, playing: playing)
-
-                    if r.revealed && !playing {
-                        MatchFactsPanel(facts: game.matchFacts.facts(team: r.team, year: r.year, index: r.idx))
-                            .transition(.opacity)
-                    }
+                    RunMatchCard(team: r.fixture.home, match: m, revealed: r.revealed, progress: shown, playing: playing)
 
                     if !r.revealed {
                         PrimaryButton(title: tr("Joacă meciul", "Play the match"), systemImage: "play.fill") { play() }
+                        SecondaryButton(title: tr("Arată direct rezultatul", "Show the result"), systemImage: "forward.end.fill") {
+                            game.revealRunMatch(); finish()
+                        }
                     } else if playing {
                         SecondaryButton(title: tr("Sări la final", "Skip to full time"), systemImage: "forward.end.fill") { finish() }
                     } else {
@@ -123,23 +159,12 @@ struct RunView: View {
                                       systemImage: "arrow.right") { game.nextRunMatch() }
                     }
 
-                    if r.revealed && !playing, let board = StageBoard.build(data: game.data, team: r.team, year: r.year, index: r.idx) {
-                        StageBoardView(board: board, team: r.team)
+                    if r.revealed && !playing {
+                        MatchFactsPanel(facts: game.matchFacts.facts(team: r.fixture.home, year: r.year, index: r.fixture.homeIndex))
                             .transition(.opacity)
-                    }
-
-                    if r.idx > 0 {
-                        Panel(title: tr("Drumul până aici", "The road so far")) {
-                            ForEach(Array(r.matches.prefix(r.idx).enumerated()), id: \.offset) { _, m in
-                                HStack(spacing: 8) {
-                                    Text(m.round).font(.system(size: 11)).foregroundStyle(Color.hwcTextDim).frame(width: 84, alignment: .leading)
-                                    Text(game.label(m.opp)).font(.system(size: 14)).lineLimit(1)
-                                    Spacer()
-                                    Text("\(m.gf)–\(m.ga)").font(.stat(14, weight: .bold))
-                                        .foregroundStyle(resultTag(m).color)
-                                }
-                                .foregroundStyle(Color.hwcText)
-                            }
+                        if let board = StageBoard.build(data: game.data, run: r) {
+                            StageBoardView(board: board, highlight: [r.fixture.home, r.fixture.away], focus: r.focus)
+                                .transition(.opacity)
                         }
                     }
 
@@ -302,45 +327,72 @@ struct RunSummaryView: View {
 
     var body: some View {
         if let r = game.run {
-            let team = game.data.meta(r.team)
+            let host = game.data.edition(r.year)?.host ?? ""
+            let tracks = game.data.tracks(year: r.year)
+            let podium: [(String, String)] = [("champion", "🏆"), ("runnerUp", "🥈"), ("third", "🥉")].compactMap { key, icon in
+                tracks.first { $0.finish == key }.map { ($0.code, icon) }
+            }
+            let scorers = topScorers(r)
             ScreenContainer(title: tr("Rezultat", "Result")) {
                 VStack(spacing: 14) {
                     VStack(spacing: 6) {
-                        Text("\(team.flag) \(team.name) · \(String(r.year))").font(.scoreboard(22)).foregroundStyle(Color.hwcText)
-                        Text(r.summaryLabel).font(.scoreboard(28))
-                            .foregroundStyle(r.outcome == .champion ? Color.hwcGold2 : Color.hwcText)
-                            .multilineTextAlignment(.center)
-                        let w = r.matches.filter { $0.gf > $0.ga }.count, d = r.matches.filter { $0.gf == $0.ga }.count
-                        Text(tr("\(r.matches.count) meciuri · \(w)V \(d)E \(r.matches.count - w - d)Î", "\(r.matches.count) matches · \(w)W \(d)D \(r.matches.count - w - d)L"))
-                            .font(.system(size: 15)).foregroundStyle(Color.hwcTextDim)
-                        if r.finished {
-                            Text(tr("Ai dus \(team.name) până la capătul drumului real.", "You took \(team.name) all the way along their real path."))
-                                .font(.system(size: 13)).foregroundStyle(Color.hwcTextDim).multilineTextAlignment(.center)
+                        Text("\(String(r.year)) · \(host)").font(.scoreboard(22)).foregroundStyle(Color.hwcText)
+                        if let champ = podium.first {
+                            let meta = game.data.meta(champ.0)
+                            Text("🏆 \(meta.flag) \(meta.name)").font(.scoreboard(30)).foregroundStyle(Color.hwcGold2)
+                                .multilineTextAlignment(.center)
+                            Text(tr("Campioană mondială", "World champions")).font(.system(size: 14)).foregroundStyle(Color.hwcTextDim)
                         }
+                        Text(tr("\(r.fixtures.count) meciuri jucate", "\(r.fixtures.count) matches played"))
+                            .font(.system(size: 13)).foregroundStyle(Color.hwcTextDim)
                     }
                     .padding(.vertical, 10)
 
-                    Panel {
-                        ForEach(Array(r.matches.enumerated()), id: \.offset) { _, m in
-                            HStack(spacing: 8) {
-                                Text(m.round).font(.system(size: 11)).foregroundStyle(Color.hwcTextDim).frame(width: 84, alignment: .leading)
-                                Text(game.label(m.opp)).font(.system(size: 14)).lineLimit(1)
+                    Panel(title: tr("Podium", "Podium")) {
+                        ForEach(Array(podium.enumerated()), id: \.offset) { _, place in
+                            let (code, icon) = place
+                            HStack {
+                                Text(icon)
+                                Text(game.label(code)).font(.system(size: 15, weight: code == r.focus ? .bold : .regular))
                                 Spacer()
-                                Text("\(m.gf)–\(m.ga)").font(.stat(14, weight: .bold))
-                                    .foregroundStyle(resultTag(m).color)
                             }
-                            .foregroundStyle(Color.hwcText)
+                            .foregroundStyle(code == r.focus ? Color.hwcGold : Color.hwcText)
+                        }
+                        if let top = scorers {
+                            Text(tr("⚽ Golgheter: \(top.0) — \(top.1) goluri", "⚽ Top scorer: \(top.0) — \(top.1) goals"))
+                                .font(.system(size: 14)).foregroundStyle(Color.hwcTextDim)
+                                .padding(.top, 4)
+                        }
+                        if let f = r.focus, let e = game.data.track(f, r.year) {
+                            Text(tr("Echipa ta, \(game.data.meta(f).name): \(e.finishLabel)", "Your team, \(game.data.meta(f).name): \(e.finishLabel)"))
+                                .font(.system(size: 14)).foregroundStyle(Color.hwcGold)
+                                .padding(.top, 2)
                         }
                     }
-                    PrimaryButton(title: tr("Joacă din nou", "Play again"), systemImage: "arrow.clockwise") {
-                        game.startRun(team: r.team, year: r.year)
+
+                    if let board = StageBoard.build(data: game.data, run: r) {
+                        StageBoardView(board: board, highlight: [], focus: r.focus)
                     }
-                    SecondaryButton(title: tr("Alege alt turneu", "Pick another tournament"), systemImage: "trophy") { game.go(.editions) }
+
+                    PrimaryButton(title: tr("Joacă din nou", "Play again"), systemImage: "arrow.clockwise") {
+                        game.startRun(year: r.year, focus: r.focus)
+                    }
+                    SecondaryButton(title: tr("Alege alt Mondial", "Pick another World Cup"), systemImage: "trophy") { game.go(.editions) }
                     SecondaryButton(title: tr("Meniu principal", "Main menu"), systemImage: "house.fill") { game.endRunAndGoHome() }
                 }
             }
         } else {
             MenuView()
         }
+    }
+
+    /// golgheterul (sau golgheterii) ediției, din golurile meciurilor
+    private func topScorers(_ r: RealRun) -> (String, Int)? {
+        var count: [String: Int] = [:]
+        for f in r.fixtures {
+            for g in game.data.match(f, year: r.year)?.goals ?? [] where g.k != "og" { count[g.n, default: 0] += 1 }
+        }
+        guard let best = count.values.max(), best > 0 else { return nil }
+        return (count.filter { $0.value == best }.keys.sorted().joined(separator: ", "), best)
     }
 }
