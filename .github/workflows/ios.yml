@@ -70,7 +70,7 @@ jobs:
             xcrun simctl io "$UDID" screenshot "screenshots/$s.png"
           done
           # aceleași ecrane în română (localizarea ro din App Store)
-          for s in menu run runLive runQuiz museum quiz country paywall; do
+          for s in menu run runLive runQuiz runBracket runShootout runFinal museum quiz country paywall; do
             xcrun simctl terminate "$UDID" "$BUNDLE" 2>/dev/null || true
             xcrun simctl launch "$UDID" "$BUNDLE" -demoScreen "$s" -demoLang ro
             if [ "$s" = "live" ]; then sleep 9; else sleep 4; fi

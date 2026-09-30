@@ -9,7 +9,7 @@ Bundle ID-ul rămâne `com.puiutpavel.historyofworldcup` (nu se vede public). Ap
 Niciodată: „FIFA”, „FIFA World Cup™”, „Official”, „We Are 26”, numele mingilor sau mascotelor ca brand.
 
 ## Subtitlu (max. 30)
-- ro: **Retrăiește Mondialele 1930–2026** (29)
+- ro: **Toate Mondialele, 1930–2026** (27)
 - en: **Relive the finals, 1930–2026** (27)
 
 Fără preț sau „o singură plată” în subtitlu, nume ori capturi (ghidul 2.3.7 interzice prețuri și termeni comerciali în metadate). Prețul apare automat în App Store.
@@ -21,7 +21,7 @@ Fără preț sau „o singură plată” în subtitlu, nume ori capturi (ghidul 
 Fără nume de alte aplicații, fără „FIFA”, fără nume de jucători, fără „gratis”.
 
 ## Text promoțional (max. 170, se poate schimba fără review)
-- ro: Joacă fiecare Mondial din 1930 până în 2026, cu formatul, regulile și adversarii reali ai epocii. Confirmă sau rescrie istoria!
+- ro: Joacă fiecare meci al fiecărui Mondial, în ordine, cu rezultatele reale, marcatorii, clasamentele la zi și tabloul eliminatoriilor. 1930–1938 și 1994 sunt gratuite.
 - en: Play every match of every World Cup in order, with the real results, scorers, live tables and the knockout bracket. 1930–1938 and 1994 are free.
 
 ## Descriere (ro)
@@ -61,7 +61,6 @@ Unofficial educational game, made independently. Not affiliated with, sponsored 
 
 Historical data: Fjelstul World Cup Database (CC-BY-SA 4.0); 2026 matches: openfootball (public domain).
 ```
-(Aplicația e deocamdată doar în română — descrierea în engleză spune adevărul doar după localizare; până atunci publică doar ro sau adaugă „Available in Romanian”.)
 
 ## Categorie, vârstă, confidențialitate
 - Categorie principală: **Games → Trivia**; secundară: **Games → Sports**.
