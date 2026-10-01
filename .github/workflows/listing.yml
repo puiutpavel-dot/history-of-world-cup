@@ -1,6 +1,6 @@
 name: Pagina App Store
 
-# Completează pagina din App Store a versiunii 1.0 prin App Store Connect API: categorii, nume/subtitlu,
+# Completează pagina din App Store a versiunii alese (implicit 1.1) prin App Store Connect API: categorii, nume/subtitlu,
 # descriere, cuvinte cheie, text promoțional, linkuri, vârstă 4+, preț gratuit, disponibilitate,
 # build, capturi iPhone 6,9" (branch-ul screenshots) și notele pentru App Review. Vezi tools/asc_listing.py.
 # Pornire manuală: GitHub → Actions → Pagina App Store → Run workflow. Poate fi rulat de mai multe ori.
@@ -8,6 +8,10 @@ name: Pagina App Store
 on:
   workflow_dispatch:
     inputs:
+      version:
+        description: "Versiunea (ex. 1.1; de la 1.1 se adaugă și es, pt, de, fr, it și „What's New”)"
+        required: false
+        default: "1.1"
       build:
         description: "Numărul build-ului (gol = cel mai nou build valid)"
         required: false
@@ -24,6 +28,7 @@ jobs:
       ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
       ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
       ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+      VERSION: ${{ github.event.inputs.version }}
       BUILD_NUMBER: ${{ github.event.inputs.build }}
       COPYRIGHT: ${{ github.event.inputs.copyright }}
     steps:

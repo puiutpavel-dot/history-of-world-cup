@@ -1,4 +1,4 @@
-"""Completează pagina din App Store a aplicației (versiunea 1.0), prin App Store Connect API.
+"""Completează pagina din App Store a aplicației (versiunea din VERSION, implicit 1.0), prin App Store Connect API.
 
 Rulează în GitHub Actions (workflow „Pagina App Store”), cu secretele ASC_KEY_ID, ASC_ISSUER_ID, ASC_KEY_P8.
 Idempotent: poate fi rulat de mai multe ori (actualizează ce există).
@@ -25,7 +25,7 @@ APP_ID = "6817332563"
 ROOT = os.path.join(os.path.dirname(__file__), "..")
 SHOTS_DIR = sys.argv[1] if len(sys.argv) > 1 else "/tmp/shots"
 BUILD_NUMBER = os.environ.get("BUILD_NUMBER", "").strip()
-VERSION = "1.0"
+VERSION = os.environ.get("VERSION", "").strip() or "1.0"
 COPYRIGHT = os.environ.get("COPYRIGHT", "").strip()
 PAGES = "https://puiutpavel-dot.github.io/history-of-world-cup"
 SCREENS = ["menu", "runLive", "runQuiz", "runBracket", "runShootout", "runFinal", "museum", "quiz", "country"]
@@ -113,18 +113,41 @@ def read_metadata():
     promo = {"ro": bullet("## Text promoțional", "ro"), "en": bullet("## Text promoțional", "en")}
     desc = {"ro": fenced("## Descriere (ro)"), "en": fenced("## Description (en)")}
     notes = open(os.path.join(ROOT, "docs", "app-store", "REVIEW_NOTES.md"), encoding="utf-8").read().split("```", 2)[1].strip("\n")
-    for k in ("ro", "en"):
+    # limbile noi (de la 1.1): secțiunea „## Limbile noi”, cu subsecțiuni ### și descrierile în blocuri separate
+    extra = md.split("## Limbile noi", 1)[1].split("\n## ", 1)[0]
+
+    def sub(title, lang):
+        block = extra.split("### " + title, 1)[1].split("\n### ", 1)[0]
+        return re.search(rf"^- {lang}: (.+)$", block, re.M).group(1).strip()
+
+    heads = {"es": "## Descripción (es)", "pt": "## Descrição (pt)", "de": "## Beschreibung (de)",
+             "fr": "## Description (fr)", "it": "## Descrizione (it)"}
+    for k in NEW_LANGS:
+        subtitle[k] = sub("Subtitlu", k)
+        keywords[k] = sub("Cuvinte-cheie", k)
+        promo[k] = sub("Text promoțional", k)
+        desc[k] = fenced(heads[k])
+    news_heads = {"en": "## What's New (en)", "ro": "## Noutăți (ro)", "es": "## Novedades (es)", "pt": "## Novidades (pt)",
+                  "de": "## Neuigkeiten (de)", "fr": "## Nouveautés (fr)", "it": "## Novità (it)"}
+    news = {k: fenced(h) for k, h in news_heads.items()}
+    for k in ("ro", "en", *NEW_LANGS):
         assert len(subtitle[k]) <= 30, subtitle
         assert len(keywords[k]) <= 100, keywords
         assert len(promo[k]) <= 170, promo
         assert len(desc[k]) <= 4000
-    return subtitle, keywords, promo, desc, notes
+        assert len(news[k]) <= 4000
+    return subtitle, keywords, promo, desc, notes, news
 
 
+NEW_LANGS = ("es", "pt", "de", "fr", "it")
+# limbile noi doar de la 1.1 (versiunea 1.0 a fost trimisă doar în en-US + ro)
 LOCALES = {"en-US": "en", "ro": "ro"}
-NAMES = {"en-US": "Football Finals Archive", "ro": "Arhiva Mondialelor"}
-PRIVACY = {"en-US": f"{PAGES}/privacy-en.html", "ro": f"{PAGES}/privacy.html"}
-SUPPORT = {"en-US": f"{PAGES}/support-en.html", "ro": f"{PAGES}/support.html"}
+if VERSION != "1.0":
+    LOCALES.update({"es-ES": "es", "es-MX": "es", "pt-BR": "pt", "de-DE": "de", "fr-FR": "fr", "it": "it"})
+# numele rămâne „Football Finals Archive” în toate limbile, în afară de română (decis 1 oct. 2026)
+NAMES = {loc: ("Arhiva Mondialelor" if loc == "ro" else "Football Finals Archive") for loc in LOCALES}
+PRIVACY = {loc: f"{PAGES}/{'privacy.html' if loc == 'ro' else 'privacy-en.html'}" for loc in LOCALES}
+SUPPORT = {loc: f"{PAGES}/{'support.html' if loc == 'ro' else 'support-en.html'}" for loc in LOCALES}
 
 
 def app_info_and_categories():
@@ -266,7 +289,7 @@ def version_and_build():
     if BUILD_NUMBER:
         valid = [b for b in valid if b["attributes"]["version"] == BUILD_NUMBER]
     if not valid:
-        WARN.append("niciun build VALID pentru 1.0" + (f" cu numărul {BUILD_NUMBER}" if BUILD_NUMBER else ""))
+        WARN.append(f"niciun build VALID pentru {VERSION}" + (f" cu numărul {BUILD_NUMBER}" if BUILD_NUMBER else ""))
         log("::warning::niciun build valid", [(b["attributes"]["version"], b["attributes"].get("processingState")) for b in builds])
     else:
         b = valid[0]
@@ -276,12 +299,14 @@ def version_and_build():
 
 
 def version_texts(vid):
-    step("Descriere, cuvinte cheie, text promoțional, suport (en-US + ro)")
-    _, keywords, promo, desc, _ = META
+    step("Descriere, cuvinte cheie, text promoțional, noutăți, suport (" + ", ".join(LOCALES) + ")")
+    _, keywords, promo, desc, _, news = META
     have = {l["attributes"]["locale"]: l for l in get_all(f"/v1/appStoreVersions/{vid}/appStoreVersionLocalizations")}
     out = {}
     for loc, lang in LOCALES.items():
         attrs = {"description": desc[lang], "keywords": keywords[lang], "promotionalText": promo[lang], "supportUrl": SUPPORT[loc]}
+        if VERSION != "1.0":
+            attrs["whatsNew"] = news[lang]
         if loc in have:
             call("PATCH", f"/v1/appStoreVersionLocalizations/{have[loc]['id']}", {"data": {
                 "type": "appStoreVersionLocalizations", "id": have[loc]["id"], "attributes": attrs}}, fatal=False)
@@ -312,6 +337,8 @@ def upload(kind, parent_rel, parent_type, parent_id, path, attr_name="uploaded")
 def screenshots(locs):
     step('Capturi iPhone 6,9" (APP_IPHONE_67)')
     for loc, lid in locs.items():
+        if loc not in ("en-US", "ro"):
+            continue  # limbile noi folosesc capturile în engleză (App Store le preia automat)
         prefix = "" if loc == "en-US" else "ro_"
         files = [os.path.join(SHOTS_DIR, f"{prefix}{s}.png") for s in SCREENS]
         files = [f for f in files if os.path.exists(f)]
@@ -369,7 +396,7 @@ def main():
     review_details(vid)
     summary = os.environ.get("GITHUB_STEP_SUMMARY", os.devnull)
     with open(summary, "a") as f:
-        f.write("### Pagina App Store — versiunea 1.0\n\n" + "\n".join(f"- {l}" if not l.startswith("**") else f"\n{l}\n" for l in LOG) + "\n\n")
+        f.write(f"### Pagina App Store — versiunea {VERSION}\n\n" + "\n".join(f"- {l}" if not l.startswith("**") else f"\n{l}\n" for l in LOG) + "\n\n")
         f.write("✅ Gata, cu avertismente:\n" + "".join(f"- {w}\n" for w in WARN) if WARN else "✅ Totul completat.\n")
         f.write("\nRămâne în App Store Connect: App Privacy (Data Not Collected), contactul pentru App Review, "
                 "achiziția „Full History” bifată la versiune, Submit for Review.\n")

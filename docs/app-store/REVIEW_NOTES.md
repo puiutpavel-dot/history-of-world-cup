@@ -26,7 +26,7 @@ HOW TO REACH THE PURCHASE
 Restore Purchases: main menu → "About & settings" → "Restore purchases".
 It is also on the purchase screen.
 
-The app is in English, and in Romanian on devices set to Romanian. Historical match data: Fjelstul World Cup Database (CC-BY-SA 4.0), credited
+The app follows the device language: English, Romanian, Spanish, Portuguese, German, French or Italian (English otherwise). Historical match data: Fjelstul World Cup Database (CC-BY-SA 4.0), credited
 in the app ("About & settings").
 ```
 
