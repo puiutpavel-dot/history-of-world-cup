@@ -36,7 +36,7 @@ jobs:
           sudo xcode-select -s "$XC"
           xcodebuild -version
       - name: Generează JSON-urile din prototipul web
-        run: node tools/export_ios_data.js
+        run: node tools/export_ios_data.js && python3 tools/i18n/build.py
       - name: Generează iconița aplicației
         run: |
           python3 -m venv /tmp/icon-venv

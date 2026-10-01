@@ -456,7 +456,7 @@ struct RunMatchCard: View {
 
             if revealed && progress >= 1 && !playing {
                 // „penalty-uri 4-5” e deja în titlul loviturilor de departajare
-                if let note = match.note, events.kicks.isEmpty || !note.contains("penalt") {
+                if let note = match.note, events.kicks.isEmpty || !NoteWords.isPenalty(note) {
                     Text(note).font(.system(size: 13)).foregroundStyle(Color.white.opacity(0.75))
                 }
                 if let verdict {
@@ -575,7 +575,7 @@ enum MatchVerdict: Equatable {
     case third(String)
     case champion(String)
 
-    static let thirdLabels: Set<String> = ["Finala mică", "Third place"]
+    static var thirdLabels: Set<String> { ["Finala mică", "Third place", translated("Third place")] }
 
     var isChampion: Bool {
         if case .champion = self { return true }

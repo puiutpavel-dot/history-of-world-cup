@@ -10,12 +10,12 @@ import Foundation
 public var roundLabels: [String: String] {
     AppLanguage.isRomanian
         ? ["R32": "Șaisprezecimi", "R16": "Optimi", "QF": "Sferturi", "SF": "Semifinală", "F": "Finală", "3P": "Finala mică"]
-        : ["R32": "Round of 32", "R16": "Round of 16", "QF": "Quarter-final", "SF": "Semi-final", "F": "Final", "3P": "Third-place match"]
+        : ["R32": "Round of 32", "R16": "Round of 16", "QF": "Quarter-final", "SF": "Semi-final", "F": "Final", "3P": "Third-place match"].mapValues(translated)
 }
 public var stageLabels: [String: String] {
     AppLanguage.isRomanian
         ? ["group": "Faza grupelor", "group2": "A doua fază a grupelor", "finalGroup": "Grupa finală"]
-        : ["group": "Group stage", "group2": "Second group stage", "finalGroup": "Final group"]
+        : ["group": "Group stage", "group2": "Second group stage", "finalGroup": "Final group"].mapValues(translated)
 }
 
 public enum Outcome: String, Codable, Sendable {

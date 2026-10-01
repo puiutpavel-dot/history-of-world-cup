@@ -224,7 +224,7 @@ public struct TrackMatch: Codable, Hashable, Sendable {
     public var hadExtraTime: Bool {
         if (goals ?? []).contains(where: { $0.base > 90 }) { return true }
         guard let note else { return false }
-        return ["prelungiri", "extra time", "penalt"].contains { note.contains($0) }
+        return NoteWords.hadExtraTime(note)
     }
 }
 

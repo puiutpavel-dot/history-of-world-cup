@@ -19,7 +19,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Generează JSON-urile din prototipul web
-        run: node tools/export_ios_data.js && node tools/make_golden.js
+        run: node tools/export_ios_data.js && node tools/make_golden.js && python3 tools/i18n/build.py
       - run: swift --version
       - run: swift test
         working-directory: ios/WorldCupCore
@@ -33,7 +33,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Generează JSON-urile din prototipul web
-        run: node tools/export_ios_data.js
+        run: node tools/export_ios_data.js && python3 tools/i18n/build.py
       - name: Generează iconița aplicației
         run: |
           python3 -m venv /tmp/icon-venv
@@ -75,6 +75,15 @@ jobs:
             xcrun simctl launch "$UDID" "$BUNDLE" -demoScreen "$s" -demoLang ro
             if [ "$s" = "live" ]; then sleep 9; else sleep 4; fi
             xcrun simctl io "$UDID" screenshot "screenshots/ro_$s.png"
+          done
+          # câteva ecrane în celelalte limbi (traducerile din tools/i18n)
+          for l in es pt de fr it; do
+            for s in menu runQuiz country; do
+              xcrun simctl terminate "$UDID" "$BUNDLE" 2>/dev/null || true
+              xcrun simctl launch "$UDID" "$BUNDLE" -demoScreen "$s" -demoLang "$l"
+              sleep 4
+              xcrun simctl io "$UDID" screenshot "screenshots/${l}_$s.png"
+            done
           done
           ls -la screenshots
       - uses: actions/upload-artifact@v4

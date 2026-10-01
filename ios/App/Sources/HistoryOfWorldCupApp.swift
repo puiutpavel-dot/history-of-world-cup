@@ -7,8 +7,8 @@ struct HistoryOfWorldCupApp: App {
     @StateObject private var store: Store
 
     init() {
-        // limba se fixează înainte de încărcarea datelor: română pe telefoanele în română, engleză în rest
-        // (`-demoLang ro|en` forțează limba pentru capturile din CI)
+        // limba se fixează înainte de încărcarea datelor: limba telefonului dacă o știm (ro, en, es, pt, de, fr, it),
+        // altfel engleză (`-demoLang ro|en|es…` forțează limba pentru capturile din CI)
         let args = ProcessInfo.processInfo.arguments
         if let i = args.firstIndex(of: "-demoLang"), i + 1 < args.count {
             AppLanguage.code = args[i + 1]
@@ -27,7 +27,7 @@ struct HistoryOfWorldCupApp: App {
                 .environmentObject(game)
                 .environmentObject(store)
                 .onReceive(store.$isUnlocked) { game.setStoreUnlocked($0) }
-                .environment(\.locale, Locale(identifier: AppLanguage.isRomanian ? "ro_RO" : "en_US"))
+                .environment(\.locale, Locale(identifier: AppLanguage.localeIdentifier))
                 .preferredColorScheme(theme.colorScheme)
                 .overlay(alignment: .topTrailing) {
                     Button {

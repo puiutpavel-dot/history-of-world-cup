@@ -33,7 +33,11 @@ enum StageBoard {
     case group(title: String, rows: [StandingRow], played: Int, total: Int)
     case knockout(rounds: [(title: String, ties: [KnockoutTie])])
 
-    static let groupLabels: Set<String> = ["Grupă", "Grupa a doua", "Grupa finală", "Group", "Second group stage", "Final group"]
+    /// etichetele fazelor de grupe (română, engleză și limba aplicației, din datele traduse)
+    static var groupLabels: Set<String> {
+        let en = ["Group", "Second group stage", "Final group"]
+        return Set(["Grupă", "Grupa a doua", "Grupa finală"] + en + en.map(translated))
+    }
 
     /// clasamentul grupei ultimului meci de pe ecran sau tabloul, cu meciurile jucate până acum
     static func build(data: GameData, run: RealRun) -> StageBoard? {
@@ -122,7 +126,7 @@ enum StageBoard {
 
     /// scorul de la penalty-uri din nota meciului („penalty-uri 4-5” / „penalties 4-5”)
     static func penalties(_ note: String?) -> (Int, Int)? {
-        guard let note, note.contains("penalt") else { return nil }
+        guard let note, NoteWords.isPenalty(note) else { return nil }
         let nums = note.split(whereSeparator: { !$0.isNumber }).compactMap { Int($0) }
         guard nums.count >= 2 else { return nil }
         return (nums[nums.count - 2], nums[nums.count - 1])
@@ -149,7 +153,7 @@ enum StageBoard {
 
 /// Litera (sau cifra) fiecărei grupe, din `MatchOrder.groups`: „Grupa A”, „Grupa 3”, „Grupa B (turul 2)”.
 enum GroupNames {
-    static let secondStage: Set<String> = ["Grupa a doua", "Second group stage"]
+    static var secondStage: Set<String> { ["Grupa a doua", "Second group stage", translated("Second group stage")] }
 
     /// grupa meciului `index` din calendarul ediției (nil = eliminatorii sau grupa finală din 1950)
     static func letter(year: Int, index: Int) -> String? {

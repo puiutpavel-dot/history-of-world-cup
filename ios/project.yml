@@ -29,10 +29,10 @@ targets:
     info:
       path: App/Info.plist
       properties:
-        # numele de sub iconiță: en.lproj / ro.lproj/InfoPlist.strings
+        # numele de sub iconiță: <limbă>.lproj/InfoPlist.strings
         CFBundleDisplayName: "Finals Archive"
         CFBundleDevelopmentRegion: en
-        CFBundleLocalizations: [en, ro]
+        CFBundleLocalizations: [en, ro, es, pt, de, fr, it]
         # versiunea vine din setările de build (TestFlight suprascrie CURRENT_PROJECT_VERSION cu numărul rulării CI)
         CFBundleShortVersionString: "$(MARKETING_VERSION)"
         CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"

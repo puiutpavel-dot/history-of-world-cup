@@ -294,7 +294,7 @@ struct GroupTableView: View {
             let t = c.tables[game.tableIndex]
             let titles = AppLanguage.isRomanian
                 ? ["group": "Clasament grupă", "group2": "A doua fază a grupelor", "finalGroup": "Grupa finală"]
-                : ["group": "Group table", "group2": "Second group stage", "finalGroup": "Final group"]
+                : ["group": "Group table", "group2": "Second group stage", "finalGroup": "Final group"].mapValues(translated)
             let title = titles[t.type] ?? tr("Clasament", "Table")
             let verdict = t.type == "finalGroup" ? c.outcomeLabel : (t.qualified ? tr("✅ Calificată", "✅ Qualified") : tr("❌ Eliminată", "❌ Knocked out"))
             ScreenContainer(title: "\(title) — \(tr("CM", "WC")) \(String(c.year))") {
