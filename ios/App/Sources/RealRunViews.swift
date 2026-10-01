@@ -175,7 +175,8 @@ struct RunView: View {
                         RunMatchCard(team: r.fixtures[x.i].home, match: x.m, revealed: r.revealed, progress: p, playing: busy,
                                      events: events, penProgress: penShown,
                                      verdict: MatchVerdict.of(run: r, index: x.i, match: x.m, data: game.data),
-                                     compact: matches.count > 1)
+                                     compact: matches.count > 1,
+                                     title: GroupNames.title(round: x.m.round, letter: GroupNames.letter(year: r.year, index: x.i)))
                     }
 
                     if !r.revealed {
@@ -332,6 +333,8 @@ struct RunMatchCard: View {
     var verdict: MatchVerdict?
     /// mai multe meciuri pe același ecran: card mai mic
     var compact = false
+    /// titlul cardului („Grupa A”); implicit faza meciului
+    var title: String? = nil
 
     /// loviturile în ordine alternativă: echipa 1, echipa 2, echipa 1…
     private var orderedKicks: [ShootoutKick] {
@@ -395,7 +398,7 @@ struct RunMatchCard: View {
         let sc = score
         let shown = moments
         VStack(spacing: 10) {
-            Text(match.round.uppercased()).font(.scoreboard(15, weight: .semibold)).foregroundStyle(Color.hwcGold)
+            Text((title ?? match.round).uppercased()).font(.scoreboard(15, weight: .semibold)).foregroundStyle(Color.hwcGold)
             HStack(alignment: .center) {
                 VStack(spacing: 4) {
                     Text(a.flag).font(.system(size: compact ? 32 : 44))

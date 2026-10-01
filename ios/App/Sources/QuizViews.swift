@@ -249,9 +249,11 @@ struct TrackEntryCard: View {
                 Text(tr("Meciurile din \(String(entry.year)) nu sunt încă în baza de date.", "The \(String(entry.year)) matches are not in the database yet."))
                     .font(.system(size: 13)).foregroundStyle(Color.hwcTextDim)
             }
-            ForEach(Array(entry.matches.enumerated()), id: \.offset) { _, m in
+            ForEach(Array(entry.matches.enumerated()), id: \.offset) { i, m in
                 HStack(alignment: .firstTextBaseline, spacing: 8) {
-                    Text(m.round).font(.system(size: 11)).foregroundStyle(Color.hwcTextDim).frame(width: 78, alignment: .leading)
+                    Text(GroupNames.title(round: m.round, letter: GroupNames.letter(year: entry.year, team: entry.code, index: i)))
+                        .font(.system(size: 11)).foregroundStyle(Color.hwcTextDim).lineLimit(2).minimumScaleFactor(0.8)
+                        .frame(width: 78, alignment: .leading)
                     Text(game.label(m.opp)).font(.system(size: 14))
                     Text("\(m.gf)–\(m.ga)").font(.stat(14, weight: .bold))
                     if let note = m.note {

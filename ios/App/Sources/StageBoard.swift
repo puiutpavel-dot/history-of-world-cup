@@ -116,7 +116,8 @@ enum StageBoard {
             if $0.gf != $1.gf { return $0.gf > $1.gf }
             return data.meta($0.code).name < data.meta($1.code).name
         }
-        return .group(title: label, rows: sorted, played: played.count, total: games.count)
+        return .group(title: GroupNames.title(round: label, letter: GroupNames.letter(year: year, index: index)),
+                      rows: sorted, played: played.count, total: games.count)
     }
 
     /// scorul de la penalty-uri din nota meciului („penalty-uri 4-5” / „penalties 4-5”)
@@ -143,6 +144,34 @@ enum StageBoard {
             return (label, ties)
         }
         return rounds.isEmpty ? nil : .knockout(rounds: rounds)
+    }
+}
+
+/// Litera (sau cifra) fiecărei grupe, din `MatchOrder.groups`: „Grupa A”, „Grupa 3”, „Grupa B (turul 2)”.
+enum GroupNames {
+    static let secondStage: Set<String> = ["Grupa a doua", "Second group stage"]
+
+    /// grupa meciului `index` din calendarul ediției (nil = eliminatorii sau grupa finală din 1950)
+    static func letter(year: Int, index: Int) -> String? {
+        guard let s = MatchOrder.groups[year], index >= 0, index < s.count else { return nil }
+        let c = s[s.index(s.startIndex, offsetBy: index)]
+        return c == "." ? nil : String(c)
+    }
+
+    /// grupa meciului `index` din traseul echipei (meciurile echipei, în ordine)
+    static func letter(year: Int, team: String, index: Int) -> String? {
+        var n = 0
+        for (i, f) in RealRun.fixtures(year: year).enumerated() where f.home == team || f.away == team {
+            if n == index { return letter(year: year, index: i) }
+            n += 1
+        }
+        return nil
+    }
+
+    /// „Grupa A” / „Grupa B (turul 2)”; fără literă rămâne eticheta fazei
+    static func title(round: String, letter: String?) -> String {
+        guard let l = letter else { return round }
+        return secondStage.contains(round) ? tr("Grupa \(l) (turul 2)", "Group \(l) (second round)") : tr("Grupa \(l)", "Group \(l)")
     }
 }
 

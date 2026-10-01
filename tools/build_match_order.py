@@ -49,6 +49,18 @@ def kickoff(y, date, time, city):
     return t - timedelta(hours=TZ_SHIFT.get(y, {}).get(city, 0))
 
 
+def group_letter(y, stage, group):
+    """litera sau cifra grupei („.” pentru meciurile eliminatorii și grupa finală din 1950)"""
+    if group in ("not applicable", "", None):
+        return "."
+    g = group.replace("Group ", "").strip()
+    # 1982: grupele din turul al doilea au fost A–D (în sursă apar ca 1–4)
+    if y == 1982 and stage == "second group stage":
+        g = "ABCD"[int(g) - 1]
+    assert len(g) == 1, (y, group)
+    return g
+
+
 def ordered(rows):
     """meciurile unei ediții în ordinea startului (data afișată rămâne ziua locală din sursă)"""
     return sorted(rows, key=lambda m: (m[5], m[2]))
@@ -135,12 +147,13 @@ def main(matches_csv, bookings_csv=None, kicks_csv=None, out=os.path.join(ROOT, 
             continue
         y = int(r["tournament_id"][3:])
         by_year[y].append((r["match_date"], r["match_time"], r["match_id"], code(r["home_team_code"]), code(r["away_team_code"]),
-                           kickoff(y, r["match_date"], r["match_time"], r["city_name"])))
+                           kickoff(y, r["match_date"], r["match_time"], r["city_name"]), group_letter(y, r["stage_name"], r["group_name"])))
     for m in json.load(open(SRC_2026, encoding="utf-8"))["matches"]:
         t, _, tz = m["time"].partition(" UTC")
         local = datetime.strptime(f"{m['date']} {t}", "%Y-%m-%d %H:%M")
         utc = local - timedelta(hours=int(tz or 0))
-        by_year[2026].append((utc.strftime("%Y-%m-%d"), utc.strftime("%H:%M"), "", CODE_2026[m["team1"]], CODE_2026[m["team2"]], utc))
+        by_year[2026].append((utc.strftime("%Y-%m-%d"), utc.strftime("%H:%M"), "", CODE_2026[m["team1"]], CODE_2026[m["team2"]], utc,
+                              group_letter(2026, "group stage", m.get("group"))))
     # evenimentele fiecărui meci (match_id), din perspectiva echipei 1 (home)
     events = defaultdict(list)
     homes = {r[2]: r[3] for v in by_year.values() for r in v if r[2]}
@@ -172,6 +185,7 @@ def main(matches_csv, bookings_csv=None, kicks_csv=None, out=os.path.join(ROOT, 
     ev_lines = []
 
     lines = []
+    groups = []
     together = 0
     for y in sorted(by_year):
         ms = ordered(by_year[y])
@@ -186,13 +200,17 @@ def main(matches_csv, bookings_csv=None, kicks_csv=None, out=os.path.join(ROOT, 
         together += items.count("=")
         assert all(re.fullmatch(r"=?\d{4}[A-Z]{3}-[A-Z]{3}", x) for x in items.split()), y
         lines.append(f"        {y}: \"{items}\",")
+        groups.append(f"        {y}: \"{''.join(m[6] for m in ms)}\",")
     with open(out, "w", encoding="utf-8") as f:
         f.write("// GENERAT de tools/build_match_order.py — nu edita manual.\n")
         f.write("// Ordinea cronologică a tuturor meciurilor fiecărei ediții: „MMDD” + echipa 1 + „-” + echipa 2.\n")
         f.write("// „=” în față: meciul a început în același moment cu cel anterior (se joacă simultan, pe același ecran).\n")
         f.write("// Surse: Fjelstul World Cup Database (CC-BY-SA 4.0); 2026: openfootball (domeniu public).\n\n")
         f.write("enum MatchOrder {\n    static let byYear: [Int: String] = [\n")
-        f.write("\n".join(lines) + "\n    ]\n}\n")
+        f.write("\n".join(lines) + "\n    ]\n\n")
+        f.write("    /// grupa fiecărui meci din calendar, câte un caracter („A”, „1”…; „.” = eliminatorii / grupa finală 1950)\n")
+        f.write("    static let groups: [Int: String] = [\n")
+        f.write("\n".join(groups) + "\n    ]\n}\n")
     print("meciuri:", {y: len(v) for y, v in sorted(by_year.items())}, "simultane cu anteriorul:", together)
     if bookings_csv or kicks_csv or MISSED:
         with open(os.path.join(os.path.dirname(out), "MatchEvents.swift"), "w", encoding="utf-8") as f:
