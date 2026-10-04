@@ -30,7 +30,8 @@ struct KnockoutTie: Identifiable {
 }
 
 enum StageBoard {
-    case group(title: String, rows: [StandingRow], played: Int, total: Int)
+    /// `live`: clasamentul se calculează în timpul meciurilor de pe ecran (scorul de la minutul curent)
+    case group(title: String, rows: [StandingRow], played: Int, total: Int, live: Bool)
     case knockout(rounds: [(title: String, ties: [KnockoutTie])])
 
     /// etichetele fazelor de grupe (română, engleză și limba aplicației, din datele traduse)
@@ -45,12 +46,13 @@ enum StageBoard {
         return build(data: data, run: run, index: last, current: last)
     }
 
-    /// clasamentul grupei meciului `index` sau tabloul, cu meciurile jucate până la `current` inclusiv
-    static func build(data: GameData, run: RealRun, index: Int, current: Int) -> StageBoard? {
+    /// clasamentul grupei meciului `index` sau tabloul, cu meciurile jucate până la `current` inclusiv;
+    /// `live`: meciurile în desfășurare (indexul din calendar → scorul echipei gazdă și al oaspeților la minutul curent)
+    static func build(data: GameData, run: RealRun, index: Int, current: Int, live: [Int: (Int, Int)] = [:]) -> StageBoard? {
         let all: [(f: Fixture, m: TrackMatch)?] = run.fixtures.map { f in data.match(f, year: run.year).map { (f: f, m: $0) } }
         guard all.indices.contains(index), all.indices.contains(current), let cur = all[index] else { return nil }
         if groupLabels.contains(cur.m.round) {
-            return group(all: all, index: index, current: current, label: cur.m.round, year: run.year, data: data)
+            return group(all: all, index: index, current: current, label: cur.m.round, year: run.year, data: data, live: live)
         }
         return knockout(all: all, current: current)
     }
@@ -58,13 +60,18 @@ enum StageBoard {
     /// după meciurile de pe ecran (unul sau mai multe simultane): câte un clasament pentru fiecare grupă
     /// implicată și, dacă e cazul, tabloul — fiecare o singură dată
     static func boards(data: GameData, run: RealRun) -> [BoardItem] {
-        let last = run.slot.upperBound - 1
+        boards(data: data, run: run, current: run.slot.upperBound - 1)
+    }
+
+    /// la fel, cu meciurile jucate până la `current` inclusiv plus cele în desfășurare (`live`) —
+    /// clasamentul în timp real, înainte și în timpul meciurilor de pe ecran
+    static func boards(data: GameData, run: RealRun, current: Int, live: [Int: (Int, Int)] = [:]) -> [BoardItem] {
         var out: [BoardItem] = []
         for i in run.slot {
-            guard let b = build(data: data, run: run, index: i, current: last) else { continue }
+            guard let b = build(data: data, run: run, index: i, current: current, live: live) else { continue }
             let key: String
             switch b {
-            case let .group(title, rows, _, _): key = title + rows.map(\.code).sorted().joined()
+            case let .group(title, rows, _, _, _): key = title + rows.map(\.code).sorted().joined()
             case .knockout: key = "knockout"
             }
             if !out.contains(where: { $0.key == key }) { out.append(BoardItem(key: key, board: b)) }
@@ -72,7 +79,8 @@ enum StageBoard {
         return out
     }
 
-    private static func group(all: [(f: Fixture, m: TrackMatch)?], index: Int, current: Int, label: String, year: Int, data: GameData) -> StageBoard? {
+    private static func group(all: [(f: Fixture, m: TrackMatch)?], index: Int, current: Int, label: String, year: Int, data: GameData,
+                              live: [Int: (Int, Int)] = [:]) -> StageBoard? {
         guard let cur = all[index] else { return nil }
         // echipele grupei: legate prin meciuri din aceeași fază de grupe
         var comp: Set<String> = [cur.f.home, cur.f.away]
@@ -99,12 +107,14 @@ enum StageBoard {
             if gf > ga { r.won += 1; r.pts += win } else if gf == ga { r.drawn += 1; r.pts += 1 } else { r.lost += 1 }
             rows[code] = r
         }
-        let played = games.filter { $0.i <= current }
+        let played = games.filter { $0.i <= current || live[$0.i] != nil }
         for g in played {
-            add(g.f.home, g.m.gf, g.m.ga)
-            add(g.f.away, g.m.ga, g.m.gf)
+            let sc = live[g.i] ?? (g.m.gf, g.m.ga)
+            add(g.f.home, sc.0, sc.1)
+            add(g.f.away, sc.1, sc.0)
         }
-        let final = played.count == games.count
+        let isLive = played.contains { live[$0.i] != nil }
+        let final = played.count == games.count && !isLive
         if final, let lastGroup = games.map(\.i).max() {
             // a mers mai departe = mai are un meci într-o altă fază, după grupă
             for code in comp {
@@ -121,7 +131,7 @@ enum StageBoard {
             return data.meta($0.code).name < data.meta($1.code).name
         }
         return .group(title: GroupNames.title(round: label, letter: GroupNames.letter(year: year, index: index)),
-                      rows: sorted, played: played.count, total: games.count)
+                      rows: sorted, played: played.count, total: games.count, live: isLive)
     }
 
     /// scorul de la penalty-uri din nota meciului („penalty-uri 4-5” / „penalties 4-5”)
@@ -197,18 +207,26 @@ struct StageBoardView: View {
 
     var body: some View {
         switch board {
-        case let .group(title, rows, played, total):
-            groupTable(title: title, rows: rows, played: played, total: total)
+        case let .group(title, rows, played, total, live):
+            groupTable(title: title, rows: rows, played: played, total: total, live: live)
         case let .knockout(rounds):
             bracket(rounds)
         }
     }
 
-    private func groupTable(title: String, rows: [StandingRow], played: Int, total: Int) -> some View {
-        let final = played == total
+    private func groupTable(title: String, rows: [StandingRow], played: Int, total: Int, live: Bool) -> some View {
+        let final = played == total && !live
         return Panel(title: "📊 " + title) {
-            Text(final ? tr("Clasament final", "Final standings") : tr("Clasament la zi · \(played) din \(total) meciuri jucate", "Live table · \(played) of \(total) matches played"))
-                .font(.system(size: 12)).foregroundStyle(Color.hwcTextDim)
+            if live {
+                HStack(spacing: 6) {
+                    Circle().fill(Color.hwcRed).frame(width: 7, height: 7)
+                    Text(tr("În timp real · \(played) din \(total) meciuri", "Live · \(played) of \(total) matches"))
+                        .font(.system(size: 12, weight: .semibold)).foregroundStyle(Color.hwcRed)
+                }
+            } else {
+                Text(final ? tr("Clasament final", "Final standings") : tr("Clasament la zi · \(played) din \(total) meciuri jucate", "Live table · \(played) of \(total) matches played"))
+                    .font(.system(size: 12)).foregroundStyle(Color.hwcTextDim)
+            }
             HStack(spacing: 0) {
                 Text("").frame(maxWidth: .infinity, alignment: .leading)
                 ForEach([tr("J", "P"), tr("V", "W"), tr("E", "D"), tr("Î", "L")], id: \.self) { h in
@@ -244,6 +262,7 @@ struct StageBoardView: View {
                 .padding(.vertical, 2).padding(.horizontal, 4)
                 .background(followed ? Color.hwcGold.opacity(0.14) : Color.clear, in: RoundedRectangle(cornerRadius: 6))
             }
+            .animation(.easeInOut(duration: 0.35), value: rows.map(\.code))
             if final && rows.contains(where: \.qualified) {
                 Text(tr("✓ a mers mai departe", "✓ went through"))
                     .font(.system(size: 11)).foregroundStyle(Color.hwcTextDim)

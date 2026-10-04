@@ -148,6 +148,8 @@ struct RunView: View {
             let slot = Array(r.slot)
             let matches = slot.compactMap { i in game.data.match(r.fixtures[i], year: r.year).map { SlotMatch(i: i, m: $0) } }
             let maxMinutes: Double = matches.contains { $0.m.hadExtraTime } ? 120 : 90
+            // unul sau două meciuri de grupă pe ecran: clasamentul grupei se vede și înainte, și în timpul meciurilor
+            let liveTable = matches.count <= 2 && matches.allSatisfy { StageBoard.groupLabels.contains($0.m.round) }
             ScreenContainer(title: "\(String(r.year)) · \(host)", backLabel: tr("Meniu", "Menu"), onBack: { game.go(.menu) }) {
                 VStack(alignment: .leading, spacing: 14) {
                     HStack {
@@ -189,17 +191,24 @@ struct RunView: View {
                                       systemImage: "arrow.right") { game.nextRunMatch() }
                     }
 
-                    if r.revealed && !playing {
+                    let finished = r.revealed && !playing
+                    if finished || liveTable {
+                        // după meciuri: clasamentul / tabloul; înainte și în timpul lor (grupe, 1–2 meciuri): clasamentul în timp real
+                        let highlight = Set(slot.flatMap { [r.fixtures[$0].home, r.fixtures[$0].away] })
+                        let boards = finished ? StageBoard.boards(data: game.data, run: r)
+                            : StageBoard.boards(data: game.data, run: r, current: r.slot.lowerBound - 1,
+                                                live: playing ? liveScores(matches, shown: shown, maxMinutes: maxMinutes) : [:])
+                        ForEach(boards) { b in
+                            StageBoardView(board: b.board, highlight: highlight, focus: r.focus)
+                                .transition(.opacity)
+                        }
+                    }
+                    if finished {
                         let each = matches.count > 1 ? 1 : 2
                         MatchFactsPanel(facts: slot.flatMap { i in
                             game.matchFacts.facts(team: r.fixtures[i].home, year: r.year, index: r.fixtures[i].homeIndex, limit: each)
                         })
                         .transition(.opacity)
-                        let highlight = Set(slot.flatMap { [r.fixtures[$0].home, r.fixtures[$0].away] })
-                        ForEach(StageBoard.boards(data: game.data, run: r)) { b in
-                            StageBoardView(board: b.board, highlight: highlight, focus: r.focus)
-                                .transition(.opacity)
-                        }
                     }
                 }
             }
@@ -218,6 +227,20 @@ struct RunView: View {
         } else {
             MenuView()
         }
+    }
+
+    /// scorul fiecărui meci de pe ecran la minutul curent (aceleași reguli ca pe card: ceasul comun,
+    /// golurile până la minutul curent, scorul final după fluier)
+    private func liveScores(_ matches: [SlotMatch], shown: Double, maxMinutes: Double) -> [Int: (Int, Int)] {
+        var out: [Int: (Int, Int)] = [:]
+        for x in matches {
+            let own: Double = x.m.hadExtraTime ? 120 : 90
+            let p = min(1, shown * maxMinutes / own)
+            if p >= 1 { out[x.i] = (x.m.gf, x.m.ga); continue }
+            let g = (x.m.goals ?? []).filter { $0.clock <= p * own }
+            out[x.i] = (g.filter { $0.t == 1 }.count, g.filter { $0.t == 0 }.count)
+        }
+        return out
     }
 
     /// „Meciul 34/52” sau, pentru meciuri simultane, „Meciurile 33–34/52”
