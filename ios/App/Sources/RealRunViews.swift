@@ -148,8 +148,8 @@ struct RunView: View {
             let slot = Array(r.slot)
             let matches = slot.compactMap { i in game.data.match(r.fixtures[i], year: r.year).map { SlotMatch(i: i, m: $0) } }
             let maxMinutes: Double = matches.contains { $0.m.hadExtraTime } ? 120 : 90
-            // unul sau două meciuri de grupă pe ecran: clasamentul grupei se vede și înainte, și în timpul meciurilor
-            let liveTable = matches.count <= 2 && matches.allSatisfy { StageBoard.groupLabels.contains($0.m.round) }
+            // meciuri de grupă pe ecran (oricâte, la orice ediție): clasamentul fiecărei grupe se vede și înainte, și în timpul meciurilor
+            let liveTable = !matches.isEmpty && matches.allSatisfy { StageBoard.groupLabels.contains($0.m.round) }
             ScreenContainer(title: "\(String(r.year)) · \(host)", backLabel: tr("Meniu", "Menu"), onBack: { game.go(.menu) }) {
                 VStack(alignment: .leading, spacing: 14) {
                     HStack {
@@ -193,7 +193,7 @@ struct RunView: View {
 
                     let finished = r.revealed && !playing
                     if finished || liveTable {
-                        // după meciuri: clasamentul / tabloul; înainte și în timpul lor (grupe, 1–2 meciuri): clasamentul în timp real
+                        // după meciuri: clasamentul / tabloul; înainte și în timpul meciurilor de grupă: clasamentul în timp real
                         let highlight = Set(slot.flatMap { [r.fixtures[$0].home, r.fixtures[$0].away] })
                         let boards = finished ? StageBoard.boards(data: game.data, run: r)
                             : StageBoard.boards(data: game.data, run: r, current: r.slot.lowerBound - 1,

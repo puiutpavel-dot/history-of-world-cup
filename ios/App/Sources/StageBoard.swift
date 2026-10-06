@@ -50,7 +50,8 @@ enum StageBoard {
     /// `live`: meciurile în desfășurare (indexul din calendar → scorul echipei gazdă și al oaspeților la minutul curent)
     static func build(data: GameData, run: RealRun, index: Int, current: Int, live: [Int: (Int, Int)] = [:]) -> StageBoard? {
         let all: [(f: Fixture, m: TrackMatch)?] = run.fixtures.map { f in data.match(f, year: run.year).map { (f: f, m: $0) } }
-        guard all.indices.contains(index), all.indices.contains(current), let cur = all[index] else { return nil }
+        // `current` = -1: niciun meci jucat încă (meciul de deschidere) — clasamentul pornește de la zero
+        guard all.indices.contains(index), current >= -1, current < all.count, let cur = all[index] else { return nil }
         if groupLabels.contains(cur.m.round) {
             return group(all: all, index: index, current: current, label: cur.m.round, year: run.year, data: data, live: live)
         }
