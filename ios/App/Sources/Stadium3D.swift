@@ -156,23 +156,23 @@ final class StadiumScene {
 
     private func buildRoofs() {
         let top = rise * Float(rows)
-        let roofMat = material(UIColor(white: 0.85, alpha: 1), roughness: 0.5)
+        let roofMat = material(UIColor(white: 0.22, alpha: 1), roughness: 0.9)
         let strip = material(.white)
-        strip.emission.contents = UIColor(white: 0.9, alpha: 1)
+        strip.emission.contents = UIColor(white: 0.55, alpha: 1)
         let column = material(UIColor(white: 0.5, alpha: 1))
         let span = depth * Float(rows)
         for s: Float in [-1, 1] {
-            let roof = SCNBox(width: CGFloat(innerX * 2 + 1.2), height: 0.06, length: CGFloat(span * 0.75), chamferRadius: 0.02)
+            let roof = SCNBox(width: CGFloat(innerX * 2 + 1.2), height: 0.06, length: CGFloat(span * 0.45), chamferRadius: 0.02)
             roof.materials = [roofMat]
             let n = SCNNode(geometry: roof)
-            n.position = SCNVector3(0, top + 0.95, s * (innerZ + span * 0.62))
+            n.position = SCNVector3(0, top + 0.95, s * (innerZ + span * 0.78))
             n.eulerAngles = SCNVector3(s * 0.08, 0, 0)
             scene.rootNode.addChildNode(n)
             // marginea acoperișului, luminată
             let edge = SCNBox(width: CGFloat(innerX * 2 + 1.2), height: 0.04, length: 0.04, chamferRadius: 0)
             edge.materials = [strip]
             let e = SCNNode(geometry: edge)
-            e.position = SCNVector3(0, top + 0.89, s * (innerZ + span * 0.25))
+            e.position = SCNVector3(0, top + 0.92, s * (innerZ + span * 0.555))
             scene.rootNode.addChildNode(e)
             for x in stride(from: -innerX, through: innerX, by: innerX / 2) {
                 let c = SCNCylinder(radius: 0.04, height: CGFloat(top + 0.95))
@@ -231,17 +231,17 @@ final class StadiumScene {
 
     private func buildCamera(rotate: Bool) {
         let cam = SCNCamera()
-        cam.fieldOfView = 36
+        cam.fieldOfView = 40
         cam.zNear = 0.5
         cam.zFar = 80
         cam.wantsHDR = true
-        cam.bloomIntensity = 0.7
-        cam.bloomThreshold = 0.75
+        cam.bloomIntensity = 0.45
+        cam.bloomThreshold = 0.9
         cam.bloomBlurRadius = 6
         camera.camera = cam
-        camera.position = SCNVector3(0, 7.2, 14.5)
+        camera.position = SCNVector3(0, 10.5, 12.5)
         let target = SCNNode()
-        target.position = SCNVector3(0, 0.6, 0)
+        target.position = SCNVector3(0, 0, 0.6)
         scene.rootNode.addChildNode(target)
         camera.constraints = [SCNLookAtConstraint(target: target)]
         pivot.addChildNode(camera)
