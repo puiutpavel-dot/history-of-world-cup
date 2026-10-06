@@ -4,17 +4,30 @@ import WorldCupCore
 struct MenuView: View {
     @EnvironmentObject var game: GameState
     @EnvironmentObject var store: Store
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         ScrollView {
             VStack(spacing: 28) {
                 VStack(spacing: 10) {
-                    Image("Logo")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 120, height: 120)
-                        .clipShape(RoundedRectangle(cornerRadius: 27, style: .continuous))
-                        .shadow(color: Color.hwcGold.opacity(0.35), radius: 18)
+                    // stadionul 3D, cu sigla deasupra marginii de jos
+                    ZStack(alignment: .bottom) {
+                        Stadium3DView(rotate: !reduceMotion)
+                            .frame(height: 250)
+                            .mask(LinearGradient(stops: [.init(color: .clear, location: 0), .init(color: .black, location: 0.12),
+                                                         .init(color: .black, location: 0.75), .init(color: .clear, location: 1)],
+                                                 startPoint: .top, endPoint: .bottom))
+                            .accessibilityHidden(true)
+                        Image("Logo")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 72, height: 72)
+                            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                            .shadow(color: Color.hwcGold.opacity(0.35), radius: 14)
+                            .offset(y: 18)
+                    }
+                    .padding(.horizontal, -24)
+                    .padding(.bottom, 18)
                     Text(tr("ARHIVA\nMONDIALELOR", "FOOTBALL FINALS\nARCHIVE"))
                         .font(.scoreboard(44))
                         .lineLimit(2)
@@ -26,7 +39,7 @@ struct MenuView: View {
                         .foregroundStyle(Color.hwcTextDim)
                         .multilineTextAlignment(.center)
                 }
-                .padding(.top, 50)
+                .padding(.top, 8)
 
                 VStack(spacing: 12) {
                     if game.hasResumableRun, let r = game.run {

@@ -205,6 +205,7 @@ final class PitchScene {
         ambient.light = SCNLight()
         ambient.light!.type = .ambient
         ambient.light!.intensity = 450
+        ambient.name = "ambient"
         root.addChildNode(ambient)
         let sun = SCNNode()
         sun.light = SCNLight()
@@ -214,12 +215,14 @@ final class PitchScene {
         sun.light!.shadowRadius = 4
         sun.light!.shadowColor = UIColor(white: 0, alpha: 0.45)
         sun.eulerAngles = SCNVector3(-Float.pi / 3, Float.pi / 6, 0)
+        sun.name = "sun"
         root.addChildNode(sun)
 
         let cam = SCNNode()
         cam.camera = SCNCamera()
         cam.camera!.fieldOfView = 40
         cam.position = SCNVector3(0, 6.6, 7.4)
+        cam.name = "pitchCamera"
         let target = SCNNode()
         target.position = SCNVector3(0, 0, 0.25)
         root.addChildNode(target)
