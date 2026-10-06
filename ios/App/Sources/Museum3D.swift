@@ -49,7 +49,11 @@ final class MuseumScene {
 
         if rotate {
             ball.runAction(.repeatForever(.rotateBy(x: 0, y: 2 * .pi, z: 0, duration: 12)))
-            shirt.runAction(.repeatForever(.rotateBy(x: 0, y: -2 * .pi, z: 0, duration: 16)))
+            // tricoul se leagănă spre privitor, ca să se vadă mereu din față (la capete se vede și spatele)
+            shirt.eulerAngles = SCNVector3(0, -0.9, 0)
+            let swing = SCNAction.rotateBy(x: 0, y: 1.8, z: 0, duration: 5)
+            swing.timingMode = .easeInEaseOut
+            shirt.runAction(.repeatForever(.sequence([swing, swing.reversed()])))
         } else {
             shirt.eulerAngles = SCNVector3(0, -0.35, 0)
         }
@@ -108,6 +112,53 @@ final class MuseumScene {
 
     private static func hex(_ h: UInt32) -> UIColor { KitColors.color(h) }
 
+    /// textura mingii (proiecție echirectangulară): 12 pentagoane sau 12 cercuri decorative
+    /// în jurul vârfurilor unui icosaedru; `ring` = culoarea inelului din jurul fiecărui motiv
+    private static func texturedBall(base: UInt32, mark: UInt32, ring: UInt32?) -> SCNMaterial {
+        let w = 512, h = 256
+        var px = [UInt8](repeating: 0, count: w * h * 4)
+        func rgb(_ c: UInt32) -> (UInt8, UInt8, UInt8) { (UInt8((c >> 16) & 0xFF), UInt8((c >> 8) & 0xFF), UInt8(c & 0xFF)) }
+        let b = rgb(base), m = rgb(mark), r = rgb(ring ?? mark)
+        // o bază locală (t1, t2) pentru fiecare vârf, ca să putem desena pentagoane
+        let frames: [(SIMD3<Float>, SIMD3<Float>, SIMD3<Float>)] = icosa.map { d in
+            let up: SIMD3<Float> = abs(d.y) < 0.9 ? SIMD3(0, 1, 0) : SIMD3(1, 0, 0)
+            let t1 = simd_normalize(simd_cross(up, d))
+            return (d, t1, simd_cross(d, t1))
+        }
+        let pent: Float = 0.33, k = Float.pi / 5
+        for y in 0..<h {
+            let lat = (0.5 - (Float(y) + 0.5) / Float(h)) * .pi
+            for x in 0..<w {
+                let lon = (Float(x) + 0.5) / Float(w) * 2 * .pi
+                let p = SIMD3<Float>(cos(lat) * sin(lon), sin(lat), cos(lat) * cos(lon))
+                var c = b
+                for (d, t1, t2) in frames {
+                    let dot = simd_dot(p, d)
+                    if dot < 0.8 { continue }
+                    let ang = acos(min(1, dot))
+                    if ring == nil {
+                        // pentagon: distanța limită depinde de unghiul din planul tangent
+                        let a = atan2(simd_dot(p, t2), simd_dot(p, t1)) + .pi
+                        let edge = pent * cos(k) / cos(a.truncatingRemainder(dividingBy: 2 * k) - k)
+                        if ang < edge { c = m }
+                    } else {
+                        if ang < 0.11 { c = m } else if ang > 0.22 && ang < 0.27 { c = r }
+                    }
+                    break
+                }
+                let i = (y * w + x) * 4
+                px[i] = c.0; px[i + 1] = c.1; px[i + 2] = c.2; px[i + 3] = 255
+            }
+        }
+        let image: CGImage? = px.withUnsafeMutableBytes { buf in
+            CGContext(data: buf.baseAddress, width: w, height: h, bitsPerComponent: 8, bytesPerRow: w * 4,
+                      space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)?.makeImage()
+        }
+        let mat = material(.white, roughness: 0.45)
+        if let image { mat.diffuse.contents = UIImage(cgImage: image) }
+        return mat
+    }
+
     static func ball(year: Int) -> SCNNode {
         let root = SCNNode()
         let sphere = SCNSphere(radius: CGFloat(radius))
@@ -137,14 +188,8 @@ final class MuseumScene {
                 root.addChildNode(band(seam, tilt: (a, a * 0.5), pipe: 0.005))
             }
         case ...1974:
-            // albă, cu pentagoane negre
-            root.addChildNode(node(sphere, material(.white, roughness: 0.45)))
-            let black = material(hex(0x111111), roughness: 0.5)
-            for d in icosa {
-                let p = SCNCylinder(radius: CGFloat(radius * 0.33), height: 0.006)
-                p.radialSegmentCount = 5
-                root.addChildNode(patch(p, black, dir: d))
-            }
+            // albă, cu pentagoane negre (desenate direct pe suprafața mingii)
+            root.addChildNode(node(sphere, texturedBall(base: 0xFFFFFF, mark: 0x111111, ring: nil)))
         case ...2002:
             // albă, cu motive decorative rotunde în culorile epocii
             let palette: [Int: (UInt32, UInt32)] = [
@@ -152,14 +197,7 @@ final class MuseumScene {
                 1990: (0x1A1A1A, 0x6B6B6B), 1994: (0x1E40AF, 0x0E7490), 1998: (0x1E3A8A, 0xC81E2C), 2002: (0xC9A227, 0xB91C1C),
             ]
             let (c1, c2) = palette[year] ?? (0x111111, 0x444444)
-            root.addChildNode(node(sphere, material(.white, roughness: 0.4)))
-            let m1 = material(hex(c1), roughness: 0.5), m2 = material(hex(c2), roughness: 0.5)
-            for (i, d) in icosa.enumerated() {
-                let ring = SCNTorus(ringRadius: CGFloat(radius * 0.27), pipeRadius: 0.012)
-                root.addChildNode(patch(ring, i % 2 == 0 ? m1 : m2, dir: d, lift: -0.004))
-                let dot = SCNCylinder(radius: CGFloat(radius * 0.1), height: 0.006)
-                root.addChildNode(patch(dot, i % 2 == 0 ? m2 : m1, dir: d))
-            }
+            root.addChildNode(node(sphere, texturedBall(base: 0xFFFFFF, mark: c2, ring: c1)))
         default:
             // minge modernă: albă, cu benzi colorate care o înconjoară
             let palette: [Int: [UInt32]] = [
@@ -268,10 +306,10 @@ final class MuseumScene {
     private func camera() {
         let cam = SCNNode()
         cam.camera = SCNCamera()
-        cam.camera!.fieldOfView = 34
-        cam.position = SCNVector3(0, 1.55, 4.3)
+        cam.camera!.fieldOfView = 30
+        cam.position = SCNVector3(0, 1.45, 3.9)
         let target = SCNNode()
-        target.position = SCNVector3(0, 0.78, 0)
+        target.position = SCNVector3(0, 0.85, 0)
         scene.rootNode.addChildNode(target)
         cam.constraints = [SCNLookAtConstraint(target: target)]
         scene.rootNode.addChildNode(cam)
