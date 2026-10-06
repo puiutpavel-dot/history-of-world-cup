@@ -444,6 +444,12 @@ struct RunMatchCard: View {
             }
             .foregroundStyle(Color.white)
 
+            // terenul 3D: înainte de meci echipele stau în așezare, apoi meciul se derulează după cronometru
+            Pitch3DView(minute: revealed ? minuteNow : 0, goals: revealed ? goals : [], home: team, away: match.opp,
+                        shootout: inShootout || (revealed && progress >= 1 && !events.kicks.isEmpty))
+                .frame(height: compact ? 130 : 190)
+                .clipShape(RoundedRectangle(cornerRadius: 10))
+
             Text(clockText)
                 .font(.stat(14, weight: .bold))
                 .foregroundStyle(playing ? Color.hwcGold : Color.white.opacity(0.7))
