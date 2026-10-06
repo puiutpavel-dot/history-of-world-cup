@@ -4,6 +4,7 @@ import WorldCupCore
 struct MuseumView: View {
     @EnvironmentObject var game: GameState
     @State private var open: Int?
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         ScreenContainer(title: tr("📖 Muzeul Edițiilor", "📖 Museum of Editions"), backLabel: tr("Meniu", "Menu"), onBack: { game.go(.menu) }) {
@@ -26,6 +27,13 @@ struct MuseumView: View {
 
                         if open == ed.year {
                             VStack(alignment: .leading, spacing: 8) {
+                                // vitrina 3D: mingea epocii și tricoul campioanei
+                                Museum3DView(year: ed.year, champion: ed.champion, rotate: !reduceMotion)
+                                    .id(ed.year)
+                                    .frame(height: 190)
+                                    .frame(maxWidth: .infinity)
+                                    .background(Color.black.opacity(0.25), in: RoundedRectangle(cornerRadius: 10))
+                                    .accessibilityHidden(true)
                                 Text(LocalizedStringKey(tr("🏆 Campioană: ", "🏆 Champions: ") + "**\(game.label(ed.champion))**"))
                                 Text(tr("🥈 Finalistă: ", "🥈 Runners-up: ") + game.label(ed.runnerUp) + tr(" · 🥉 Locul 3: ", " · 🥉 Third: ") + game.label(ed.third))
                                 Text(tr("⚽ Golgheter: ", "⚽ Top scorer: ") + ed.topScorer)
