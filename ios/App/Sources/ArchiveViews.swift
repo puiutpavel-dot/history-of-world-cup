@@ -37,7 +37,6 @@ struct MuseumView: View {
                                 Text(LocalizedStringKey(tr("🏆 Campioană: ", "🏆 Champions: ") + "**\(game.label(ed.champion))**"))
                                 Text(tr("🥈 Finalistă: ", "🥈 Runners-up: ") + game.label(ed.runnerUp) + tr(" · 🥉 Locul 3: ", " · 🥉 Third: ") + game.label(ed.third))
                                 Text(tr("⚽ Golgheter: ", "⚽ Top scorer: ") + ed.topScorer)
-                                Text(tr("🔴 Minge oficială: ", "🔴 Match ball: ") + ed.ball)
                                 Text(ed.note).italic().foregroundStyle(Color.hwcTextDim)
                                 if let f = game.data.formats[ed.year] {
                                     Text(LocalizedStringKey("📋 **Format:** " + f.summary))
@@ -58,7 +57,7 @@ struct MuseumView: View {
                     .background(Color.hwcPanel, in: RoundedRectangle(cornerRadius: 12))
                     .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.hwcBorder))
                 }
-                Text(LocalizedStringKey(tr("Rezultatele meciurilor reale: [Fjelstul World Cup Database](https://www.github.com/jfjelstul/worldcup) © 2023 Joshua C. Fjelstul, Ph.D., licență [CC-BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/legalcode) (date adaptate). Loturi: Wikipedia, „FIFA World Cup squads”.", "Real match results: [Fjelstul World Cup Database](https://www.github.com/jfjelstul/worldcup) © 2023 Joshua C. Fjelstul, Ph.D., licensed [CC-BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/legalcode) (adapted data). Squads: Wikipedia, \"FIFA World Cup squads\".")))
+                Text(LocalizedStringKey(tr("Rezultatele meciurilor reale: [baza de date Fjelstul](https://www.github.com/jfjelstul/worldcup) © 2023 Joshua C. Fjelstul, Ph.D., licență [CC-BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/legalcode) (date adaptate). Loturi: listele de loturi de pe Wikipedia.", "Real match results: [Fjelstul football database](https://www.github.com/jfjelstul/worldcup) © 2023 Joshua C. Fjelstul, Ph.D., licensed [CC-BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/legalcode) (adapted data). Squads: Wikipedia squad lists.")))
                     .font(.system(size: 11))
                     .foregroundStyle(Color.hwcTextDim)
                     .tint(.hwcGold)

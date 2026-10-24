@@ -1,7 +1,7 @@
 // GENERAT de tools/build_match_order.py — nu edita manual.
 // Ordinea cronologică a tuturor meciurilor fiecărei ediții: „MMDD” + echipa 1 + „-” + echipa 2.
 // „=” în față: meciul a început în același moment cu cel anterior (se joacă simultan, pe același ecran).
-// Surse: Fjelstul World Cup Database (CC-BY-SA 4.0); 2026: openfootball (domeniu public).
+// Surse: Fjelstul football database (CC-BY-SA 4.0); 2026: openfootball (domeniu public).
 
 enum MatchOrder {
     static let byYear: [Int: String] = [

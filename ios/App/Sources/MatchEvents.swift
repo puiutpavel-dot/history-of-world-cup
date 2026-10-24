@@ -2,7 +2,7 @@
 // Eliminările și loviturile de departajare, pe meci (indexul din calendarul `MatchOrder`).
 // „R|minut|1=echipa 1, 0=echipa 2|jucător|1=roșu direct, 2=al doilea galben”; „K|echipa|jucător|1=marcat, 0=ratat”;
 // „M|minut|echipa|jucător|portarul care a apărat (gol = pe lângă / bară / peste)” = penalty ratat în timpul jocului.
-// Surse: Fjelstul World Cup Database (CC-BY-SA 4.0), 1930-2022 (cartonașe din 1970);
+// Surse: Fjelstul football database (CC-BY-SA 4.0), 1930-2022 (cartonașe din 1970);
 // penalty-urile ratate: RSSSF, BeSoccer și rapoarte de meci (vezi MISSED în generator).
 
 enum MatchEventsData {

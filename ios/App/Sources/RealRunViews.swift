@@ -90,7 +90,7 @@ struct RunTeamSelectView: View {
         ScreenContainer(title: "\(String(year)) · \(host)", backLabel: tr("Ediții", "Editions"), onBack: { game.go(.editions) }) {
             VStack(alignment: .leading, spacing: 12) {
                 Text(tr("Joci toate cele \(count) de meciuri ale Mondialului, în ordinea în care s-au jucat, cu rezultatele reale și marcatorii. După fiecare meci vezi clasamentul grupei sau tabloul eliminatoriilor.",
-                        "Play all \(count) matches of the World Cup in the order they were played, with the real results and goalscorers. After every match you see the group table or the knockout bracket."))
+                        "Play all \(count) matches of the tournament in the order they were played, with the real results and goalscorers. After every match you see the group table or the knockout bracket."))
                     .font(.system(size: 14)).foregroundStyle(Color.hwcTextDim)
                 PrimaryButton(title: tr("Începe turneul", "Start the tournament"), systemImage: "play.fill") {
                     game.startRun(year: year, focus: nil)
@@ -116,7 +116,7 @@ struct RunTeamSelectView: View {
                         .buttonStyle(.plain)
                     }
                 }
-                Text(tr("Rezultate reale: 1930–2022 Fjelstul World Cup Database (CC-BY-SA 4.0); 2026 openfootball (domeniu public).", "Real results: 1930–2022 Fjelstul World Cup Database (CC-BY-SA 4.0); 2026 openfootball (public domain)."))
+                Text(tr("Rezultate reale: 1930–2022 baza de date Fjelstul (CC-BY-SA 4.0); 2026 openfootball (domeniu public).", "Real results: 1930–2022 Fjelstul football database (CC-BY-SA 4.0); 2026 openfootball (public domain)."))
                     .font(.system(size: 11)).foregroundStyle(Color.hwcTextDim)
             }
         }
@@ -775,7 +775,7 @@ struct RunSummaryView: View {
                     PrimaryButton(title: tr("Joacă din nou", "Play again"), systemImage: "arrow.clockwise") {
                         game.startRun(year: r.year, focus: r.focus)
                     }
-                    SecondaryButton(title: tr("Alege alt Mondial", "Pick another World Cup"), systemImage: "trophy") { game.go(.editions) }
+                    SecondaryButton(title: tr("Alege alt Mondial", "Pick another edition"), systemImage: "trophy") { game.go(.editions) }
                     SecondaryButton(title: tr("Meniu principal", "Main menu"), systemImage: "house.fill") { game.endRunAndGoHome() }
                 }
             }

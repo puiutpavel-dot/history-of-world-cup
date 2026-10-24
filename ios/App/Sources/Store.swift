@@ -130,7 +130,7 @@ struct PaywallView: View {
                         .font(.scoreboard(24)).foregroundStyle(Color.hwcGold2)
                     PrimaryButton(title: tr("Continuă", "Continue"), systemImage: "arrow.right") { game.closePaywall() }
                 } else {
-                    Text(tr("Mondialele 1930–1938 și 1994 sunt gratuite. Deblochează restul istoriei:", "The 1930–1938 and 1994 World Cups are free. Unlock the rest of history:"))
+                    Text(tr("Mondialele 1930–1938 și 1994 sunt gratuite. Deblochează restul istoriei:", "The 1930–1938 and 1994 editions are free. Unlock the rest of history:"))
                         .font(.system(size: 16)).foregroundStyle(Color.hwcText)
                     VStack(alignment: .leading, spacing: 12) {
                         ForEach(Array(perks.enumerated()), id: \.offset) { _, perk in

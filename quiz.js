@@ -24,14 +24,14 @@ const FINAL_SCORES = {
 
 /* câte o întrebare-surpriză pe ediție: răspunsul corect e primul */
 const QUIZ_SURPRISES = {
-  1930: ["Ce s-a întâmplat cu mingea în finala din 1930?", "S-a jucat câte o repriză cu mingea fiecărei echipe", "S-a jucat cu o minge adusă de FIFA din Europa", "Mingea s-a spart, iar meciul s-a reluat", "S-a jucat tot meciul cu mingea gazdelor"],
+  1930: ["Ce s-a întâmplat cu mingea în finala din 1930?", "S-a jucat câte o repriză cu mingea fiecărei echipe", "S-a jucat cu o minge adusă din Europa", "Mingea s-a spart, iar meciul s-a reluat", "S-a jucat tot meciul cu mingea gazdelor"],
   1934: ["Ce campioană en-titre a refuzat să vină la Mondialul din 1934?", "Uruguay", "Brazilia", "Argentina", "Anglia"],
   1938: ["De ce a intrat Suedia direct în sferturi în 1938?", "Adversara ei, Austria, dispăruse după Anschluss", "Era campioana olimpică", "Era primul cap de serie", "A câștigat o tragere la sorți"],
   1950: ["Ce îi ajungea Braziliei în ultimul meci din 1950, cu Uruguay?", "Un egal", "O victorie la două goluri", "O victorie la orice scor", "Nimic — era deja campioană"],
   1954: ["Cu ce scor pierduse RFG cu Ungaria în grupă, înainte să o învingă în finală?", "3–8", "0–3", "2–4", "1–2"],
   1958: ["Câte goluri a marcat Just Fontaine în 1958 — record încă în picioare?", "13", "9", "11", "10"],
   1962: ["Cine l-a înlocuit în echipă pe Pelé, accidentat, în 1962?", "Amarildo", "Garrincha", "Vavá", "Zagallo"],
-  1966: ["Cine a găsit trofeul Jules Rimet, furat înainte de Mondialul din 1966?", "Un câine, Pickles", "Scotland Yard", "Un portar al Angliei", "Un taximetrist londonez"],
+  1966: ["Cine a găsit trofeul furat înainte de Mondialul din 1966?", "Un câine, Pickles", "Scotland Yard", "Un portar al Angliei", "Un taximetrist londonez"],
   1970: ["Ce a apărut în premieră la Mondialul din 1970?", "Cartonașele galbene și roșii", "Golul de aur", "Arbitrajul video (VAR)", "Tehnologia pe linia porții"],
   1974: ["Cine a primit primul cartonaș roșu din istoria Mondialelor, în 1974?", "Carlos Caszely (Chile)", "Antonio Rattín (Argentina)", "Johan Neeskens (Olanda)", "Gerd Müller (RFG)"],
   1978: ["La câte goluri diferență trebuia Argentina să bată Peru în 1978 ca să treacă de Brazilia?", "4", "1", "2", "6"],

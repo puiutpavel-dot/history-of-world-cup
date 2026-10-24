@@ -308,13 +308,23 @@ def version_texts(vid):
         if VERSION != "1.0":
             attrs["whatsNew"] = news[lang]
         if loc in have:
-            call("PATCH", f"/v1/appStoreVersionLocalizations/{have[loc]['id']}", {"data": {
+            r = call("PATCH", f"/v1/appStoreVersionLocalizations/{have[loc]['id']}", {"data": {
                 "type": "appStoreVersionLocalizations", "id": have[loc]["id"], "attributes": attrs}}, fatal=False)
+            if r is None and "whatsNew" in attrs:
+                # prima versiune publicată nu acceptă „What's New” (ex. 1.0 respinsă, redenumită 1.1) → restul textelor fără el
+                attrs.pop("whatsNew")
+                call("PATCH", f"/v1/appStoreVersionLocalizations/{have[loc]['id']}", {"data": {
+                    "type": "appStoreVersionLocalizations", "id": have[loc]["id"], "attributes": attrs}}, fatal=False)
             out[loc] = have[loc]["id"]
         else:
             r = call("POST", "/v1/appStoreVersionLocalizations", {"data": {
                 "type": "appStoreVersionLocalizations", "attributes": {"locale": loc, **attrs},
                 "relationships": {"appStoreVersion": rel("appStoreVersions", vid)}}}, fatal=False)
+            if r is None and "whatsNew" in attrs:
+                attrs.pop("whatsNew")
+                r = call("POST", "/v1/appStoreVersionLocalizations", {"data": {
+                    "type": "appStoreVersionLocalizations", "attributes": {"locale": loc, **attrs},
+                    "relationships": {"appStoreVersion": rel("appStoreVersions", vid)}}}, fatal=False)
             if r:
                 out[loc] = r["data"]["id"]
         log(loc, "ok")

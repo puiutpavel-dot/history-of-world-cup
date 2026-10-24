@@ -8,7 +8,7 @@ enum AppLinks {
 }
 
 /// Textul de neafiliere — același pe web, în aplicație și în descrierea din App Store.
-var unofficialDisclaimer: String { tr("Arhiva Mondialelor este un joc educațional neoficial, creat independent. Nu este afiliat, sponsorizat sau aprobat de FIFA, de organizatorii turneelor sau de vreo federație națională. Numele competițiilor, echipelor și jucătorilor sunt folosite doar descriptiv, în scop istoric. Aplicația nu folosește logouri, embleme, trofee oficiale sau fotografii.", "Football Finals Archive is an unofficial educational game, made independently. It is not affiliated with, sponsored or endorsed by FIFA, the tournament organisers or any national federation. The names of competitions, teams and players are used only descriptively, for historical purposes. The app uses no logos, emblems, official trophies or photographs.") }
+var unofficialDisclaimer: String { tr("Arhiva Mondialelor este un joc educațional neoficial, creat independent. Nu este afiliat, sponsorizat sau aprobat de vreun for de conducere al fotbalului, de organizatorii turneelor sau de vreo federație națională. Numele competițiilor, echipelor și jucătorilor sunt folosite doar descriptiv, în scop istoric. Aplicația nu folosește logouri, embleme, trofee sau fotografii.", "Football Finals Archive is an unofficial educational game, made independently. It is not affiliated with, sponsored or endorsed by any football governing body, tournament organiser or national federation. The names of competitions, teams and players are used only descriptively, for historical purposes. The app uses no logos, emblems, trophies or photographs.") }
 
 // MARK: - Despre și setări
 
@@ -21,7 +21,7 @@ struct AboutView: View {
             VStack(alignment: .leading, spacing: 14) {
                 Panel(title: tr("Achiziții", "Purchases")) {
                     Text(store.isUnlocked ? tr("✅ Full History este deblocat pe acest Apple ID.", "✅ Full History is unlocked on this Apple ID.")
-                         : tr("Mondialele 1930–1938 și 1994 sunt gratuite. Restul istoriei se deblochează cu o singură achiziție.", "The 1930–1938 and 1994 World Cups are free. The rest of history unlocks with a single purchase."))
+                         : tr("Mondialele 1930–1938 și 1994 sunt gratuite. Restul istoriei se deblochează cu o singură achiziție.", "The 1930–1938 and 1994 editions are free. The rest of history unlocks with a single purchase."))
                         .font(.system(size: 14)).foregroundStyle(Color.hwcText)
                     if !store.isUnlocked {
                         PrimaryButton(title: "Full History", systemImage: "lock.open.fill") { game.showPaywall() }
@@ -51,7 +51,7 @@ struct AboutView: View {
                 }
 
                 Panel(title: tr("Surse", "Sources")) {
-                    Text(LocalizedStringKey(tr("Rezultatele meciurilor reale: [Fjelstul World Cup Database](https://www.github.com/jfjelstul/worldcup) © 2023 Joshua C. Fjelstul, Ph.D., licență [CC-BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/legalcode) (date adaptate). Meciurile din 2026: [openfootball](https://github.com/openfootball/worldcup.json) (domeniu public). Loturi: Wikipedia. Textele istorice sunt rezumate originale.", "Real match results: [Fjelstul World Cup Database](https://www.github.com/jfjelstul/worldcup) © 2023 Joshua C. Fjelstul, Ph.D., licensed [CC-BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/legalcode) (adapted data). 2026 matches: [openfootball](https://github.com/openfootball/worldcup.json) (public domain). Squads: Wikipedia. The historical texts are original summaries.")))
+                    Text(LocalizedStringKey(tr("Rezultatele meciurilor reale: [baza de date Fjelstul](https://www.github.com/jfjelstul/worldcup) © 2023 Joshua C. Fjelstul, Ph.D., licență [CC-BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/legalcode) (date adaptate). Meciurile din 2026: [openfootball](https://github.com/openfootball/worldcup.json) (domeniu public). Loturi: Wikipedia. Textele istorice sunt rezumate originale.", "Real match results: [Fjelstul football database](https://www.github.com/jfjelstul/worldcup) © 2023 Joshua C. Fjelstul, Ph.D., licensed [CC-BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/legalcode) (adapted data). 2026 matches: [openfootball](https://github.com/openfootball/worldcup.json) (public domain). Squads: Wikipedia. The historical texts are original summaries.")))
                         .font(.system(size: 13)).foregroundStyle(Color.hwcTextDim).tint(.hwcGold)
                 }
 

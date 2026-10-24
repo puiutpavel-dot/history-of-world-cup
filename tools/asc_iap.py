@@ -23,11 +23,11 @@ PRODUCT_ID = "com.puiutpavel.historyofworldcup.fullhistory"
 PRICE_USD = "4.99"
 LOCALIZATIONS = {
     # nume: max. 30 de caractere; descriere: max. 55
-    "en-US": ("Full History", "Every World Cup 1930–2026 and every quiz"),
+    "en-US": ("Full History", "Every edition 1930–2026 and every quiz"),
     "ro": ("Full History", "Toate Mondialele 1930–2026 și toate quizurile"),
 }
 REVIEW_NOTE = ("Non-consumable, one-time purchase. Unlocks every tournament after the free ones "
-               "(1930, 1934, 1938, 1994) in 'Relive a World Cup' and every quiz mode. "
+               "(1930, 1934, 1938, 1994) in 'Relive a tournament' and every quiz mode. "
                "Restore Purchases is in 'About & settings'.")
 API = "https://api.appstoreconnect.apple.com"
 

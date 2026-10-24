@@ -99,10 +99,10 @@ const TITLE_PATH = [
 /* ---------- Povestea fiecărei ediții ---------- */
 const STORIES = {
   1930: {
-    context: "Uruguay, 13–30 iulie. Prima ediție, singura fără calificări și singura jucată integral într-un singur oraș: Montevideo. Țara sărbătorea 100 de ani de la prima constituție și era dublă campioană olimpică; a plătit drumul echipelor. Au venit doar 13: patru europene (Franța, Belgia, România — cu lotul ales de regele Carol al II-lea — și Iugoslavia), cu vaporul, împreună cu Jules Rimet și trofeul.",
+    context: "Uruguay, 13–30 iulie. Prima ediție, singura fără calificări și singura jucată integral într-un singur oraș: Montevideo. Țara sărbătorea 100 de ani de la prima constituție și era dublă campioană olimpică; a plătit drumul echipelor. Au venit doar 13: patru europene (Franța, Belgia, România — cu lotul ales de regele Carol al II-lea — și Iugoslavia), cu vaporul, împreună cu trofeul.",
     moments: [
       "Franța 4–1 Mexic: primul gol din istoria Mondialelor, Lucien Laurent, minutul 19.",
-      "SUA 3–0 Paraguay: Bert Patenaude, primul hat-trick recunoscut de FIFA.",
+      "SUA 3–0 Paraguay: Bert Patenaude, primul hat-trick din istoria turneului.",
       "România 3–1 Peru: prima victorie a României la un Mondial.",
       "Estadio Centenario se deschide cu 5 zile întârziere, din cauza ploilor.",
       "Argentina 6–1 SUA în semifinală: americanul Raphael Tracey își rupe piciorul — fără schimbări, echipa rămâne în 10.",
@@ -176,7 +176,7 @@ const STORIES = {
     coach: "Aymoré Moreira (Brazilia).",
   },
   1966: {
-    context: "Anglia, 11–30 iulie. Trofeul Jules Rimet e furat înainte de turneu și găsit de câinele Pickles. Debutează Portugalia și Coreea de Nord. Departajare tot prin media golurilor.",
+    context: "Anglia, 11–30 iulie. Trofeul e furat înainte de turneu și găsit de câinele Pickles. Debutează Portugalia și Coreea de Nord. Departajare tot prin media golurilor.",
     moments: [
       "Portugalia și Ungaria scot Brazilia din grupă; Pelé e lovit fără milă.",
       "Coreea de Nord 1–0 Italia (Pak Doo-ik): Italia acasă întâmpinată cu roșii.",
@@ -194,11 +194,11 @@ const STORIES = {
       "Brazilia 3–2 România: Pelé, două goluri.",
       "Italia 4–3 RFG după prelungiri: „Meciul secolului”, cu 5 goluri în prelungiri și Beckenbauer cu brațul în eșarfă.",
     ],
-    final: "Brazilia 4–1 Italia la Azteca (Pelé, Gérson, Jairzinho, Carlos Alberto; Boninsegna). Al treilea titlu, trofeul Jules Rimet rămâne definitiv Braziliei. Jairzinho a marcat în toate meciurile.",
+    final: "Brazilia 4–1 Italia la Azteca (Pelé, Gérson, Jairzinho, Carlos Alberto; Boninsegna). Al treilea titlu, trofeul original rămâne definitiv Braziliei. Jairzinho a marcat în toate meciurile.",
     coach: "Mário Zagallo — primul campion mondial ca jucător și ca antrenor.",
   },
   1974: {
-    context: "RFG, 13 iunie–7 iulie. Noul trofeu FIFA înlocuiește Jules Rimet. Structura se schimbă: două faze de grupe, fără sferturi și semifinale clasice. Debut: Australia, RD Germană, Haiti, Zair.",
+    context: "RFG, 13 iunie–7 iulie. Un trofeu nou îl înlocuiește pe cel original. Structura se schimbă: două faze de grupe, fără sferturi și semifinale clasice. Debut: Australia, RD Germană, Haiti, Zair.",
     moments: [
       "RFG 1–0 Chile: Carlos Caszely, primul cartonaș roșu din istoria Mondialelor.",
       "RD Germană 1–0 RFG (Sparwasser), singurul meci dintre cele două Germanii.",

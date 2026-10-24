@@ -213,7 +213,7 @@ struct CountryView: View {
                         .font(.system(size: 14)).foregroundStyle(Color.hwcTextDim)
                 }
                 CountryPicker()
-                Text(tr("Date meci cu meci: 1930-2022 Fjelstul World Cup Database (CC-BY-SA 4.0); 2026 openfootball (domeniu public).", "Match-by-match data: 1930-2022 Fjelstul World Cup Database (CC-BY-SA 4.0); 2026 openfootball (public domain)."))
+                Text(tr("Date meci cu meci: 1930-2022 baza de date Fjelstul (CC-BY-SA 4.0); 2026 openfootball (domeniu public).", "Match-by-match data: 1930-2022 Fjelstul football database (CC-BY-SA 4.0); 2026 openfootball (public domain)."))
                     .font(.system(size: 11)).foregroundStyle(Color.hwcTextDim)
             }
         }

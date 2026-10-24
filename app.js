@@ -85,7 +85,7 @@ function renderMenu() {
       <button class="btn" data-action="legends">⭐ Galeria Legendelor</button>
       <button class="btn" data-action="trophies">🗄️ Sala Trofeelor</button>
     </div>
-    <p class="disclaimer">Joc educațional neoficial, fără legătură cu FIFA sau cu federațiile naționale. · <a href="privacy.html">Confidențialitate</a> · <a href="support.html">Suport</a></p>
+    <p class="disclaimer">Joc educațional neoficial, fără legătură cu vreun for al fotbalului sau cu federațiile naționale. · <a href="privacy.html">Confidențialitate</a> · <a href="support.html">Suport</a></p>
   </div>`;
 }
 
@@ -405,7 +405,6 @@ function renderMuseum() {
       ${open ? `<div class="museum-body">
         <p>🏆 Campioană: <b>${teamLabel(ed.champion)}</b> · Finalistă: ${teamLabel(ed.runnerUp)} · Locul 3: ${teamLabel(ed.third)}</p>
         <p>⚽ Golgheter: ${ed.topScorer}</p>
-        <p>🔴 Minge oficială: ${ed.ball}</p>
         <p class="museum-note">${ed.note}</p>
         ${FORMATS[ed.year] ? `<p>📋 <b>Format:</b> ${FORMATS[ed.year].summary}</p><p>${rulesLine(FORMATS[ed.year])}</p>` : ""}
         ${STORIES[ed.year] ? storyHtml(STORIES[ed.year]) : ""}
@@ -417,7 +416,7 @@ function renderMuseum() {
   <div class="screen">
     <div class="topbar"><button class="btn-back" data-action="menu">← Meniu</button><h2>📖 Muzeul Edițiilor</h2></div>
     <div class="museum-list">${items}</div>
-    <p class="hint credits">Rezultatele meciurilor reale: <a href="https://www.github.com/jfjelstul/worldcup" target="_blank" rel="noopener">Fjelstul World Cup Database</a> © 2023 Joshua C. Fjelstul, Ph.D., licență <a href="https://creativecommons.org/licenses/by-sa/4.0/legalcode" target="_blank" rel="noopener">CC-BY-SA 4.0</a> (date adaptate). Loturi: Wikipedia, „FIFA World Cup squads”.</p>
+    <p class="hint credits">Rezultatele meciurilor reale: <a href="https://www.github.com/jfjelstul/worldcup" target="_blank" rel="noopener">baza de date Fjelstul</a> © 2023 Joshua C. Fjelstul, Ph.D., licență <a href="https://creativecommons.org/licenses/by-sa/4.0/legalcode" target="_blank" rel="noopener">CC-BY-SA 4.0</a> (date adaptate). Loturi: listele de loturi de pe Wikipedia.</p>
   </div>`;
 }
 
@@ -603,7 +602,7 @@ function renderCountry() {
     ${t.entries.length ? entries : `<p class="hint">${t.name} nu a jucat încă la un turneu final.</p>`}
     ${t.absent.length ? `<p class="hint">Absentă la: ${t.absent.join(", ")}.</p>` : ""}
     ${picker}
-    <p class="hint credits">Date meci cu meci: 1930-2022 Fjelstul World Cup Database, CC-BY-SA 4.0; 2026 openfootball (domeniu public).</p>
+    <p class="hint credits">Date meci cu meci: 1930-2022 baza de date Fjelstul, CC-BY-SA 4.0; 2026 openfootball (domeniu public).</p>
   </div>`;
 }
 

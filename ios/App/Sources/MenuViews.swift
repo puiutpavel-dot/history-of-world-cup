@@ -34,7 +34,7 @@ struct MenuView: View {
                         .minimumScaleFactor(0.6)
                         .multilineTextAlignment(.center)
                         .foregroundStyle(Color.hwcGold2)
-                    Text(tr("Retrăiește fiecare Mondial, meci cu meci — 1930-2026", "Relive every World Cup, match by match — 1930-2026"))
+                    Text(tr("Retrăiește fiecare Mondial, meci cu meci — 1930-2026", "Relive every world championship, match by match — 1930-2026"))
                         .font(.system(size: 15))
                         .foregroundStyle(Color.hwcTextDim)
                         .multilineTextAlignment(.center)
@@ -46,9 +46,9 @@ struct MenuView: View {
                         PrimaryButton(title: tr("Continuă: ", "Continue: ") + "\(String(r.year)) · \(r.idx + 1)/\(r.fixtures.count)", systemImage: "play.fill") {
                             game.go(.run)
                         }
-                        SecondaryButton(title: tr("Retrăiește un Mondial", "Relive a World Cup"), systemImage: "trophy") { game.go(.editions) }
+                        SecondaryButton(title: tr("Retrăiește un Mondial", "Relive a tournament"), systemImage: "trophy") { game.go(.editions) }
                     } else {
-                        PrimaryButton(title: tr("Retrăiește un Mondial", "Relive a World Cup"), systemImage: "trophy.fill") { game.go(.editions) }
+                        PrimaryButton(title: tr("Retrăiește un Mondial", "Relive a tournament"), systemImage: "trophy.fill") { game.go(.editions) }
                     }
                     // butoanele secundare în perechi, ca două capsule alăturate
                     HStack(spacing: 12) {
