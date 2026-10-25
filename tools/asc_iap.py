@@ -85,10 +85,11 @@ def main():
             "relationships": {"app": {"data": {"type": "apps", "id": APP_ID}}}}})["data"]
         print("creat:", iap["id"])
     iap_id = iap["id"]
-    if not iap["attributes"].get("familySharable"):
+    attrs = iap["attributes"]
+    if not attrs.get("familySharable") or attrs.get("reviewNote") != REVIEW_NOTE:
         call("PATCH", f"/v2/inAppPurchases/{iap_id}", {"data": {"type": "inAppPurchases", "id": iap_id,
                                                                 "attributes": {"familySharable": True, "reviewNote": REVIEW_NOTE}}})
-        print("Family Sharing pornit")
+        print("Family Sharing și nota pentru review actualizate")
 
     step("Nume și descriere")
     have = {l["attributes"]["locale"]: l for l in get_all(f"/v2/inAppPurchases/{iap_id}/inAppPurchaseLocalizations")}
