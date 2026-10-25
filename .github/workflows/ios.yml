@@ -90,6 +90,7 @@ jobs:
         with:
           name: screenshots
           path: screenshots
+          retention-days: 7
       - name: Publică capturile pe branch-ul "screenshots" (vizibile direct pe GitHub)
         if: github.event_name != 'pull_request'
         run: |
@@ -117,3 +118,4 @@ jobs:
         with:
           name: HistoryOfWorldCup-simulator-app
           path: HistoryOfWorldCup-simulator.zip
+          retention-days: 7
