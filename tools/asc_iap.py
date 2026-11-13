@@ -108,7 +108,9 @@ def main():
     versions = get_all(f"/v2/inAppPurchases/{iap_id}/versions?limit=200")
     states = {v["id"]: v["attributes"].get("state") for v in versions}
     print("versiuni:", states or "niciuna")
-    draft = next((v["id"] for v in versions if states[v["id"]] == "PREPARE_FOR_SUBMISSION"), None)
+    # O versiune respinsă sau retrasă rămâne versiunea „în lucru”: Apple refuză (409) crearea alteia cât există ea.
+    draft = next((v["id"] for v in versions
+                  if states[v["id"]] in ("PREPARE_FOR_SUBMISSION", "DEVELOPER_REJECTED", "REJECTED")), None)
     in_review = [s for s in states.values() if s in ("READY_FOR_REVIEW", "WAITING_FOR_REVIEW", "IN_REVIEW")]
     approved = [v["id"] for v in versions if states[v["id"]] in ("ACCEPTED", "APPROVED")]
     if not draft and in_review:
