@@ -92,18 +92,48 @@ def main():
         print("Family Sharing și nota pentru review actualizate")
 
     step("Nume și descriere")
-    have = {l["attributes"]["locale"]: l for l in get_all(f"/v2/inAppPurchases/{iap_id}/inAppPurchaseLocalizations")}
+    # Din API 4.4.1 numele și descrierea țin de o „versiune” a achiziției (inAppPurchaseVersions), nu de
+    # achiziția însăși; vechile /v1/inAppPurchaseLocalizations dispar la începutul lui 2027.
     for loc, (name, desc) in LOCALIZATIONS.items():
         assert len(name) <= 30 and len(desc) <= 55, (loc, len(name), len(desc))
-        if loc in have:
-            call("PATCH", f"/v1/inAppPurchaseLocalizations/{have[loc]['id']}", {"data": {
-                "type": "inAppPurchaseLocalizations", "id": have[loc]["id"], "attributes": {"name": name, "description": desc}}})
-            print(loc, "actualizat")
-        else:
-            call("POST", "/v1/inAppPurchaseLocalizations", {"data": {
-                "type": "inAppPurchaseLocalizations", "attributes": {"locale": loc, "name": name, "description": desc},
-                "relationships": {"inAppPurchaseV2": {"data": {"type": "inAppPurchases", "id": iap_id}}}}})
-            print(loc, "creat")
+
+    def texts(version_id):
+        return {l["attributes"]["locale"]: l
+                for l in get_all(f"/v1/inAppPurchaseVersions/{version_id}/localizations?limit=200")}
+
+    def up_to_date(have):
+        return all(loc in have and (have[loc]["attributes"].get("name"), have[loc]["attributes"].get("description")) == want
+                   for loc, want in LOCALIZATIONS.items())
+
+    versions = get_all(f"/v2/inAppPurchases/{iap_id}/versions?limit=200")
+    states = {v["id"]: v["attributes"].get("state") for v in versions}
+    print("versiuni:", states or "niciuna")
+    draft = next((v["id"] for v in versions if states[v["id"]] == "PREPARE_FOR_SUBMISSION"), None)
+    in_review = [s for s in states.values() if s in ("READY_FOR_REVIEW", "WAITING_FOR_REVIEW", "IN_REVIEW")]
+    approved = [v["id"] for v in versions if states[v["id"]] in ("ACCEPTED", "APPROVED")]
+    if not draft and in_review:
+        print("::warning::o versiune e deja trimisă la review; textele nu se mai pot schimba acum")
+    elif not draft and any(up_to_date(texts(v)) for v in approved):
+        print("versiunea aprobată are deja textele corecte")
+    else:
+        if not draft:
+            draft = call("POST", "/v1/inAppPurchaseVersions", {"data": {
+                "type": "inAppPurchaseVersions",
+                "relationships": {"inAppPurchase": {"data": {"type": "inAppPurchases", "id": iap_id}}}}})["data"]["id"]
+            print("versiune nouă:", draft)
+        have = texts(draft)
+        for loc, (name, desc) in LOCALIZATIONS.items():
+            if loc not in have:
+                call("POST", "/v2/inAppPurchaseLocalizations", {"data": {
+                    "type": "inAppPurchaseLocalizations", "attributes": {"locale": loc, "name": name, "description": desc},
+                    "relationships": {"version": {"data": {"type": "inAppPurchaseVersions", "id": draft}}}}})
+                print(loc, "creat")
+            elif (have[loc]["attributes"].get("name"), have[loc]["attributes"].get("description")) != (name, desc):
+                call("PATCH", f"/v2/inAppPurchaseLocalizations/{have[loc]['id']}", {"data": {
+                    "type": "inAppPurchaseLocalizations", "id": have[loc]["id"], "attributes": {"name": name, "description": desc}}})
+                print(loc, "actualizat")
+            else:
+                print(loc, "neschimbat")
 
     step("Preț")
     points = get_all(f"/v2/inAppPurchases/{iap_id}/pricePoints?filter[territory]=USA&limit=200")
